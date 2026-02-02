@@ -7,6 +7,7 @@
     <title>LUNA - Werewolf Game</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌙</text></svg>">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet">
@@ -49,16 +50,16 @@
             padding-bottom: 40px;
         }
 
-        /* TYPOGRAPHY LUNA */
+        /* TYPOGRAPHY */
         h1 { font-size: 3.5rem; font-weight: 800; margin: 0; letter-spacing: 2px; line-height: 1; background: -webkit-linear-gradient(#fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         h2 { font-size: 3rem; margin: 10px 0; color: var(--accent); background: rgba(0,0,0,0.2); padding: 5px 25px; border-radius: 20px; display: inline-block; }
+        h3 { color: var(--accent); margin-bottom: 5px; }
         p { opacity: 0.9; margin-bottom: 15px; font-weight: 400; }
         .subtitle { font-size: 1rem; letter-spacing: 3px; color: var(--accent); margin-bottom: 30px; text-transform: uppercase; }
 
         .material-symbols-rounded { font-size: 4rem; margin-bottom: 10px; text-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .small-icon { font-size: 1.2rem; vertical-align: middle; margin-right: 5px; }
 
-        /* VERSION TAG */
         .app-version {
             position: fixed; bottom: 15px; width: 100%; text-align: center;
             font-size: 0.75rem; color: rgba(255, 255, 255, 0.3); letter-spacing: 1px; pointer-events: none; z-index: 999;
@@ -82,13 +83,11 @@
         button:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
         
         button.secondary { background: rgba(255,255,255,0.15); color: white; box-shadow: none; border: 1px solid rgba(255,255,255,0.2); }
+        button.info { background: rgba(52, 152, 219, 0.2); color: #3498db; border: 1px solid #3498db; margin-top: 10px; }
         button.emergency { background: #e74c3c; color: white; font-size: 0.8rem; padding: 10px; width: auto; margin: 10px auto; border: 1px solid white; display: inline-block;}
         button.end-game { background: #cf6679; color: white; font-size: 0.9rem; padding: 12px; margin-top: 20px; }
 
-        .timer-display { 
-            font-size: 5rem; font-weight: 800; margin-top: auto; 
-            text-shadow: 3px 3px 0 rgba(0,0,0,0.2); font-variant-numeric: tabular-nums;
-        }
+        .timer-display { font-size: 5rem; font-weight: 800; margin-top: auto; text-shadow: 3px 3px 0 rgba(0,0,0,0.2); font-variant-numeric: tabular-nums; }
         
         #phaseDesc {
             background: rgba(0, 0, 0, 0.25); padding: 20px; border-radius: 15px;
@@ -124,7 +123,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.95); z-index: 100; 
             display: flex; flex-direction: column; justify-content: center; align-items: center; 
-            padding: 40px; animation: fadeIn 0.3s;
+            padding: 20px; animation: fadeIn 0.3s;
         }
         .role-reveal-box {
             border: 2px solid var(--accent); padding: 30px; border-radius: 20px;
@@ -132,6 +131,19 @@
             box-shadow: 0 0 30px var(--accent); width: 100%; max-width: 350px;
         }
         
+        /* GUIDE BOX STYLING */
+        .guide-box {
+            background: #1e272e; width: 100%; max-width: 400px; height: 80%;
+            border-radius: 20px; display: flex; flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .guide-header { padding: 20px; background: #2c3e50; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .guide-content { padding: 20px; overflow-y: auto; text-align: left; font-size: 0.9rem; line-height: 1.6; }
+        .guide-content h3 { color: var(--accent); margin-top: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        .guide-content ul { padding-left: 20px; }
+        .guide-content li { margin-bottom: 8px; }
+
         .msg-toast { 
             position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
             background: #2ecc71; color: #000; padding: 15px 25px; 
@@ -168,6 +180,10 @@
             </button>
             <button class="secondary" onclick="showJoin()">
                 <span class="material-symbols-rounded small-icon">login</span> GABUNG
+            </button>
+            
+            <button class="info" onclick="toggleGuide(true)">
+                <span class="material-symbols-rounded small-icon">menu_book</span> PANDUAN
             </button>
         </div>
 
@@ -235,6 +251,43 @@
         </div>
     </div>
 
+    <div id="overlayGuide" class="overlay hidden">
+        <div class="guide-box">
+            <div class="guide-header">
+                <h3 style="margin:0; color:white;">PANDUAN LUNA</h3>
+                <button onclick="toggleGuide(false)" style="width:auto; padding:5px 15px; font-size:0.8rem; margin:0;">TUTUP</button>
+            </div>
+            <div class="guide-content">
+                <p>Selamat datang di <b>LUNA</b>, permainan Werewolf Phygital. HP-mu adalah identitasmu.</p>
+                
+                <h3>🎭 PERAN (ROLE)</h3>
+                <ul>
+                    <li>🐺 <b>WEREWOLF (Jahat):</b> Tiap malam pilih satu korban untuk dimangsa.</li>
+                    <li>👁️ <b>SEER (Desa):</b> Tiap malam terawang satu orang. Sistem akan memberitahu dia JAHAT/BAIK.</li>
+                    <li>💉 <b>DOCTOR (Desa):</b> Lindungi satu orang (bisa diri sendiri) dari serangan malam.</li>
+                    <li>🛡️ <b>BODYGUARD (Desa):</b> Lindungi orang. Jika dia diserang, dia selamat TAPI kamu & penyerang mati (Double Kill).</li>
+                    <li>🔫 <b>HUNTER (Desa):</b> Pilih target. Jika kamu mati malam ini, targetmu ikut mati tertembak.</li>
+                    <li>👱 <b>VILLAGER (Desa):</b> Warga biasa. Gunakan insting saat diskusi & voting.</li>
+                </ul>
+
+                <h3>🤫 FITUR "DISGUISED INPUT"</h3>
+                <p>Saat malam, <b>SEMUA ORANG</b> (termasuk Warga) wajib menekan HP seolah-olah memilih target. Ini agar Werewolf tidak ketahuan!</p>
+                <ul>
+                    <li>Warga = Klik Dummy (Kosong)</li>
+                    <li>Werewolf = Klik Membunuh</li>
+                </ul>
+
+                <h3>⚠️ ATURAN MAIN</h3>
+                <ol>
+                    <li><b>Dilarang intip HP teman.</b></li>
+                    <li><b>Jika Mati = DIAM.</b> Jangan beri kode.</li>
+                    <li>Naikkan Brightness HP agar wajah terlihat.</li>
+                </ol>
+                <br><br>
+            </div>
+        </div>
+    </div>
+
     <div id="overlayWin" class="overlay hidden">
         <span class="material-symbols-rounded" style="font-size: 5rem; color:var(--accent);">emoji_events</span>
         <h1 id="winTitle" style="font-size: 3rem; margin:10px 0;">WINNER</h1>
@@ -242,7 +295,7 @@
         <button onclick="clearSession()" style="width:auto; padding: 15px 40px;">KEMBALI KE LOBBY</button>
     </div>
 
-    <div class="app-version">Luna V.1.1</div>
+    <div class="app-version">Luna V.1.2</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -302,7 +355,14 @@
         let selectedTarget = null, allPlayers = {}, roleFetched = false;
         let hostLocalTimer = 0, lastRenderedPhase = "";
 
-        // --- RESTORE SESSION (LOGIC BARU) ---
+        // --- NEW: GUIDE TOGGLE ---
+        window.toggleGuide = (show) => {
+            const guide = document.getElementById("overlayGuide");
+            if(show) guide.classList.remove("hidden");
+            else guide.classList.add("hidden");
+        }
+
+        // --- RESTORE SESSION ---
         (function restoreSession() {
             const savedRoom = localStorage.getItem("ww_room");
             const savedName = localStorage.getItem("ww_name");
@@ -347,7 +407,6 @@
                 players: { [myId]: { name: myName, isHost: true } },
                 gameState: { phase: "LOBBY" }
             });
-            // onDisconnect DIHAPUS agar room tidak hilang saat refresh
             listenRoom();
         };
 
