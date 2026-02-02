@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#1a1a2e">
-    <title>Werewolf Phygital v9.0</title>
+    <title>Werewolf Phygital v9.1</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -130,19 +130,31 @@
             width: 90%; max-width: 350px; animation: slideDown 0.5s; border: 2px solid white;
         }
 
+        /* Loading Screen saat Refresh */
+        #screenLoading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark); z-index: 200;
+            display: flex; justify-content: center; align-items: center;
+            color: var(--accent); font-size: 1.5rem; font-weight: bold;
+        }
+
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideDown { from { top: -50px; } to { top: 70px; } }
     </style>
 </head>
 <body>
 
-    <div id="debugStatus" style="position:fixed; bottom:5px; left:5px; font-size:0.6rem; opacity:0.3;">v9.0 Final Logic</div>
+    <div id="screenLoading">
+        Memuat Game...
+    </div>
 
-    <div id="screenLobby" class="screen">
+    <div id="debugStatus" style="position:fixed; bottom:5px; left:5px; font-size:0.6rem; opacity:0.3;">v9.1 Anti-Reset</div>
+
+    <div id="screenLobby" class="screen hidden">
         <div id="viewLanding">
             <span class="material-symbols-rounded" style="color:var(--accent); font-size: 5rem;">pets</span>
             <h1>WEREWOLF<br>PHYGITAL</h1>
-            <p style="font-size: 0.9rem; margin-top: -5px;">Versi 9.0 (Full Roles)</p>
+            <p style="font-size: 0.9rem; margin-top: -5px;">Versi 9.1 (Stable)</p>
             <br>
             
             <input type="text" id="inputName" placeholder="NAMA KAMU">
@@ -282,20 +294,37 @@
         let selectedTarget = null, allPlayers = {}, roleFetched = false;
         let hostLocalTimer = 0, lastRenderedPhase = "";
 
-        // --- SILENT AUTO REJOIN (NO UI) ---
-        // Langsung cek session saat load
-        const savedRoom = localStorage.getItem("ww_room");
-        const savedName = localStorage.getItem("ww_name");
-        if (savedRoom && savedName) {
-            roomCode = savedRoom;
-            myName = savedName;
-            myId = localStorage.getItem("ww_id") || myId;
-            isHost = (localStorage.getItem("ww_host") === "true");
-            
-            // Langsung masuk lobby tanpa tanya user
-            setupLobby();
-            listenRoom();
-        }
+        // --- RESTORE SESSION (LOGIC BARU) ---
+        // Menjalankan cek sesi SEBELUM menampilkan apa pun
+        (function restoreSession() {
+            const savedRoom = localStorage.getItem("ww_room");
+            const savedName = localStorage.getItem("ww_name");
+            const savedId = localStorage.getItem("ww_id");
+            const savedHost = localStorage.getItem("ww_host");
+
+            if (savedRoom && savedName && savedId) {
+                // Restore Variables
+                roomCode = savedRoom;
+                myName = savedName;
+                myId = savedId;
+                isHost = (savedHost === "true");
+                
+                // Fetch Role Dulu baru Listen
+                get(ref(db, `rooms/${roomCode}/players/${myId}/role`)).then(snap => {
+                    if (snap.exists()) myRole = snap.val();
+                    setupLobby(); // Tetap setup lobby structure
+                    listenRoom(); // Mulai listener realtime
+                }).catch(() => {
+                    // Kalau error/room dah bubar
+                    document.getElementById("screenLoading").classList.add("hidden");
+                    document.getElementById("screenLobby").classList.remove("hidden");
+                });
+            } else {
+                // Tidak ada sesi, buka lobby normal
+                document.getElementById("screenLoading").classList.add("hidden");
+                document.getElementById("screenLobby").classList.remove("hidden");
+            }
+        })();
 
         window.clearSession = () => { localStorage.clear(); location.reload(); }
 
@@ -304,7 +333,6 @@
             myName = document.getElementById("inputName").value.trim().toUpperCase();
             if(!myName) return alert("Isi nama dulu!");
             
-            // Generate Code
             const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ";
             roomCode = ""; for(let i=0; i<4; i++) roomCode += chars.charAt(Math.floor(Math.random()*chars.length));
             
@@ -332,7 +360,7 @@
             if(roomCode.length !== 4) return alert("Kode harus 4 huruf!");
 
             get(ref(db, `rooms/${roomCode}`)).then(snap => {
-                if(snap.exists()) { // Allow rejoin anytime if room exists
+                if(snap.exists()) { 
                     set(ref(db, `rooms/${roomCode}/players/${myId}`), { name: myName, isHost: false });
                     onDisconnect(ref(db, `rooms/${roomCode}/players/${myId}`)).remove();
                     isHost = false; saveSession(); setupLobby(); listenRoom();
@@ -348,33 +376,35 @@
         }
 
         function setupLobby() {
-            document.getElementById("viewLanding").classList.add("hidden");
+            document.getElementById("screenLobby").classList.remove("hidden"); // Show container
+            document.getElementById("viewLanding").classList.add("hidden"); // Hide Landing
             document.getElementById("viewJoin").classList.add("hidden");
-            document.getElementById("viewWaiting").classList.remove("hidden");
+            document.getElementById("viewWaiting").classList.remove("hidden"); // Show Waiting
             document.getElementById("dispCode").innerText = roomCode;
             if(isHost) document.getElementById("hostPanel").classList.remove("hidden");
         }
 
         // --- CORE LISTENER ---
         function listenRoom() {
+            // Sembunyikan Loading Screen setelah koneksi dimulai
+            document.getElementById("screenLoading").classList.add("hidden");
+
             onValue(ref(db, `rooms/${roomCode}/players`), snap => {
                 allPlayers = snap.val() || {};
                 document.getElementById("pCount").innerText = Object.keys(allPlayers).length;
                 
+                // PASTIKAN TOMBOL HOST MUNCUL JIKA REFRESH
                 if (allPlayers[myId]?.isHost) {
                     isHost = true;
                     document.getElementById("hostGameControls").classList.remove("hidden");
                     if (!window.hostInterval) startHostEngine();
                 }
 
-                // LISTEN PRIVATE MESSAGE (FIXED)
                 if (allPlayers[myId]?.privateMsg) {
                     const el = document.getElementById("privateMsg");
                     el.innerHTML = `<span class="material-symbols-rounded small-icon">info</span> ${allPlayers[myId].privateMsg}`;
                     el.classList.remove("hidden");
-                    // Clear local alert after 8s
                     setTimeout(() => el.classList.add("hidden"), 8000);
-                    // Clear DB immediately so it doesn't loop
                     if(!isHost) update(ref(db, `rooms/${roomCode}/players/${myId}`), { privateMsg: null });
                 }
             });
@@ -383,6 +413,7 @@
                 const state = snap.val();
                 if(!state) return;
 
+                // Sync Timer jika beda jauh (misal habis refresh)
                 if (isHost && Math.abs(hostLocalTimer - state.timer) > 3) hostLocalTimer = state.timer;
 
                 if (state.phase === "GAME_OVER") {
@@ -397,21 +428,27 @@
 
         function renderGamePhase(state) {
             document.getElementById("timerDisplay").innerText = (state.timer !== undefined) ? state.timer : "";
+            
+            // JANGAN RENDER ULANG JIKA FASE SAMA (Agar input tidak hilang)
             if (lastRenderedPhase === state.phase) return; 
             lastRenderedPhase = state.phase;
 
+            // Jika masuk game, sembunyikan Lobby
             if (state.phase !== "LOBBY") {
                 document.getElementById("screenLobby").classList.add("hidden");
                 document.getElementById("screenGame").classList.remove("hidden");
             }
 
-            if (state.phase === "STARTING" && !roleFetched) {
-                get(ref(db, `rooms/${roomCode}/players/${myId}/role`)).then(s => {
-                    myRole = s.val();
-                    updateRoleUI();
-                    document.getElementById("overlayRole").classList.remove("hidden");
-                    roleFetched = true;
+            // Ambil Role (Backup jika restore session gagal ambil role)
+            if (!myRole || myRole === "VILLAGER") {
+                 get(ref(db, `rooms/${roomCode}/players/${myId}/role`)).then(s => {
+                    if(s.exists()) {
+                        myRole = s.val();
+                        updateRoleUI();
+                    }
                 });
+            } else {
+                updateRoleUI();
             }
 
             document.body.style.backgroundColor = PHASE_COLORS[state.phase] || "#2c3e50";
@@ -477,18 +514,19 @@
         function updateRoleUI() {
             document.getElementById("myRoleTitle").innerText = myRole;
             let desc = "Warga biasa. Cari Wolf.";
-            let color = "#2ecc71";
+            let color = "#2ecc71"; // Green
             
-            if(myRole === "WEREWOLF") { desc = "Faksi Jahat. Mangsa warga tiap malam."; color = "#e74c3c"; }
-            if(myRole === "SEER") { desc = "Faksi Desa. Cek status pemain (Jahat/Baik)."; color = "#3498db"; }
-            if(myRole === "DOCTOR") { desc = "Faksi Desa. Lindungi 1 orang dari serangan."; color = "#9b59b6"; }
-            if(myRole === "BODYGUARD") { desc = "Faksi Desa. Lindungi orang. Jika diserang, kamu & penyerang mati."; color = "#e67e22"; }
+            if(myRole === "WEREWOLF") { desc = "JAHAT. Mangsa warga tiap malam."; color = "#e74c3c"; }
+            if(myRole === "SEER") { desc = "DESA. Cek status pemain (Jahat/Baik)."; color = "#3498db"; }
+            if(myRole === "DOCTOR") { desc = "DESA. Lindungi 1 orang dari serangan."; color = "#9b59b6"; }
+            if(myRole === "BODYGUARD") { desc = "DESA. Lindungi orang. Jika diserang, kamu & penyerang mati."; color = "#e67e22"; }
+            if(myRole === "HUNTER") { desc = "DESA. Jika mati malam ini, tembakanmu aktif."; color = "#f39c12"; }
             
             document.getElementById("myRoleDesc").innerText = desc;
             document.getElementById("myRoleTitle").style.color = color;
         }
 
-        // ================= HOST LOGIC (UPDATED ROLES) =================
+        // ================= HOST LOGIC =================
         let processing = false;
 
         window.startGame = () => {
@@ -497,19 +535,13 @@
                 const count = ids.length;
                 let roles = [];
 
-                // --- LOGIKA DISTRIBUSI ROLE ---
                 if (count >= 8) {
-                    // 8-10 Orang: 1 Wolf, 1 Seer, 1 Doctor, 1 Bodyguard
                     roles.push("WEREWOLF", "SEER", "DOCTOR", "BODYGUARD");
                 } else {
-                    // 4-7 Orang: 1 Wolf, 1 Seer
                     roles.push("WEREWOLF", "SEER");
                 }
 
-                // Sisanya jadi VILLAGER
                 while(roles.length < count) roles.push("VILLAGER");
-                
-                // Acak
                 roles.sort(() => Math.random() - 0.5);
 
                 ids.forEach((id, i) => update(ref(db, `rooms/${roomCode}/players/${id}`), { role: roles[i], isAlive: true, privateMsg: null }));
@@ -584,7 +616,7 @@
             
             let wolfVotes = {}, seerT = null, seerId = null;
             let docTarget = null, bgTarget = null, bgId = null;
-            let hunterT = null, hunterId = null; // Pre-emptive revenge
+            let hunterT = null, hunterId = null;
 
             Object.keys(acts).forEach(k => {
                 const r = acts[k].role;
@@ -593,49 +625,42 @@
                 if(r === "SEER") { seerT = t; seerId = k; }
                 if(r === "DOCTOR") docTarget = t;
                 if(r === "BODYGUARD") { bgTarget = t; bgId = k; }
-                if(r === "HUNTER") { hunterT = t; hunterId = k; } // Simpan target hunter
+                if(r === "HUNTER") { hunterT = t; hunterId = k; }
             });
 
-            // 1. Tentukan Korban Wolf
             let wolfTarget = null, max = 0;
             Object.keys(wolfVotes).forEach(k => { if(wolfVotes[k] > max){ max = wolfVotes[k]; wolfTarget = k; }});
 
             let deadList = [];
             let story = "Malam tenang.";
 
-            // 2. Logika Proteksi & Pembunuhan
             if (wolfTarget) {
                 if (wolfTarget === docTarget) {
                     story = "Seseorang diserang, tapi TABIB menyelamatkannya!";
-                    wolfTarget = null; // Batal mati
+                    wolfTarget = null; 
                 } else if (wolfTarget === bgTarget) {
                     story = "BODYGUARD berkorban! Dia membunuh satu Werewolf, tapi dia juga gugur.";
-                    deadList.push(bgId); // Bodyguard mati
-                    // Cari 1 Wolf random untuk dibunuh
+                    deadList.push(bgId); 
                     let wolfId = Object.keys(allPlayers).find(p => allPlayers[p].role === "WEREWOLF" && allPlayers[p].isAlive);
                     if(wolfId) deadList.push(wolfId);
-                    wolfTarget = null; // Target asli selamat
+                    wolfTarget = null; 
                 } else {
                     deadList.push(wolfTarget);
                     story = `Malam berdarah! ${allPlayers[wolfTarget].name} tewas.`;
                 }
             }
 
-            // 3. Logika Hunter Revenge (Jika Hunter ada di daftar mati malam ini)
             if (hunterId && hunterT && deadList.includes(hunterId)) {
                 deadList.push(hunterT);
                 story += ` TAPI! HUNTER sempat menembak ${allPlayers[hunterT].name} sebelum mati!`;
             }
 
-            // 4. Eksekusi Kematian
             deadList.forEach(id => update(ref(db, `rooms/${roomCode}/players/${id}`), { isAlive: false }));
 
-            // 5. Logika Seer (Kirim Hasil)
             if(seerT && seerId) {
                 const targetRole = allPlayers[seerT].role;
-                // Minion terlihat JAHAT atau BAIK? Biasanya JAHAT. Wolf pasti JAHAT. Sisanya BAIK.
                 const isEvil = (targetRole === "WEREWOLF" || targetRole === "MINION"); 
-                const info = `Terawangan: ${allPlayers[seerT].name} adalah faksi ${isEvil ? "JAHAT (Werewolf)" : "BAIK (Warga)"}.`;
+                const info = `Terawangan: ${allPlayers[seerT].name} adalah faksi ${isEvil ? "JAHAT" : "BAIK"}.`;
                 update(ref(db, `rooms/${roomCode}/players/${seerId}`), { privateMsg: info });
             }
 
@@ -652,12 +677,9 @@
 
             if(victim && max >= 2) {
                 update(ref(db, `rooms/${roomCode}/players/${victim}`), { isAlive: false });
-                
-                // Cek Hunter Mati saat Vote
                 if (allPlayers[victim].role === "HUNTER") {
-                    return `Warga menggantung ${allPlayers[victim].name}. Dia adalah HUNTER! (Hunter bisa memilih tembakan di malam hari saja di versi ini).`;
+                    return `Warga menggantung ${allPlayers[victim].name}. Dia adalah HUNTER!`;
                 }
-                
                 return `Warga sepakat! ${allPlayers[victim].name} dieksekusi.`;
             }
             return "Voting seri/kurang. Tidak ada eksekusi.";
