@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Werewolf Phygital v4.2</title>
+    <title>Werewolf Phygital v5.0</title>
     <style>
         /* --- CSS VARIABLES --- */
         :root {
             --bg-lobby: #2c3e50;
-            --bg-night: #1a0b2e; /* Ungu Gelap */
-            --bg-day: #2980b9;    /* Biru Cerah */
-            --bg-vote: #c0392b;   /* Merah */
+            --bg-night: #1a0b2e;
+            --bg-day: #2980b9;
+            --bg-vote: #c0392b;
             --accent: #f1c40f;
         }
 
@@ -29,67 +29,44 @@
             user-select: none;
         }
 
-        /* LAYOUT */
         .screen { width: 90%; max-width: 400px; text-align: center; display: flex; flex-direction: column; height: 100%; justify-content: center; }
         .hidden { display: none !important; }
         
-        /* TYPOGRAPHY */
         h1 { font-size: 2rem; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 2px; }
         h2 { font-size: 3.5rem; margin: 10px 0; color: var(--accent); background: rgba(0,0,0,0.3); padding: 5px 20px; border-radius: 15px; display: inline-block; }
         
-        /* QUESTION TEXT (Penting untuk Disguised Input) */
         #phaseDesc { 
-            font-size: 1.2rem; 
-            font-weight: bold;
-            color: #ffeb3b;
-            margin-bottom: 20px; 
-            line-height: 1.4; 
-            background: rgba(0,0,0,0.2);
-            padding: 15px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
+            font-size: 1.2rem; font-weight: bold; color: #ffeb3b;
+            margin-bottom: 20px; line-height: 1.4; background: rgba(0,0,0,0.2);
+            padding: 15px; border-radius: 8px; transition: all 0.3s ease;
         }
 
-        /* BUTTONS & INPUT */
         input { padding: 15px; width: 80%; font-size: 1.2rem; border-radius: 8px; border: none; text-align: center; margin-bottom: 10px; text-transform: uppercase; }
         button { background: white; color: #333; border: none; padding: 15px 30px; font-size: 1.1rem; font-weight: bold; border-radius: 50px; cursor: pointer; width: 80%; margin-bottom: 10px; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
         button:active { transform: translateY(2px); box-shadow: none; }
         button.secondary { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.5); }
 
-        /* GAME ELEMENTS */
         .phase-icon { font-size: 4rem; margin-bottom: 10px; display: block; }
-        .timer-big { font-size: 3rem; font-weight: bold; margin-top: 20px; }
+        .timer-big { font-size: 4rem; font-weight: bold; margin-top: 20px; text-shadow: 2px 2px 0 #000; }
         
-        /* PLAYER GRID */
-        .player-grid { 
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
-            width: 100%; max-height: 40vh; overflow-y: auto; margin: 10px 0;
-        }
-        .p-card { 
-            background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; 
-            cursor: pointer; border: 2px solid transparent; transition: 0.2s;
-        }
+        .player-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-height: 40vh; overflow-y: auto; margin: 10px 0; }
+        .p-card { background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
         .p-card.selected { background: var(--accent); color: black; border-color: white; transform: scale(1.05); }
         .p-card.dead { opacity: 0.4; text-decoration: line-through; pointer-events: none; background: #000; }
 
-        /* POPUPS */
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 99; flex-direction: column; justify-content: center; align-items: center; }
         .role-title { font-size: 3rem; color: var(--accent); font-weight: bold; margin: 20px 0; }
-        
         .msg-box { background: #2ecc71; color: black; padding: 15px; border-radius: 10px; margin-bottom: 15px; animation: popIn 0.5s; }
         @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
-        
-        /* Quiz specific */
         #quizStep1 { animation: popIn 0.3s; }
-
     </style>
 </head>
 <body>
 
     <div id="screenLobby" class="screen">
         <div id="viewLanding">
-            <h1>Werewolf<br>Phygital v4.2</h1>
-            <p>Edisi Bank Soal & Kuis</p>
+            <h1>Werewolf<br>Phygital v5.0</h1>
+            <p>Edisi Final Fix</p>
             <input type="text" id="inputName" placeholder="NAMA KAMU">
             <button onclick="createRoom()">BUAT ROOM (HOST)</button>
             <button class="secondary" onclick="showJoin()">GABUNG ROOM</button>
@@ -120,9 +97,8 @@
 
         <div id="privateMsg" class="msg-box hidden"></div>
 
-        <div id="phaseIcon" class="phase-icon">🌙</div>
-        <h1 id="phaseTitle">LOADING...</h1>
-        
+        <div id="phaseIcon" class="phase-icon">⏳</div>
+        <h1 id="phaseTitle">MENUNGGU...</h1>
         <div id="phaseDesc">...</div>
         
         <div id="actionArea" class="hidden">
@@ -130,7 +106,7 @@
             <button id="btnAction" onclick="submitAction()">KONFIRMASI</button>
         </div>
 
-        <div id="timerDisplay" class="timer-big">00</div>
+        <div id="timerDisplay" class="timer-big"></div>
     </div>
 
     <div id="overlayRole" class="overlay hidden" onclick="this.classList.add('hidden')">
@@ -164,9 +140,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // ================= BANK SOAL (DISGUISED INPUT) =================
-
-        // Tipe A: Pertanyaan Langsung (Ronde Ganjil)
+        // --- BANK SOAL ---
         const singleQuestions = [
             "Siapa yang tatapan matanya paling mencurigakan?", "Siapa yang paling jago berbohong?",
             "Siapa yang terlihat paling gugup?", "Siapa yang senyumnya terlihat palsu?",
@@ -182,21 +156,17 @@
             "Siapa yang sulit kamu percaya 100%?", "Siapa yang punya rahasia terbesar?",
             "Siapa yang ingin kamu singkirkan dari meja?", "Kepada siapa intuisimu tertuju?"
         ];
-
-        // Tipe B: Kuis Pilihan Ganda (Ronde Genap)
         const quizFillersQ1 = [
             "Perasaanmu malam ini?", "Elemen favoritmu?", "Pilih senjata:", 
             "Cuaca hatimu?", "Warna keberuntungan?", "Hewan jiwamu?", 
             "Jam tidurmu?", "Musik favorit?", "Satu kata sifat:", "Ketakutan terbesar?"
         ];
-        
         const quizFillersQ2 = [
             ["Tenang", "Gelisah", "Waspada"], ["Api", "Air", "Angin"], ["Pisau", "Pistol", "Racun"],
             ["Badai", "Cerah", "Kabut"], ["Merah", "Hitam", "Putih"], ["Serigala", "Domba", "Ular"],
             ["9 Malam", "12 Malam", "Subuh"], ["Rock", "Jazz", "Pop"], ["Berani", "Licik", "Setia"],
             ["Gelap", "Tinggi", "Sepi"]
         ];
-
         const quizActionsQ3 = [
             "Siapa yang sedang kamu perhatikan?", "Tujukan nalurimu pada satu orang:",
             "Siapa yang nasibnya buruk malam ini?", "Kirim energi ke satu orang:",
@@ -205,22 +175,14 @@
             "Siapa yang harus diperiksa?", "Kunci pandanganmu pada:"
         ];
 
-        // --- FUNGSI GENERATOR KONTEN MALAM ---
         function getNightContent(round) {
-            // Ganjil = Single, Genap = Quiz
             if (round % 2 !== 0) {
                 const index = (round - 1) % singleQuestions.length;
                 return { type: "SINGLE", text: singleQuestions[index] };
             } else {
-                // Acak kuis
                 const idx1 = (round + Math.floor(Math.random() * 5)) % quizFillersQ1.length;
                 const idx3 = round % quizActionsQ3.length;
-                return { 
-                    type: "QUIZ", 
-                    q1: quizFillersQ1[idx1], 
-                    a1: quizFillersQ2[idx1], 
-                    qText: quizActionsQ3[idx3] 
-                };
+                return { type: "QUIZ", q1: quizFillersQ1[idx1], a1: quizFillersQ2[idx1], qText: quizActionsQ3[idx3] };
             }
         }
 
@@ -232,9 +194,9 @@
         let myRole = "VILLAGER";
         let selectedTarget = null;
         let allPlayers = {};
+        let roleFetched = false;
 
-        // ================= UI FUNCTIONS =================
-
+        // --- NAVIGASI ---
         window.createRoom = () => {
             myName = document.getElementById("inputName").value.trim().toUpperCase();
             if(!myName) return alert("Isi nama dulu!");
@@ -256,6 +218,9 @@
         };
 
         window.showJoin = () => {
+            const nameCheck = document.getElementById("inputName").value.trim();
+            if(!nameCheck) return alert("Isi NAMA KAMU dulu di atas!");
+            
             document.getElementById("viewLanding").classList.add("hidden");
             document.getElementById("viewJoin").classList.remove("hidden");
         }
@@ -263,7 +228,9 @@
         window.joinRoom = () => {
             myName = document.getElementById("inputName").value.trim().toUpperCase();
             roomCode = document.getElementById("inputCode").value.trim().toUpperCase();
-            if(!myName || roomCode.length !== 4) return alert("Data tidak lengkap!");
+            
+            if(!myName) return alert("Nama hilang! Refresh halaman.");
+            if(roomCode.length !== 4) return alert("Kode harus 4 huruf!");
 
             const rRef = ref(db, `rooms/${roomCode}`);
             get(rRef).then(snap => {
@@ -289,13 +256,11 @@
             }
         }
 
-        // ================= GAME LOGIC =================
-
+        // --- LISTENER ---
         function listenRoom() {
             onValue(ref(db, `rooms/${roomCode}/players`), snap => {
                 allPlayers = snap.val() || {};
                 document.getElementById("pCount").innerText = Object.keys(allPlayers).length;
-                
                 if(allPlayers[myId] && allPlayers[myId].privateMsg) {
                     const msgDiv = document.getElementById("privateMsg");
                     msgDiv.innerText = allPlayers[myId].privateMsg;
@@ -308,28 +273,36 @@
             onValue(ref(db, `rooms/${roomCode}/gameState`), snap => {
                 const state = snap.val();
                 if(!state) return;
-
-                if(state.phase === "STARTING") {
-                    get(ref(db, `rooms/${roomCode}/players/${myId}/role`)).then(s => {
-                        myRole = s.val();
-                        updateRoleUI();
-                        document.getElementById("screenLobby").classList.add("hidden");
-                        document.getElementById("screenGame").classList.remove("hidden");
-                        document.getElementById("overlayRole").classList.remove("hidden");
-                    });
-                } else if (state.phase === "GAME_OVER") {
+                
+                // UNIFIED RENDER LOGIC (FIXES UNDEFINED BUG)
+                if (state.phase === "GAME_OVER") {
                     document.getElementById("overlayWin").classList.remove("hidden");
                     document.getElementById("winTitle").innerText = state.winner + " MENANG!";
                 } else {
                     renderGamePhase(state);
                 }
-
+                
                 if(isHost) hostEngine(state);
             });
         }
 
-        // --- RENDERER ---
         function renderGamePhase(state) {
+            // Jika fase bukan Lobby, pindah ke layar game
+            if (state.phase !== "LOBBY") {
+                document.getElementById("screenLobby").classList.add("hidden");
+                document.getElementById("screenGame").classList.remove("hidden");
+            }
+
+            // Ambil Role SEKALI saja saat game mulai
+            if (state.phase === "STARTING" && !roleFetched) {
+                get(ref(db, `rooms/${roomCode}/players/${myId}/role`)).then(s => {
+                    myRole = s.val();
+                    updateRoleUI();
+                    document.getElementById("overlayRole").classList.remove("hidden");
+                    roleFetched = true;
+                });
+            }
+
             const body = document.body;
             const title = document.getElementById("phaseTitle");
             const descArea = document.getElementById("phaseDesc");
@@ -337,28 +310,32 @@
             const actionArea = document.getElementById("actionArea");
             const timer = document.getElementById("timerDisplay");
 
-            timer.innerText = state.timer;
+            // SAFE TIMER UPDATE (Fixes 'undefined')
+            timer.innerText = (state.timer !== undefined) ? state.timer : "";
+
             actionArea.classList.add("hidden");
             document.getElementById("privateMsg").classList.add("hidden");
 
             switch(state.phase) {
+                case "STARTING":
+                    body.style.background = "#2c3e50"; // Dark Blue
+                    title.innerText = "GAME DIMULAI";
+                    icon.innerText = "⏳";
+                    descArea.innerText = "Siap-siap lihat peranmu...";
+                    break;
+
                 case "NIGHT":
                     body.style.background = "var(--bg-night)";
                     title.innerText = "MALAM HARI";
                     icon.innerText = "🌙";
-                    
-                    // --- LOGIKA BANK SOAL ---
                     const round = state.round || 1;
                     const content = getNightContent(round);
-                    
                     if (content.type === "SINGLE") {
                         descArea.innerHTML = `<span style="color:#ffeb3b;">${content.text}</span>`;
                         actionArea.classList.remove("hidden");
                         renderGrid("NIGHT");
                         document.getElementById("btnAction").classList.remove("hidden");
-                    } 
-                    else if (content.type === "QUIZ") {
-                        // Render Kuis Tahap 1
+                    } else if (content.type === "QUIZ") {
                         descArea.innerHTML = `
                             <div id="quizStep1">
                                 <p style="color:#aaa; font-size:0.9rem;">PERTANYAAN 1/2</p>
@@ -368,31 +345,20 @@
                                     <button onclick="nextQuizStep('${content.qText}')" class="secondary" style="font-size:0.9rem;">${content.a1[1]}</button>
                                     <button onclick="nextQuizStep('${content.qText}')" class="secondary" style="font-size:0.9rem;">${content.a1[2]}</button>
                                 </div>
-                            </div>
-                        `;
-                        // Sembunyikan Grid dulu
+                            </div>`;
                         actionArea.classList.add("hidden");
                     }
                     break;
-
                 case "DAY_ANNOUNCE":
-                    body.style.background = "var(--bg-day)";
-                    title.innerText = "PENGUMUMAN";
-                    icon.innerText = "☀️";
+                    body.style.background = "var(--bg-day)"; title.innerText = "PENGUMUMAN"; icon.innerText = "☀️";
                     descArea.innerText = state.announcement || "Desa aman terkendali.";
                     break;
-
                 case "DAY_DISCUSS":
-                    body.style.background = "var(--bg-day)";
-                    title.innerText = "DISKUSI";
-                    icon.innerText = "🗣️";
+                    body.style.background = "var(--bg-day)"; title.innerText = "DISKUSI"; icon.innerText = "🗣️";
                     descArea.innerText = "Waktunya debat! Cari pelakunya.";
                     break;
-
                 case "VOTING":
-                    body.style.background = "var(--bg-vote)";
-                    title.innerText = "VOTING";
-                    icon.innerText = "⚖️";
+                    body.style.background = "var(--bg-vote)"; title.innerText = "VOTING"; icon.innerText = "⚖️";
                     descArea.innerText = "Siapa yang akan digantung?";
                     actionArea.classList.remove("hidden");
                     renderGrid("VOTE");
@@ -401,17 +367,10 @@
             }
         }
 
-        // Fungsi Transisi Kuis
         window.nextQuizStep = (qText) => {
             const descArea = document.getElementById("phaseDesc");
             const actionArea = document.getElementById("actionArea");
-            
-            descArea.innerHTML = `
-                <div style="animation: popIn 0.3s;">
-                    <p style="color:#aaa; font-size:0.9rem;">PERTANYAAN 2/2</p>
-                    <h3 style="color:#ffeb3b;">${qText}</h3>
-                </div>
-            `;
+            descArea.innerHTML = `<div style="animation: popIn 0.3s;"><p style="color:#aaa; font-size:0.9rem;">PERTANYAAN 2/2</p><h3 style="color:#ffeb3b;">${qText}</h3></div>`;
             actionArea.classList.remove("hidden");
             renderGrid("NIGHT");
             document.getElementById("btnAction").classList.remove("hidden");
@@ -420,15 +379,12 @@
         function renderGrid(mode) {
             const grid = document.getElementById("playerGrid");
             grid.innerHTML = "";
-            
             Object.keys(allPlayers).forEach(key => {
                 if(key === myId) return; 
                 const p = allPlayers[key];
-                
                 const div = document.createElement("div");
                 div.className = `p-card ${!p.isAlive ? 'dead' : ''}`;
                 div.innerText = p.name;
-                
                 if(p.isAlive) {
                     div.onclick = () => {
                         document.querySelectorAll(".p-card").forEach(c => c.classList.remove("selected"));
@@ -442,56 +398,31 @@
 
         window.submitAction = () => {
             if(!selectedTarget) return alert("Pilih target dulu!");
-            
-            set(ref(db, `rooms/${roomCode}/actions/${myId}`), {
-                target: selectedTarget,
-                role: myRole
-            });
-            
+            set(ref(db, `rooms/${roomCode}/actions/${myId}`), { target: selectedTarget, role: myRole });
             document.getElementById("actionArea").classList.add("hidden");
             document.getElementById("phaseDesc").innerText = "Jawaban tercatat. Menunggu yang lain...";
         }
 
-        window.toggleRole = () => {
-            document.getElementById("overlayRole").classList.remove("hidden");
-        }
-
+        window.toggleRole = () => { document.getElementById("overlayRole").classList.remove("hidden"); }
         function updateRoleUI() {
             document.getElementById("myRoleTitle").innerText = myRole;
-            if(myRole === "WEREWOLF") {
-                document.getElementById("myRoleDesc").innerText = "Tugas: Habisi semua warga. Pilih mangsa saat malam.";
-                document.getElementById("myRoleTitle").style.color = "#e74c3c";
-            } else if (myRole === "SEER") {
-                document.getElementById("myRoleDesc").innerText = "Tugas: Cari Werewolf. Pilih pemain untuk diterawang saat malam.";
-                document.getElementById("myRoleTitle").style.color = "#2ecc71";
-            } else {
-                document.getElementById("myRoleDesc").innerText = "Tugas: Bertahan hidup dan gantung Werewolf saat siang.";
-            }
+            if(myRole === "WEREWOLF") { document.getElementById("myRoleDesc").innerText = "Habisi warga. Pilih mangsa saat malam."; document.getElementById("myRoleTitle").style.color = "#e74c3c"; }
+            else if (myRole === "SEER") { document.getElementById("myRoleDesc").innerText = "Cari Werewolf. Pilih pemain untuk diterawang."; document.getElementById("myRoleTitle").style.color = "#2ecc71"; }
+            else { document.getElementById("myRoleDesc").innerText = "Bertahan hidup dan gantung Werewolf saat siang."; }
         }
 
-        // ================= HOST LOGIC =================
+        // --- HOST LOGIC ---
         let lastTick = 0;
-
         window.startGame = () => {
             get(ref(db, `rooms/${roomCode}/players`)).then(snap => {
                 const ids = Object.keys(snap.val());
                 const count = ids.length;
-                
-                let wolves = count >= 8 ? 2 : 1;
-                let seer = 1;
-                let roles = [];
+                let wolves = count >= 8 ? 2 : 1; let seer = 1; let roles = [];
                 for(let i=0; i<wolves; i++) roles.push("WEREWOLF");
                 for(let i=0; i<seer; i++) roles.push("SEER");
                 while(roles.length < count) roles.push("VILLAGER");
-                
                 roles.sort(() => Math.random() - 0.5);
-
-                ids.forEach((id, idx) => {
-                    update(ref(db, `rooms/${roomCode}/players/${id}`), { 
-                        role: roles[idx], isAlive: true, privateMsg: null 
-                    });
-                });
-
+                ids.forEach((id, idx) => { update(ref(db, `rooms/${roomCode}/players/${id}`), { role: roles[idx], isAlive: true, privateMsg: null }); });
                 update(ref(db, `rooms/${roomCode}`), { status: "PLAYING" });
                 update(ref(db, `rooms/${roomCode}/gameState`), { phase: "STARTING", timer: 5, round: 1 });
             });
@@ -501,95 +432,50 @@
             const now = Date.now();
             if(now - lastTick < 1000) return;
             lastTick = now;
-
             if(state.timer > 0) {
                 update(ref(db, `rooms/${roomCode}/gameState/timer`), state.timer - 1);
             } else {
-                let next = "";
-                let time = 0;
-                let announce = "";
-                let nextRound = state.round || 1;
-
-                if(state.phase === "STARTING") {
-                    next = "NIGHT"; time = 20;
-                    remove(ref(db, `rooms/${roomCode}/actions`));
-                }
+                let next = ""; let time = 0; let announce = ""; let nextRound = state.round || 1;
+                if(state.phase === "STARTING") { next = "NIGHT"; time = 20; remove(ref(db, `rooms/${roomCode}/actions`)); }
                 else if(state.phase === "NIGHT") {
                     processNightActions().then(resultText => {
-                        update(ref(db, `rooms/${roomCode}/gameState`), {
-                            phase: "DAY_ANNOUNCE",
-                            timer: 8,
-                            announcement: resultText,
-                            round: nextRound
-                        });
+                        update(ref(db, `rooms/${roomCode}/gameState`), { phase: "DAY_ANNOUNCE", timer: 8, announcement: resultText, round: nextRound });
                         checkWinCondition();
-                    });
-                    return;
+                    }); return;
                 }
-                else if(state.phase === "DAY_ANNOUNCE") {
-                    next = "DAY_DISCUSS"; time = 60;
-                }
-                else if(state.phase === "DAY_DISCUSS") {
-                    next = "VOTING"; time = 20;
-                    remove(ref(db, `rooms/${roomCode}/actions`));
-                }
+                else if(state.phase === "DAY_ANNOUNCE") { next = "DAY_DISCUSS"; time = 60; }
+                else if(state.phase === "DAY_DISCUSS") { next = "VOTING"; time = 20; remove(ref(db, `rooms/${roomCode}/actions`)); }
                 else if(state.phase === "VOTING") {
                     processVoting().then(resultText => {
-                        update(ref(db, `rooms/${roomCode}/gameState`), {
-                            phase: "DAY_ANNOUNCE",
-                            timer: 8,
-                            announcement: resultText,
-                            round: nextRound
-                        });
+                        update(ref(db, `rooms/${roomCode}/gameState`), { phase: "DAY_ANNOUNCE", timer: 8, announcement: resultText, round: nextRound });
                         checkWinCondition();
                     });
-                    
                     setTimeout(() => {
-                         update(ref(db, `rooms/${roomCode}/gameState`), { 
-                             phase: "NIGHT", 
-                             timer: 20,
-                             round: nextRound + 1 // RONDE NAIK
-                         });
+                         update(ref(db, `rooms/${roomCode}/gameState`), { phase: "NIGHT", timer: 20, round: nextRound + 1 });
                          remove(ref(db, `rooms/${roomCode}/actions`));
-                    }, 8000);
-                    return;
+                    }, 8000); return;
                 }
-
-                if(next) {
-                    update(ref(db, `rooms/${roomCode}/gameState`), { 
-                        phase: next, timer: time, announcement: announce, round: nextRound 
-                    });
-                }
+                if(next) { update(ref(db, `rooms/${roomCode}/gameState`), { phase: next, timer: time, announcement: announce, round: nextRound }); }
             }
         }
 
         async function processNightActions() {
             const snap = await get(ref(db, `rooms/${roomCode}/actions`));
             const actions = snap.val() || {};
-            
-            let wolfVotes = {};
-            let seerTarget = null;
-            let seerId = null;
-
+            let wolfVotes = {}; let seerTarget = null; let seerId = null;
             Object.keys(actions).forEach(uid => {
                 const act = actions[uid];
                 if(act.role === "WEREWOLF") wolfVotes[act.target] = (wolfVotes[act.target] || 0) + 1;
                 if(act.role === "SEER") { seerTarget = act.target; seerId = uid; }
             });
-
-            let victim = null;
-            let maxV = 0;
-            Object.keys(wolfVotes).forEach(target => {
-                if(wolfVotes[target] > maxV) { maxV = wolfVotes[target]; victim = target; }
-            });
-
+            let victim = null; let maxV = 0;
+            Object.keys(wolfVotes).forEach(target => { if(wolfVotes[target] > maxV) { maxV = wolfVotes[target]; victim = target; } });
             let text = "Malam yang tenang. Tidak ada yang mati.";
             if(victim) {
                 update(ref(db, `rooms/${roomCode}/players/${victim}`), { isAlive: false });
                 const vName = allPlayers[victim].name;
                 text = `Malam berdarah! ${vName} ditemukan tewas.`;
             }
-
             if(seerTarget && seerId) {
                 const targetRole = allPlayers[seerTarget].role;
                 const isBad = (targetRole === "WEREWOLF");
@@ -602,34 +488,21 @@
         async function processVoting() {
             const snap = await get(ref(db, `rooms/${roomCode}/actions`));
             const votes = snap.val() || {};
-            
             let counts = {};
             Object.values(votes).forEach(v => counts[v.target] = (counts[v.target] || 0) + 1);
-
-            let executed = null;
-            let maxV = 0;
-            Object.keys(counts).forEach(target => {
-                if(counts[target] > maxV) { maxV = counts[target]; executed = target; }
-            });
-
+            let executed = null; let maxV = 0;
+            Object.keys(counts).forEach(target => { if(counts[target] > maxV) { maxV = counts[target]; executed = target; } });
             if(executed && maxV >= 2) {
                 update(ref(db, `rooms/${roomCode}/players/${executed}`), { isAlive: false });
                 return `Warga sepakat! ${allPlayers[executed].name} dieksekusi.`;
-            } else {
-                return "Voting seri/kurang. Tidak ada eksekusi.";
-            }
+            } else { return "Voting seri/kurang. Tidak ada eksekusi."; }
         }
 
         function checkWinCondition() {
             get(ref(db, `rooms/${roomCode}/players`)).then(snap => {
                 const ps = snap.val();
-                let wolves = 0;
-                let villagers = 0;
-                Object.values(ps).forEach(p => {
-                    if(p.isAlive) {
-                        if(p.role === "WEREWOLF") wolves++; else villagers++;
-                    }
-                });
+                let wolves = 0; let villagers = 0;
+                Object.values(ps).forEach(p => { if(p.isAlive) { if(p.role === "WEREWOLF") wolves++; else villagers++; } });
                 if(wolves === 0) update(ref(db, `rooms/${roomCode}/gameState`), { phase: "GAME_OVER", winner: "VILLAGERS" });
                 else if (wolves >= villagers) update(ref(db, `rooms/${roomCode}/gameState`), { phase: "GAME_OVER", winner: "WEREWOLVES" });
             });
