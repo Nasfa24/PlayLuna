@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Werewolf Phygital Prototype</title>
+    <title>Werewolf Phygital v2</title>
     <style>
         /* --- CSS FRAMEWORK --- */
         body {
@@ -22,30 +22,26 @@
         }
 
         /* State Colors */
-        .state-lobby { background-color: #2c3e50; color: white; }
+        .state-lobby { background-color: #2c3e50; }
+        .state-role-reveal { background-color: #16a085; } /* Hijau Laut */
         .state-night-wait { background-color: #000000; color: #888; }
-        .state-night-action { background-color: #4b0082; color: white; }
+        .state-night-action { background-color: #4b0082; } /* Ungu */
         .state-day-announce { background-color: #f1c40f; color: black; }
-        .state-day-discuss { background-color: #3498db; color: white; }
+        .state-day-discuss { background-color: #3498db; } /* Biru */
+        .state-voting { background-color: #c0392b; } /* Merah */
 
         /* Components */
         .container { width: 90%; max-width: 400px; }
-        h1 { font-size: 2.5rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
-        p { font-size: 1.2rem; margin-bottom: 20px; }
+        h1 { font-size: 2rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        p { font-size: 1.1rem; margin-bottom: 15px; }
         
-        .timer-box {
-            font-size: 4rem;
-            font-weight: bold;
-            margin: 20px 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
+        .timer-box { font-size: 3.5rem; font-weight: bold; margin: 15px 0; }
 
-        .input-group { margin-bottom: 15px; }
-        input { padding: 15px; width: 80%; font-size: 1.2rem; border-radius: 8px; border: none; text-align: center; }
+        input { padding: 15px; width: 80%; font-size: 1.2rem; border-radius: 8px; border: none; text-align: center; margin-bottom: 10px; }
         
         button {
-            padding: 15px 30px;
-            font-size: 1.2rem;
+            padding: 12px 25px;
+            font-size: 1.1rem;
             border: none;
             border-radius: 50px;
             cursor: pointer;
@@ -53,7 +49,7 @@
             color: #333;
             font-weight: bold;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            transition: transform 0.1s;
+            margin-top: 10px;
         }
         button:active { transform: scale(0.95); }
 
@@ -61,18 +57,30 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;
-            margin-top: 20px;
+            margin-top: 10px;
+            max-height: 40vh;
+            overflow-y: auto;
         }
         .player-card {
             background: rgba(255,255,255,0.2);
-            padding: 15px;
-            border-radius: 10px;
+            padding: 10px;
+            border-radius: 8px;
             cursor: pointer;
             border: 2px solid transparent;
+            font-size: 0.9rem;
         }
-        .player-card.selected { border-color: #fff; background: rgba(255,255,255,0.5); }
+        .player-card.selected { border-color: #fff; background: rgba(255,255,255,0.5); font-weight: bold; }
+        .player-card.dead { opacity: 0.5; text-decoration: line-through; background: #333; pointer-events: none; }
 
         .hidden { display: none !important; }
+        
+        /* Role Card */
+        #roleCard {
+            background: white; color: #333; padding: 20px; border-radius: 10px;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 80%; z-index: 100; display: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
         
         .host-badge {
             position: absolute; top: 10px; right: 10px;
@@ -85,43 +93,45 @@
 
     <div id="hostBadge" class="host-badge hidden">👑 HOST</div>
 
+    <div id="roleCard">
+        <h2 id="myRoleTitle">PERANMU</h2>
+        <p id="myRoleDesc">Deskripsi...</p>
+        <button onclick="toggleRole(false)">TUTUP</button>
+    </div>
+    <button id="btnPeekRole" style="position:absolute; top:10px; left:10px; padding:5px 10px; font-size:0.8rem; opacity:0.7;" class="hidden" onclick="toggleRole(true)">👁️ PERAN</button>
+
     <div id="lobbyScreen" class="container">
-        <h1>WEREWOLF<br>PHYGITAL</h1>
-        <div class="input-group">
-            <input type="text" id="username" placeholder="Masukkan Nama Kamu">
-        </div>
+        <h1>WEREWOLF<br>V2.0</h1>
+        <input type="text" id="username" placeholder="Masukkan Nama">
         <button id="btnJoin">MASUK ROOM</button>
-        <br><br>
-        <small>Project ID: werewolf-4d03a</small>
+        <div id="lobbyList" style="margin-top:20px; font-size:0.9rem; opacity:0.8;"></div>
     </div>
 
     <div id="gameScreen" class="container hidden">
-        <div id="phaseIcon" style="font-size: 3rem; margin-bottom:10px;">🌙</div>
-        <h1 id="statusTitle">MENUNGGU...</h1>
-        <p id="statusDesc">Menunggu host memulai permainan.</p>
+        <div id="phaseIcon" style="font-size: 3rem;">⏳</div>
+        <h1 id="statusTitle">LOADING</h1>
+        <p id="statusDesc">...</p>
         
         <div id="timerDisplay" class="timer-box hidden">00</div>
 
         <div id="actionArea" class="hidden">
-            <p id="questionText" style="font-weight:bold; color:#ffeb3b;">PERTANYAAN HARIAN</p>
+            <p id="actionInstruction" style="font-weight:bold; color:#ffeb3b;">...</p>
             <div id="playerGrid" class="player-grid"></div>
-            <br>
-            <button id="btnSubmit">KIRIM JAWABAN</button>
+            <button id="btnSubmit">KONFIRMASI</button>
         </div>
 
-        <button id="btnStart" class="hidden">MULAI GAME</button>
+        <button id="btnStart" class="hidden">MULAI GAME (ACAK PERAN)</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, set, update, onValue, push, onDisconnect, remove, serverTimestamp } 
+        import { getDatabase, ref, set, update, onValue, remove, onDisconnect } 
         from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // --- KONFIGURASI FINAL (SUDAH DIPERBAIKI) ---
+        // --- KONFIGURASI FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyB9Q_Z8oewtWt6pphvwJQbh6PpAqyneYfM",
             authDomain: "werewolf-4d03a.firebaseapp.com",
-            // ALAMAT ASIA SOUTHEAST1 YANG BENAR:
             databaseURL: "https://werewolf-4d03a-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "werewolf-4d03a",
             storageBucket: "werewolf-4d03a.firebasestorage.app",
@@ -133,193 +143,274 @@
         const db = getDatabase(app);
         const ROOM_ID = "ROOM_TEST_01"; 
 
+        // --- VARIABLES ---
         let myId = null;
-        let myName = "";
+        let myData = {};
         let isHost = false;
         let selectedTarget = null;
-        
-        const questions = [
-            "Siapa yang paling jago berbohong?",
-            "Siapa yang senyumnya paling misterius?",
-            "Siapa yang bajunya paling keren?",
-            "Siapa yang paling mungkin jadi pemimpin?"
-        ];
+        let allPlayers = {};
 
-        // Fungsi Global
+        // --- 1. LOBBY SYSTEM ---
         window.joinGame = function() {
-            myName = document.getElementById("username").value.trim();
-            if (!myName) return alert("Isi nama dulu bos!");
+            const name = document.getElementById("username").value.trim();
+            if (!name) return alert("Nama wajib diisi!");
 
-            myId = "user_" + Math.floor(Math.random() * 10000);
-
-            onValue(ref(db, `rooms/${ROOM_ID}/players`), (snapshot) => {
-                const players = snapshot.val();
+            myId = "user_" + Math.floor(Math.random() * 9999);
+            
+            // Cek Host & Register
+            onValue(ref(db, `rooms/${ROOM_ID}/players`), (snap) => {
+                const players = snap.val();
                 if (!players) {
-                    isHost = true; 
+                    isHost = true;
                     document.getElementById("hostBadge").classList.remove("hidden");
                 }
-                registerPlayer();
+                
+                // Simpan Player ke DB
+                const playerRef = ref(db, `rooms/${ROOM_ID}/players/${myId}`);
+                set(playerRef, { name: name, role: "?", isAlive: true, isHost: isHost });
+                onDisconnect(playerRef).remove(); // Hapus kalau keluar
+
+                // Setup UI Local
+                document.getElementById("lobbyScreen").classList.add("hidden");
+                document.getElementById("gameScreen").classList.remove("hidden");
+                initGameListener();
+
             }, { onlyOnce: true });
         }
 
-        function registerPlayer() {
-            const playerRef = ref(db, `rooms/${ROOM_ID}/players/${myId}`);
-            set(playerRef, {
-                name: myName,
-                isHost: isHost,
-                role: "VILLAGER", 
-                isAlive: true
-            });
-            onDisconnect(playerRef).remove();
-
-            document.getElementById("lobbyScreen").classList.add("hidden");
-            document.getElementById("gameScreen").classList.remove("hidden");
-            listenToGameState();
-        }
-
-        window.startGame = function() {
-            update(ref(db, `rooms/${ROOM_ID}/gameState`), {
-                phase: "NIGHT_INTRO",
-                timer: 5,
-                round: 1,
-                lastUpdate: Date.now()
-            });
-            document.getElementById("btnStart").classList.add("hidden");
-        }
-
-        function listenToGameState() {
-            const gameRef = ref(db, `rooms/${ROOM_ID}/gameState`);
-            onValue(gameRef, (snapshot) => {
-                const state = snapshot.val();
+        // --- 2. GAME LOOP LISTENER ---
+        function initGameListener() {
+            // Dengar perubahan status game
+            onValue(ref(db, `rooms/${ROOM_ID}/gameState`), (snap) => {
+                const state = snap.val();
                 if (!state) {
+                    // Masih di Lobby
                     document.getElementById("statusTitle").innerText = "LOBBY";
-                    document.getElementById("statusDesc").innerText = "Menunggu pemain lain...";
-                    if (isHost) document.getElementById("btnStart").classList.remove("hidden");
+                    document.getElementById("statusDesc").innerText = "Menunggu pemain...";
+                    if(isHost) document.getElementById("btnStart").classList.remove("hidden");
                     return;
                 }
                 renderUI(state);
-                if (isHost) handleHostTimer(state);
+                if (isHost) hostLogic(state); // Host menjalankan timer
+            });
+
+            // Dengar data diri sendiri (untuk cek role/mati)
+            onValue(ref(db, `rooms/${ROOM_ID}/players/${myId}`), (snap) => {
+                myData = snap.val();
+                if (myData) {
+                    updateRoleCard(myData.role);
+                    if (!myData.isAlive) {
+                        document.body.style.filter = "grayscale(100%)"; // Efek mati
+                    }
+                }
+            });
+
+            // Dengar daftar pemain (untuk grid)
+            onValue(ref(db, `rooms/${ROOM_ID}/players`), (snap) => {
+                allPlayers = snap.val() || {};
+                renderLobbyList(); // Update list di lobby kalau belum mulai
             });
         }
 
+        // --- 3. UI RENDERER (VISUAL) ---
         function renderUI(state) {
             const body = document.body;
             const title = document.getElementById("statusTitle");
             const desc = document.getElementById("statusDesc");
-            const timerDiv = document.getElementById("timerDisplay");
+            const timer = document.getElementById("timerDisplay");
             const actionArea = document.getElementById("actionArea");
             const icon = document.getElementById("phaseIcon");
 
-            body.className = ""; 
-
-            timerDiv.classList.remove("hidden");
-            timerDiv.innerText = state.timer;
+            body.className = ""; // Reset warna
+            timer.classList.remove("hidden");
+            timer.innerText = state.timer;
+            
+            // Tombol Intip Peran muncul setelah game mulai
+            document.getElementById("btnPeekRole").classList.remove("hidden");
+            if(isHost) document.getElementById("btnStart").classList.add("hidden");
 
             switch(state.phase) {
+                case "ROLE_DISTRIBUTION":
+                    body.classList.add("state-role-reveal");
+                    title.innerText = "CEK PERAN!";
+                    desc.innerText = "Tekan tombol '👁️ PERAN' di pojok kiri atas.";
+                    icon.innerText = "🎭";
+                    actionArea.classList.add("hidden");
+                    break;
+
                 case "NIGHT_INTRO":
                     body.classList.add("state-night-wait");
                     title.innerText = "MALAM HARI";
-                    desc.innerText = "Tutup mata atau lihat layar. Jangan bersuara.";
+                    desc.innerText = "Tutup mata / letakkan HP.";
                     icon.innerText = "🌙";
                     actionArea.classList.add("hidden");
                     break;
+
                 case "NIGHT_ACTION":
-                    body.classList.add("state-night-action");
-                    title.innerText = "INPUT DATA";
-                    desc.innerText = "Silakan jawab pertanyaan di bawah.";
+                    body.classList.add("state-night-action"); // Ungu
+                    title.innerText = "AKTIVITAS MALAM";
+                    // Teks samaran untuk semua, tapi instruksi asli ada di otak pemain
+                    desc.innerText = "Siapa targetmu malam ini?"; 
                     icon.innerText = "📱";
-                    if(state.timer == 19 && navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                    
+                    if(state.timer == 19 && navigator.vibrate) navigator.vibrate([200]);
                     actionArea.classList.remove("hidden");
-                    if (actionArea.innerHTML.trim() === "" || document.getElementById('playerGrid').children.length === 0) {
-                        loadPlayersIntoGrid();
-                        document.getElementById("questionText").innerText = questions[Math.floor(Math.random() * questions.length)];
-                    }
+                    renderPlayerGrid(true); // True = Mode Select
                     break;
+
                 case "DAY_RESULT":
-                    body.classList.add("state-day-announce");
-                    title.innerText = "MATAHARI TERBIT";
-                    desc.innerText = "Lihat siapa yang tidak bangun pagi ini...";
+                    body.classList.add("state-day-announce"); // Kuning
+                    title.innerText = "PAGI HARI";
+                    desc.innerText = state.announcement || "Tidak ada kejadian.";
                     icon.innerText = "☀️";
                     actionArea.classList.add("hidden");
                     break;
+
                 case "DAY_DISCUSS":
-                    body.classList.add("state-day-discuss");
+                    body.classList.add("state-day-discuss"); // Biru
                     title.innerText = "DISKUSI";
-                    desc.innerText = "Debat dimulai. Cari pelakunya!";
+                    desc.innerText = "Cari siapa Werewolf-nya!";
                     icon.innerText = "🗣️";
                     actionArea.classList.add("hidden");
-                    if(state.timer == 29 && navigator.vibrate) navigator.vibrate(1000);
+                    break;
+
+                case "VOTING":
+                    body.classList.add("state-voting"); // Merah
+                    title.innerText = "VOTING";
+                    desc.innerText = "Pilih pemain untuk dieksekusi.";
+                    icon.innerText = "⚖️";
+                    if(state.timer == 14 && navigator.vibrate) navigator.vibrate([500]);
+                    actionArea.classList.remove("hidden");
+                    renderPlayerGrid(true);
                     break;
             }
         }
 
+        // --- 4. HOST LOGIC (THE BRAIN) ---
+        window.startGame = function() {
+            // 1. Ambil semua pemain
+            const ids = Object.keys(allPlayers);
+            if (ids.length < 2) return alert("Butuh minimal 2 pemain!");
+
+            // 2. Acak Peran (Simple: 1 Werewolf, sisanya Villager)
+            // Diambil acak 1 orang jadi Wolf
+            const wolfIndex = Math.floor(Math.random() * ids.length);
+            
+            ids.forEach((id, index) => {
+                let role = (index === wolfIndex) ? "WEREWOLF" : "VILLAGER";
+                update(ref(db, `rooms/${ROOM_ID}/players/${id}`), { role: role });
+            });
+
+            // 3. Set State Awal
+            update(ref(db, `rooms/${ROOM_ID}/gameState`), {
+                phase: "ROLE_DISTRIBUTION",
+                timer: 10,
+                round: 1
+            });
+        }
+
         let lastTick = 0;
-        function handleHostTimer(state) {
+        function hostLogic(state) {
             const now = Date.now();
-            if (now - lastTick < 1000) return; 
+            if (now - lastTick < 1000) return;
             lastTick = now;
 
             if (state.timer > 0) {
                 update(ref(db, `rooms/${ROOM_ID}/gameState`), { timer: state.timer - 1 });
             } else {
-                nextPhase(state.phase);
+                nextPhase(state);
             }
         }
 
-        function nextPhase(currentPhase) {
+        function nextPhase(state) {
             let next = "";
             let time = 0;
+            let announce = "";
 
-            if (currentPhase === "NIGHT_INTRO") {
-                next = "NIGHT_ACTION";
-                time = 20;
-            } else if (currentPhase === "NIGHT_ACTION") {
-                next = "DAY_RESULT";
-                time = 5; 
-            } else if (currentPhase === "DAY_RESULT") {
-                next = "DAY_DISCUSS";
-                time = 30; 
-            } else if (currentPhase === "DAY_DISCUSS") {
-                next = "NIGHT_INTRO"; 
-                time = 5;
+            if (state.phase === "ROLE_DISTRIBUTION") {
+                next = "NIGHT_INTRO"; time = 5;
+            } 
+            else if (state.phase === "NIGHT_INTRO") {
+                next = "NIGHT_ACTION"; time = 20;
+                // Reset votes malam sebelumnya (idealnya)
+            } 
+            else if (state.phase === "NIGHT_ACTION") {
+                // LOGIKA HITUNG PEMBUNUHAN (Sederhana: Random Death kalau ada vote)
+                // Di versi full, host harus baca data `actions` dari firebase
+                next = "DAY_RESULT"; time = 8;
+                announce = "Malam yang sunyi..."; // Placeholder
+            } 
+            else if (state.phase === "DAY_RESULT") {
+                next = "DAY_DISCUSS"; time = 30;
+            } 
+            else if (state.phase === "DAY_DISCUSS") {
+                next = "VOTING"; time = 15;
+            }
+            else if (state.phase === "VOTING") {
+                // LOGIKA HITUNG VOTING (Sederhana: Pindah hari)
+                next = "NIGHT_INTRO"; time = 5;
             }
 
             update(ref(db, `rooms/${ROOM_ID}/gameState`), {
                 phase: next,
-                timer: time
+                timer: time,
+                announcement: announce
             });
         }
 
-        function loadPlayersIntoGrid() {
-            const grid = document.getElementById("playerGrid");
-            grid.innerHTML = ""; 
-            
-            onValue(ref(db, `rooms/${ROOM_ID}/players`), (snap) => {
-                const players = snap.val();
-                if (!players) return;
+        // --- 5. HELPER & UI ---
+        function renderLobbyList() {
+            const list = document.getElementById("lobbyList");
+            if(list) list.innerHTML = Object.values(allPlayers).map(p => `👤 ${p.name}`).join("<br>");
+        }
 
-                Object.keys(players).forEach(key => {
-                    if (key === myId) return; 
-                    const p = players[key];
-                    const div = document.createElement("div");
-                    div.className = "player-card";
-                    div.innerText = p.name;
+        function renderPlayerGrid(clickable) {
+            const grid = document.getElementById("playerGrid");
+            grid.innerHTML = "";
+            
+            Object.keys(allPlayers).forEach(key => {
+                if (key === myId) return; // Jangan tampilkan diri sendiri
+                const p = allPlayers[key];
+                
+                const div = document.createElement("div");
+                div.className = `player-card ${!p.isAlive ? 'dead' : ''}`;
+                div.innerText = p.name;
+                
+                if(clickable && p.isAlive) {
                     div.onclick = function() {
                         document.querySelectorAll(".player-card").forEach(c => c.classList.remove("selected"));
                         div.classList.add("selected");
                         selectedTarget = key;
                     };
-                    grid.appendChild(div);
-                });
-            }, { onlyOnce: true });
+                }
+                grid.appendChild(div);
+            });
         }
 
         window.submitAction = function() {
-            if (!selectedTarget) return alert("Pilih satu orang dulu!");
-            document.getElementById("actionArea").innerHTML = "<h3>Jawaban Terkirim!</h3><p>Tunggu pemain lain...</p>";
+            if (!selectedTarget) return alert("Pilih target dulu!");
+            // Kirim aksi ke Firebase (Dummy Action untuk sekarang)
+            // Nanti Host yang baca ini
+            document.getElementById("actionArea").classList.add("hidden");
+            alert("Pilihan disimpan.");
         }
 
-        // Event Listener Manual agar Tombol pasti jalan di semua browser
+        window.toggleRole = function(show) {
+            const card = document.getElementById("roleCard");
+            if (show) card.style.display = "block";
+            else card.style.display = "none";
+        }
+
+        function updateRoleCard(role) {
+            document.getElementById("myRoleTitle").innerText = role;
+            if (role === "WEREWOLF") {
+                document.getElementById("myRoleDesc").innerText = "Tugas: Bunuh semua warga. Kamu bisa melihat sesama Wolf.";
+            } else {
+                document.getElementById("myRoleDesc").innerText = "Tugas: Temukan dan gantung Werewolf.";
+            }
+        }
+
+        // Event Listener Tombol
         document.getElementById('btnJoin').addEventListener('click', window.joinGame);
         document.getElementById('btnStart').addEventListener('click', window.startGame);
         document.getElementById('btnSubmit').addEventListener('click', window.submitAction);
