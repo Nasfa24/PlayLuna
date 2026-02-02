@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Werewolf Phygital v5.1</title>
+    <title>Werewolf Phygital v5.2</title>
     <style>
         /* --- CSS VARIABLES --- */
         :root {
@@ -65,8 +65,8 @@
 
     <div id="screenLobby" class="screen">
         <div id="viewLanding">
-            <h1>Werewolf<br>Phygital v5.1</h1>
-            <p>Edisi Anti-Macet</p>
+            <h1>Werewolf<br>Phygital v5.2</h1>
+            <p>Edisi Final Fix</p>
             <input type="text" id="inputName" placeholder="NAMA KAMU">
             <button onclick="createRoom()">BUAT ROOM (HOST)</button>
             <button class="secondary" onclick="showJoin()">GABUNG ROOM</button>
@@ -195,7 +195,7 @@
         let selectedTarget = null;
         let allPlayers = {};
         let roleFetched = false;
-        let currentGameState = null; // Menyimpan status terakhir untuk Host
+        let currentGameState = null;
 
         // --- NAVIGASI ---
         window.createRoom = () => {
@@ -262,6 +262,16 @@
             onValue(ref(db, `rooms/${roomCode}/players`), snap => {
                 allPlayers = snap.val() || {};
                 document.getElementById("pCount").innerText = Object.keys(allPlayers).length;
+                
+                // HOST RECOVERY (Anti-Refresh)
+                if (allPlayers[myId] && allPlayers[myId].isHost === true) {
+                    isHost = true;
+                    // Restart interval kalau belum jalan
+                    if (!window.hostInterval && currentGameState && currentGameState.phase !== "LOBBY") {
+                         window.hostInterval = setInterval(hostLoop, 1000);
+                    }
+                }
+
                 if(allPlayers[myId] && allPlayers[myId].privateMsg) {
                     const msgDiv = document.getElementById("privateMsg");
                     msgDiv.innerText = allPlayers[myId].privateMsg;
@@ -275,15 +285,17 @@
                 const state = snap.val();
                 if(!state) return;
                 
-                currentGameState = state; // Update state global untuk Host Loop
+                currentGameState = state; 
 
-                // UNIFIED RENDER LOGIC
                 if (state.phase === "GAME_OVER") {
                     document.getElementById("overlayWin").classList.remove("hidden");
                     document.getElementById("winTitle").innerText = state.winner + " MENANG!";
                 } else {
                     renderGamePhase(state);
                 }
+                
+                // --- BUG FIX: HAPUS PEMANGGILAN hostEngine() DI SINI ---
+                // Logika Host sekarang sepenuhnya diurus oleh setInterval di bawah
             });
         }
 
@@ -309,7 +321,6 @@
             const actionArea = document.getElementById("actionArea");
             const timer = document.getElementById("timerDisplay");
 
-            // SAFE TIMER UPDATE
             timer.innerText = (state.timer !== undefined) ? state.timer : "";
 
             actionArea.classList.add("hidden");
@@ -434,17 +445,14 @@
         }
 
         function hostLoop() {
-            // Hanya Host yang menjalankan ini
-            if (!currentGameState) return; // Belum ada data
+            if (!currentGameState) return; 
             if (currentGameState.phase === "LOBBY" || currentGameState.phase === "GAME_OVER") return;
 
             if (currentGameState.timer > 0) {
-                // Kurangi waktu
                 update(ref(db, `rooms/${roomCode}/gameState/timer`), currentGameState.timer - 1);
-                processingPhase = false; // Reset flag
+                processingPhase = false; 
             } else {
-                // Waktu Habis -> Ganti Fase
-                if (processingPhase) return; // Jangan jalankan 2x kalau DB lemot
+                if (processingPhase) return; 
                 processingPhase = true;
 
                 let state = currentGameState;
