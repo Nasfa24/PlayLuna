@@ -117,11 +117,11 @@
         import { getDatabase, ref, set, update, onValue, push, onDisconnect, remove, serverTimestamp } 
         from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // --- PERBAIKAN UTAMA DI SINI ---
+        // --- KONFIGURASI FINAL (SUDAH DIPERBAIKI) ---
         const firebaseConfig = {
             apiKey: "AIzaSyB9Q_Z8oewtWt6pphvwJQbh6PpAqyneYfM",
             authDomain: "werewolf-4d03a.firebaseapp.com",
-            // SAYA TAMBAHKAN LINE DI BAWAH INI SESUAI PESAN ERROR KAMU:
+            // ALAMAT ASIA SOUTHEAST1 YANG BENAR:
             databaseURL: "https://werewolf-4d03a-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "werewolf-4d03a",
             storageBucket: "werewolf-4d03a.firebasestorage.app",
@@ -319,7 +319,7 @@
             document.getElementById("actionArea").innerHTML = "<h3>Jawaban Terkirim!</h3><p>Tunggu pemain lain...</p>";
         }
 
-        // Tambahkan Event Listener Manual agar Tombol pasti jalan
+        // Event Listener Manual agar Tombol pasti jalan di semua browser
         document.getElementById('btnJoin').addEventListener('click', window.joinGame);
         document.getElementById('btnStart').addEventListener('click', window.startGame);
         document.getElementById('btnSubmit').addEventListener('click', window.submitAction);
