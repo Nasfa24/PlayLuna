@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#1a1a2e">
-    <title>Werewolf Phygital v9.2</title>
+    <title>LUNA - Werewolf Game</title>
     
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAwNJREFUeF7tm01oE0EUx/+zs2k32WrTovVgwVNFLxZFrYKgBwueqqCoKLZKqqCoqKCo6EFRFMWDKKioqKCoqKCo6EHPKooevFkQ9aJQaNum2d3ZkZkkpE1I22w6C4H3lpfNfP/35s3O7LwlcB8f+P3H4fGNg9c3FkHQLlC0DYoWBCB4D4r2g6Kdh+D9h8B794H3PgHeexB8YB943/2fKz66FzxYCh78FjwwCR78CD5wC3yQy3cQfOAm+MAk+OBb8OBB8GANPJi4l4sD7/V0g/c9Ad57BLzvIfDe/eD9B8D7DoH3Hj4zR1Xw+qZB0F7w+sYOh6V54G4q5e5n7h340u4P8t5r573X4Huv1V0d/F39r+5V9/8+G/75uG9L/u3F40G1w3+3Z/f2nJ3Y2Tz2/m2T2wQn3k7mJ3Y0n3/3+GjQWjT//nLd7t71A5Uzu97/g/h4Z+XU9ubx12+b9oI33k2+nN7RvPju0ZfB+s1/+50o2r67Rypnd697D1D415XJbY3j7982F8Fb7iZfTO9oXnz/8Mu9g3/+e+9Y666eP9RcnN3z7s2lUoFvuz/I62/eNheDW+4k8/lM39rF8zdfD7bWvL1jrbv6/lBLcXY/uXdzqVrgO72D/Obrt80m8LZykvmN9PbtS+dvvhmstX/vWLuufrC2OPv15N6NpUqR7/L3sxtv3jT3gXeqk8yvX/v2+bM3Xw/WOr92rH3V4NraYv7b/r0by1WB39Pfx269e9PcD3z9nWS+9/r2xbM3Xw/WOr7uWNvqwdX1xdnv+/duLFcL/F39vbz87m1zK/BNe5L5b+vblz+/+Xqw1uF1x9rXDK6tL+W/H9y7sVxD8H1+D7/9/m1zM3j3P8n85uvbVz6/+XoE1jq07lj7f4NrG0v5n4f2bqzUEPwA+X0s//Zt88/gvXuS+a21d/0/g7X+bO+Y//3A2sZS9cfhvRur9QXfT94f1t99aP43eG8nmf917dvXP7/5agTWOj7vWPv6wY2NpfzPI3s3VusLvj/Yw3/x8WNzI3j9nmT+27VvX//85qsRWGufd6x9Y2D93lJ14cjexs7/ACVp269m4gUAAAAASUVORK5CYII=">
+    <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAwNJREFUeF7tm01oE0EUx/+zs2k32WrTovVgwVNFLxZFrYKgBwueqqCoKLZKqqCoqKCo6EFRFMWDKKioqKCoqKCo6EHPKooevFkQ9aJQaNum2d3ZkZkkpE1I22w6C4H3lpfNfP/35s3O7LwlcB8f+P3H4fGNg9c3FkHQLlC0DYoWBCB4D4r2g6Kdh+D9h8B794H3PgHeexB8YB943/2fKz66FzxYCh78FjwwCR78CD5wC3yQy3cQfOAm+MAk+OBb8OBB8GANPJi4l4sD7/V0g/c9Ad57BLzvIfDe/eD9B8D7DoH3Hj4zR1Xw+qZB0F7w+sYOh6V54G4q5e5n7h340u4P8t5r573X4Huv1V0d/F39r+5V9/8+G/75uG9L/u3F40G1w3+3Z/f2nJ3Y2Tz2/m2T2wQn3k7mJ3Y0n3/3+GjQWjT//nLd7t71A5Uzu97/g/h4Z+XU9ubx12+b9oI33k2+nN7RvPju0ZfB+s1/+50o2r67Rypnd697D1D415XJbY3j7982F8Fb7iZfTO9oXnz/8Mu9g3/+e+9Y666eP9RcnN3z7s2lUoFvuz/I62/eNheDW+4k8/lM39rF8zdfD7bWvL1jrbv6/lBLcXY/uXdzqVrgO72D/Obrt80m8LZykvmN9PbtS+dvvhmstX/vWLuufrC2OPv15N6NpUqR7/L3sxtv3jT3gXeqk8yvX/v2+bM3Xw/WOr92rH3V4NraYv7b/r0by1WB39Pfx269e9PcD3z9nWS+9/r2xbM3Xw/WOr7uWNvqwdX1xdnv+/duLFcL/F39vbz87m1zK/BNe5L5b+vblz+/+Xqw1uF1x9rXDK6tL+W/H9y7sVxD8H1+D7/9/m1zM3j3P8n85uvbVz6/+XoE1jq07lj7f4NrG0v5n4f2bqzUEPwA+X0s//Zt88/gvXuS+a21d/0/g7X+bO+Y//3A2sZS9cfhvRur9QXfT94f1t99aP43eG8nmf917dvXP7/5agTWOj7vWPv6wY2NpfzPI3s3VusLvj/Yw3/x8WNzI3j9nmT+27VvX//85qsRWGufd6x9Y2D93lJ14cjexs7/ACVp269m4gUAAAAASUVORK5CYII=">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet">
@@ -45,14 +47,21 @@
             display: flex; flex-direction: column; 
             padding: 20px; text-align: center; justify-content: center;
             position: relative;
+            padding-bottom: 40px;
         }
 
-        h1 { font-size: 2rem; font-weight: 800; margin: 0 0 10px 0; letter-spacing: 1px; line-height: 1.1; }
+        h1 { font-size: 3.5rem; font-weight: 800; margin: 0; letter-spacing: 2px; line-height: 1; background: -webkit-linear-gradient(#fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         h2 { font-size: 3rem; margin: 10px 0; color: var(--accent); background: rgba(0,0,0,0.2); padding: 5px 25px; border-radius: 20px; display: inline-block; }
         p { opacity: 0.9; margin-bottom: 15px; font-weight: 400; }
+        .subtitle { font-size: 1rem; letter-spacing: 3px; color: var(--accent); margin-bottom: 30px; text-transform: uppercase; }
 
         .material-symbols-rounded { font-size: 4rem; margin-bottom: 10px; text-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .small-icon { font-size: 1.2rem; vertical-align: middle; margin-right: 5px; }
+
+        .app-version {
+            position: fixed; bottom: 15px; width: 100%; text-align: center;
+            font-size: 0.75rem; color: rgba(255, 255, 255, 0.3); letter-spacing: 1px; pointer-events: none; z-index: 999;
+        }
 
         input { 
             padding: 18px; width: 100%; font-size: 1.1rem; 
@@ -130,7 +139,6 @@
             width: 90%; max-width: 350px; animation: slideDown 0.5s; border: 2px solid white;
         }
 
-        /* Loading Screen saat Refresh */
         #screenLoading {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-dark); z-index: 200;
@@ -146,13 +154,11 @@
 
     <div id="screenLoading">Memulihkan Sesi...</div>
 
-    <div id="debugStatus" style="position:fixed; bottom:5px; left:5px; font-size:0.6rem; opacity:0.3;">v9.2 Persistent</div>
-
     <div id="screenLobby" class="screen hidden">
         <div id="viewLanding">
-            <span class="material-symbols-rounded" style="color:var(--accent); font-size: 5rem;">pets</span>
-            <h1>WEREWOLF<br>PHYGITAL</h1>
-            <p style="font-size: 0.9rem; margin-top: -5px;">Anti-Refresh Logic</p>
+            <span class="material-symbols-rounded" style="color:var(--accent); font-size: 5rem; margin-bottom: 0;">dark_mode</span>
+            <h1>LUNA</h1>
+            <div class="subtitle">WEREWOLF GAME</div>
             <br>
             
             <input type="text" id="inputName" placeholder="NAMA KAMU">
@@ -184,7 +190,7 @@
                 <button onclick="startGame()" style="background:var(--accent); color:black;">
                     <span class="material-symbols-rounded small-icon">play_circle</span> MULAI GAME
                 </button>
-                <p style="font-size:0.8rem; color:#aaa;">Distribusi peran otomatis sesuai jumlah pemain.</p>
+                <p style="font-size:0.8rem; color:#aaa;">Distribusi peran otomatis.</p>
                 <button class="end-game" onclick="deleteRoom()">HAPUS ROOM</button>
             </div>
             <p id="waitText" style="opacity:0.6; font-size:0.9rem;">Menunggu Host memulai...</p>
@@ -234,6 +240,8 @@
         <p>Permainan Selesai</p>
         <button onclick="clearSession()" style="width:auto; padding: 15px 40px;">KEMBALI KE LOBBY</button>
     </div>
+
+    <div class="app-version">Luna V.1</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -306,7 +314,6 @@
                 myId = savedId;
                 isHost = (savedHost === "true");
                 
-                // Cek Role sebelum tampil
                 get(ref(db, `rooms/${roomCode}/players/${myId}/role`)).then(snap => {
                     if (snap.exists()) myRole = snap.val();
                     setupLobby(); 
@@ -339,8 +346,7 @@
                 players: { [myId]: { name: myName, isHost: true } },
                 gameState: { phase: "LOBBY" }
             });
-            // HAPUS onDisconnect().remove() AGAR ROOM TIDAK HILANG SAAT REFRESH
-            // onDisconnect(ref(db, `rooms/${roomCode}`)).remove(); 
+            // onDisconnect DIHAPUS agar room tidak hilang saat refresh
             listenRoom();
         };
 
@@ -358,7 +364,6 @@
             get(ref(db, `rooms/${roomCode}`)).then(snap => {
                 if(snap.exists()) { 
                     set(ref(db, `rooms/${roomCode}/players/${myId}`), { name: myName, isHost: false });
-                    // HAPUS onDisconnect UNTUK PEMAIN JUGA
                     isHost = false; saveSession(); setupLobby(); listenRoom();
                 } else { alert("Room tidak ditemukan!"); }
             });
