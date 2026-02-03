@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>LUNA - Werewolf Game</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌙</text></svg>">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #16213e;
+            --bg-night: #0f3460;
+            --bg-day: #3282b8;
+            --bg-vote: #e94560;
+            --accent: #ffd369;
+            --text-main: #ffffff;
+            --card-bg: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            height: 100dvh;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.6s ease;
+            overflow: hidden;
+            user-select: none;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        .hidden { display: none !important; }
+        .screen { 
+            width: 100%; max-width: 450px; height: 100%; 
+            display: flex; flex-direction: column; 
+            padding: 20px; text-align: center; justify-content: center;
+            position: relative;
+            padding-bottom: 40px;
+        }
+
+        /* TYPOGRAPHY */
+        h1 { font-size: 3.5rem; font-weight: 800; margin: 0; letter-spacing: 2px; line-height: 1; background: -webkit-linear-gradient(#fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        h2 { font-size: 3rem; margin: 10px 0; color: var(--accent); background: rgba(0,0,0,0.2); padding: 5px 25px; border-radius: 20px; display: inline-block; }
+        h3 { color: var(--accent); margin-bottom: 5px; }
+        p { opacity: 0.9; margin-bottom: 15px; font-weight: 400; }
+        .subtitle { font-size: 1rem; letter-spacing: 3px; color: var(--accent); margin-bottom: 30px; text-transform: uppercase; }
+
+        .material-symbols-rounded { font-size: 4rem; margin-bottom: 10px; text-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .small-icon { font-size: 1.2rem; vertical-align: middle; margin-right: 5px; }
+
+        .app-version {
+            position: fixed; bottom: 15px; width: 100%; text-align: center;
+            font-size: 0.75rem; color: rgba(255, 255, 255, 0.3); letter-spacing: 1px; pointer-events: none; z-index: 999;
+        }
+
+        input { 
+            padding: 18px; width: 100%; font-size: 1.1rem; 
+            border-radius: 15px; border: 2px solid rgba(255,255,255,0.2); 
+            background: rgba(0,0,0,0.2); color: white;
+            text-align: center; margin-bottom: 15px; outline: none; transition: border 0.3s;
+        }
+        input:focus { border-color: var(--accent); }
+
+        button { 
+            background: var(--text-main); color: var(--bg-dark); 
+            border: none; padding: 18px; font-size: 1.1rem; font-weight: 800; 
+            border-radius: 15px; cursor: pointer; width: 100%; 
+            margin-bottom: 12px; box-shadow: 0 5px 0 rgba(0,0,0,0.2); 
+            transition: transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        button:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); }
+        
+        button.secondary { background: rgba(255,255,255,0.15); color: white; box-shadow: none; border: 1px solid rgba(255,255,255,0.2); }
+        button.info { background: rgba(52, 152, 219, 0.2); color: #3498db; border: 1px solid #3498db; margin-top: 10px; }
+        button.emergency { background: #e74c3c; color: white; font-size: 0.8rem; padding: 10px; width: auto; margin: 10px auto; border: 1px solid white; display: inline-block;}
+        button.end-game { background: #cf6679; color: white; font-size: 0.9rem; padding: 12px; margin-top: 20px; }
+
+        .timer-display { font-size: 5rem; font-weight: 800; margin-top: auto; text-shadow: 3px 3px 0 rgba(0,0,0,0.2); font-variant-numeric: tabular-nums; }
+        
+        #phaseDesc {
+            background: rgba(0, 0, 0, 0.25); padding: 20px; border-radius: 15px;
+            margin: 10px 0; font-size: 1.1rem; line-height: 1.5;
+            border-left: 5px solid var(--accent); text-align: left;
+        }
+
+        .player-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; 
+            width: 100%; max-height: 45vh; overflow-y: auto; margin: 10px 0;
+            padding-bottom: 50px;
+        }
+        .p-card { 
+            background: var(--card-bg); padding: 20px 10px; border-radius: 12px; 
+            cursor: pointer; border: 2px solid transparent; font-weight: 600;
+            transition: all 0.2s; position: relative; overflow: hidden;
+        }
+        .p-card.selected { 
+            background: var(--accent); color: var(--bg-dark); 
+            border-color: white; transform: scale(1.02); box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .p-card.dead { opacity: 0.5; filter: grayscale(1); background: #000; pointer-events: none; }
+
+        .fab-role {
+            position: absolute; top: 15px; left: 15px;
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(5px);
+            color: white; border-radius: 30px; padding: 8px 16px;
+            font-size: 0.8rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.3);
+            display: flex; align-items: center; gap: 5px; z-index: 10; cursor: pointer;
+        }
+
+        .overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); z-index: 100; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            padding: 20px; animation: fadeIn 0.3s;
+        }
+        .role-reveal-box {
+            border: 2px solid var(--accent); padding: 30px; border-radius: 20px;
+            background: radial-gradient(circle, #2c3e50 0%, #000 100%);
+            box-shadow: 0 0 30px var(--accent); width: 100%; max-width: 350px;
+        }
+        
+        /* GUIDE BOX STYLING */
+        .guide-box {
+            background: #1e272e; width: 100%; max-width: 400px; height: 80%;
+            border-radius: 20px; display: flex; flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .guide-header { padding: 20px; background: #2c3e50; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .guide-content { padding: 20px; overflow-y: auto; text-align: left; font-size: 0.9rem; line-height: 1.6; }
+        .guide-content h3 { color: var(--accent); margin-top: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        .guide-content ul { padding-left: 20px; }
+        .guide-content li { margin-bottom: 8px; }
+
+        .msg-toast { 
+            position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+            background: #2ecc71; color: #000; padding: 15px 25px; 
+            border-radius: 15px; font-weight: 700; font-size: 1rem;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.5); z-index: 20;
+            width: 90%; max-width: 350px; animation: slideDown 0.5s; border: 2px solid white;
+        }
+
+        #screenLoading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark); z-index: 200;
+            display: flex; justify-content: center; align-items: center;
+            color: var(--accent); font-size: 1.5rem; font-weight: bold;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideDown { from { top: -50px; } to { top: 70px; } }
+    </style>
+</head>
+<body>
+
+    <div id="screenLoading">Memulihkan Sesi...</div>
+
+    <div id="screenLobby" class="screen hidden">
+        <div id="viewLanding">
+            <span class="material-symbols-rounded" style="color:var(--accent); font-size: 5rem; margin-bottom: 0;">dark_mode</span>
+            <h1>LUNA</h1>
+            <div class="subtitle">WEREWOLF GAME</div>
+            <br>
+            
+            <input type="text" id="inputName" placeholder="NAMA KAMU">
+            <button onclick="createRoom()">
+                <span class="material-symbols-rounded small-icon">add_circle</span> BUAT ROOM
+            </button>
+            <button class="secondary" onclick="showJoin()">
+                <span class="material-symbols-rounded small-icon">login</span> GABUNG
+            </button>
+            
+            <button class="info" onclick="toggleGuide(true)">
+                <span class="material-symbols-rounded small-icon">menu_book</span> PANDUAN
+            </button>
+        </div>
+
+        <div id="viewJoin" class="hidden">
+            <h1>GABUNG</h1>
+            <p>Minta 4 Huruf Kode ke Host</p>
+            <input type="text" id="inputCode" placeholder="KODE (CONTOH: ABCD)" maxlength="4" style="text-transform:uppercase; letter-spacing: 5px; font-size: 1.5rem;">
+            <button onclick="joinRoom()">MASUK ROOM</button>
+            <button class="secondary" onclick="location.reload()">BATAL</button>
+        </div>
+
+        <div id="viewWaiting" class="hidden">
+            <p>KODE ROOM</p>
+            <h2><span id="dispCode">----</span></h2>
+            <div style="margin: 20px 0;">
+                <span class="material-symbols-rounded" style="font-size: 2rem;">group</span>
+                <p style="margin:0;"><span id="pCount">0</span> Pemain Masuk</p>
+            </div>
+            
+            <div id="hostPanel" class="hidden">
+                <button onclick="startGame()" style="background:var(--accent); color:black;">
+                    <span class="material-symbols-rounded small-icon">play_circle</span> MULAI GAME
+                </button>
+                <p style="font-size:0.8rem; color:#aaa;">Distribusi peran otomatis.</p>
+                <button class="end-game" onclick="deleteRoom()">HAPUS ROOM</button>
+            </div>
+            <p id="waitText" style="opacity:0.6; font-size:0.9rem;">Menunggu Host memulai...</p>
+        </div>
+    </div>
+
+    <div id="screenGame" class="screen hidden">
+        <div class="fab-role" onclick="toggleRole()">
+            <span class="material-symbols-rounded" style="font-size:1.2rem">visibility</span> PERAN
+        </div>
+
+        <div id="privateMsg" class="msg-toast hidden"></div>
+
+        <div style="margin-top: 50px;">
+            <span id="phaseIcon" class="material-symbols-rounded">hourglass_empty</span>
+            <h1 id="phaseTitle">LOADING</h1>
+        </div>
+
+        <div id="phaseDesc">Menghubungkan ke server...</div>
+        
+        <div id="actionArea" class="hidden" style="flex-grow:1; display:flex; flex-direction:column;">
+            <div id="playerGrid" class="player-grid"></div>
+            <button id="btnAction" onclick="submitAction()" style="margin-top:auto; background:var(--accent); color:black;">
+                <span class="material-symbols-rounded small-icon">check_circle</span> KONFIRMASI
+            </button>
+        </div>
+
+        <div id="timerDisplay" class="timer-display"></div>
+
+        <div id="hostGameControls" class="hidden">
+            <button class="emergency" onclick="forceNextPhase()">SKIP FASE</button>
+            <button class="end-game" onclick="endGame()">AKHIRI GAME</button>
+        </div>
+    </div>
+
+    <div id="overlayRole" class="overlay hidden" onclick="this.classList.add('hidden')">
+        <div class="role-reveal-box">
+            <p style="color:#aaa; margin:0;">PERAN KAMU</p>
+            <h1 id="myRoleTitle" style="font-size: 2.5rem; margin: 10px 0; color:var(--accent);">???</h1>
+            <p id="myRoleDesc" style="font-size: 0.9rem;">Ketuk untuk menutup</p>
+        </div>
+    </div>
+
+    <div id="overlayGuide" class="overlay hidden">
+        <div class="guide-box">
+            <div class="guide-header">
+                <h3 style="margin:0; color:white;">PANDUAN LUNA</h3>
+                <button onclick="toggleGuide(false)" style="width:auto; padding:5px 15px; font-size:0.8rem; margin:0;">TUTUP</button>
+            </div>
+            <div class="guide-content">
+                <p>Selamat datang di <b>LUNA</b>, permainan Werewolf Phygital. HP-mu adalah identitasmu.</p>
+                
+                <h3>🎭 PERAN (ROLE)</h3>
+                <ul>
+                    <li>🐺 <b>WEREWOLF (Jahat):</b> Tiap malam pilih satu korban untuk dimangsa.</li>
+                    <li>👁️ <b>SEER (Desa):</b> Tiap malam terawang satu orang. Sistem akan memberitahu dia JAHAT/BAIK.</li>
+                    <li>💉 <b>DOCTOR (Desa):</b> Lindungi satu orang (bisa diri sendiri) dari serangan malam.</li>
+                    <li>🛡️ <b>BODYGUARD (Desa):</b> Lindungi orang. Jika dia diserang, dia selamat TAPI kamu & penyerang mati (Double Kill).</li>
+                    <li>🔫 <b>HUNTER (Desa):</b> Pilih target. Jika kamu mati malam ini, targetmu ikut mati tertembak.</li>
+                    <li>👱 <b>VILLAGER (Desa):</b> Warga biasa. Gunakan insting saat diskusi & voting.</li>
+                </ul>
+
+                <h3>🤫 FITUR "DISGUISED INPUT"</h3>
+                <p>Saat malam, <b>SEMUA ORANG</b> (termasuk Warga) wajib menekan HP seolah-olah memilih target. Ini agar Werewolf tidak ketahuan!</p>
+                <ul>
+                    <li>Warga = Klik Dummy (Kosong)</li>
+                    <li>Werewolf = Klik Membunuh</li>
+                </ul>
+
+                <h3>⚠️ ATURAN MAIN</h3>
+                <ol>
+                    <li><b>Dilarang intip HP teman.</b></li>
+                    <li><b>Jika Mati = DIAM.</b> Jangan beri kode.</li>
+                    <li>Naikkan Brightness HP agar wajah terlihat.</li>
+                </ol>
+                <br><br>
+            </div>
+        </div>
+    </div>
+
+    <div id="overlayWin" class="overlay hidden">
+        <span class="material-symbols-rounded" style="font-size: 5rem; color:var(--accent);">emoji_events</span>
+        <h1 id="winTitle" style="font-size: 3rem; margin:10px 0;">WINNER</h1>
+        <p>Permainan Selesai</p>
+        <button onclick="clearSession()" style="width:auto; padding: 15px 40px;">KEMBALI KE LOBBY</button>
+    </div>
+
+    <div class="app-version">Luna V.1.2</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, set, update, onValue, remove, onDisconnect, get } 
+        from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9Q_Z8oewtWt6pphvwJQbh6PpAqyneYfM",
+            authDomain: "werewolf-4d03a.firebaseapp.com",
+            databaseURL: "https://werewolf-4d03a-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "werewolf-4d03a",
+            storageBucket: "werewolf-4d03a.firebasestorage.app",
+            messagingSenderId: "989729672721",
+            appId: "1:989729672721:web:bddba4f156ecca66c8abb0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // --- ASSETS ---
+        const singleQuestions = [
+            "Siapa yang tatapan matanya paling mencurigakan?", "Siapa yang paling jago berbohong?",
+            "Siapa yang terlihat paling gugup?", "Siapa yang senyumnya terlihat palsu?",
+            "Siapa yang paling banyak diam?", "Siapa yang bicaranya paling berbelit-belit?",
+            "Siapa yang paling mungkin jadi dalang?", "Siapa yang ekspresinya susah ditebak?",
+            "Siapa yang paling menghindari kontak mata?", "Siapa yang paling ambisius menang?",
+            "Jika ada zombie, siapa yang kamu korbankan?", "Siapa yang mati duluan di film horor?",
+            "Siapa yang akan kamu ajak kerjasama di pulau?", "Siapa yang paling tega meninggalkan teman?",
+            "Siapa yang outfit-nya paling keren?", "Siapa yang paling sering telat?",
+            "Siapa yang wajahnya paling polos?", "Siapa yang paling sering drama?",
+            "Pusatkan energimu. Siapa yang auranya gelap?", "Secara insting, siapa yang membuatmu tidak nyaman?",
+            "Siapa yang terasa paling jauh darimu?", "Siapa yang memancarkan energi dominan?",
+            "Siapa yang sulit kamu percaya 100%?", "Siapa yang punya rahasia terbesar?",
+            "Siapa yang ingin kamu singkirkan dari meja?", "Kepada siapa intuisimu tertuju?"
+        ];
+        
+        const PHASE_ICONS = {
+            "STARTING": "hourglass_top", "NIGHT": "bedtime", 
+            "DAY_ANNOUNCE": "wb_sunny", "DAY_DISCUSS": "forum", 
+            "VOTING": "how_to_vote", "GAME_OVER": "emoji_events"
+        };
+
+        const PHASE_COLORS = {
+            "STARTING": "#2c3e50", "NIGHT": "#0f3460", 
+            "DAY_ANNOUNCE": "#f1c40f", "DAY_DISCUSS": "#3282b8", 
+            "VOTING": "#e94560"
+        };
+
+        function getNightContent(round) {
+            const index = (round - 1) % singleQuestions.length;
+            return { type: "SINGLE", text: singleQuestions[index] };
+        }
+
+        // --- STATE ---
+        let myId = "u" + Math.floor(Math.random()*100000);
+        let myName = "", roomCode = "", isHost = false, myRole = "VILLAGER";
+        let selectedTarget = null, allPlayers = {}, roleFetched = false;
+        let hostLocalTimer = 0, lastRenderedPhase = "";
+
+        // --- NEW: GUIDE TOGGLE ---
+        window.toggleGuide = (show) => {
+            const guide = document.getElementById("overlayGuide");
+            if(show) guide.classList.remove("hidden");
+            else guide.classList.add("hidden");
+        }
+
+        // --- RESTORE SESSION ---
+        (function restoreSession() {
+            const savedRoom = localStorage.getItem("ww_room");
+            const savedName = localStorage.getItem("ww_name");
+            const savedId = localStorage.getItem("ww_id");
+            const savedHost = localStorage.getItem("ww_host");
+
+            if (savedRoom && savedName && savedId) {
+                roomCode = savedRoom;
+                myName = savedName;
+                myId = savedId;
+                isHost = (savedHost === "true");
+                
+                get(ref(db, `rooms/${roomCode}/players/${myId}/role`)).then(snap => {
+                    if (snap.exists()) myRole = snap.val();
+                    setupLobby(); 
+                    listenRoom(); 
+                }).catch(() => {
+                    document.getElementById("screenLoading").classList.add("hidden");
+                    document.getElementById("screenLobby").classList.remove("hidden");
+                });
+            } else {
+                document.getElementById("screenLoading").classList.add("hidden");
+                document.getElementById("screenLobby").classList.remove("hidden");
+            }
+        })();
+
+        window.clearSession = () => { localStorage.clear(); location.reload(); }
+
+        // --- NAVIGATION ---
+        window.createRoom = () => {
+            myName = document.getElementById("inputName").value.trim().toUpperCase();
+            if(!myName) return alert("Isi nama dulu!");
+            
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+            roomCode = ""; for(let i=0; i<4; i++) roomCode += chars.charAt(Math.floor(Math.random()*chars.length));
+            
+            isHost = true;
+            saveSession(); setupLobby();
+            
+            set(ref(db, `rooms/${roomCode}`), {
+                status: "LOBBY",
+                players: { [myId]: { name: myName, isHost: true } },
+                gameState: { phase: "LOBBY" }
+            });
+            listenRoom();
+        };
+
+        window.showJoin = () => {
+            if(!document.getElementById("inputName").value.trim()) return alert("Isi nama dulu!");
+            document.getElementById("viewLanding").classList.add("hidden");
+            document.getElementById("viewJoin").classList.remove("hidden");
+        }
+
+        window.joinRoom = () => {
+            myName = document.getElementById("inputName").value.trim().toUpperCase();
+            roomCode = document.getElementById("inputCode").value.trim().toUpperCase();
+            if(roomCode.length !== 4) return alert("Kode harus 4 huruf!");
+
+            get(ref(db, `rooms/${roomCode}`)).then(snap => {
+                if(snap.exists()) { 
+                    set(ref(db, `rooms/${roomCode}/players/${myId}`), { name: myName, isHost: false });
+                    isHost = false; saveSession(); setupLobby(); listenRoom();
+                } else { alert("Room tidak ditemukan!"); }
+            });
+        };
+
+        function saveSession() {
+            localStorage.setItem("ww_room", roomCode);
+            localStorage.setItem("ww_name", myName);
+            localStorage.setItem("ww_id", myId);
+            localStorage.setItem("ww_host", isHost);
+        }
+
+        function setupLobby() {
+            document.getElementById("screenLobby").classList.remove("hidden");
+            document.getElementById("viewLanding").classList.add("hidden");
+            document.getElementById("viewJoin").classList.add("hidden");
+            document.getElementById("viewWaiting").classList.remove("hidden");
+            document.getElementById("dispCode").innerText = roomCode;
+            if(isHost) document.getElementById("hostPanel").classList.remove("hidden");
+        }
+
+        // --- CORE LISTENER ---
+        function listenRoom() {
+            document.getElementById("screenLoading").classList.add("hidden");
+
+            onValue(ref(db, `rooms/${roomCode}/players`), snap => {
+                allPlayers = snap.val() || {};
+                document.getElementById("pCount").innerText = Object.keys(allPlayers).length;
+                
+                if (allPlayers[myId]?.isHost) {
+                    isHost = true;
+                    document.getElementById("hostGameControls").classList.remove("hidden");
+                    if (!window.hostInterval) startHostEngine();
+                }
+
+                if (allPlayers[myId]?.privateMsg) {
+                    const el = document.getElementById("privateMsg");
+                    el.innerHTML = `<span class="material-symbols-rounded small-icon">info</span> ${allPlayers[myId].privateMsg}`;
+                    el.classList.remove("hidden");
+                    setTimeout(() => el.classList.add("hidden"), 8000);
+                    if(!isHost) update(ref(db, `rooms/${roomCode}/players/${myId}`), { privateMsg: null });
+                }
+            });
+
+            onValue(ref(db, `rooms/${roomCode}/gameState`), snap => {
+                const state = snap.val();
+                if(!state) return;
+
+                if (isHost && Math.abs(hostLocalTimer - state.timer) > 3) hostLocalTimer = state.timer;
+
+                if (state.phase === "GAME_OVER") {
+                    document.getElementById("overlayWin").classList.remove("hidden");
+                    document.getElementById("winTitle").innerText = state.winner;
+                    if(isHost) clearInterval(window.hostInterval);
+                } else {
+                    renderGamePhase(state);
+                }
+            });
+        }
+
+        function renderGamePhase(state) {
+            document.getElementById("timerDisplay").innerText = (state.timer !== undefined) ? state.timer : "";
+            if (lastRenderedPhase === state.phase) return; 
+            lastRenderedPhase = state.phase;
+
+            if (state.phase !== "LOBBY") {
+                document.getElementById("screenLobby").classList.add("hidden");
+                document.getElementById("screenGame").classList.remove("hidden");
+            }
+
+            if (!myRole || myRole === "VILLAGER") {
+                 get(ref(db, `rooms/${roomCode}/players/${myId}/role`)).then(s => {
+                    if(s.exists()) {
+                        myRole = s.val();
+                        updateRoleUI();
+                    }
+                });
+            } else {
+                updateRoleUI();
+            }
+
+            if (state.phase === "STARTING" && !roleFetched) {
+                document.getElementById("overlayRole").classList.remove("hidden");
+                roleFetched = true;
+            }
+
+            document.body.style.backgroundColor = PHASE_COLORS[state.phase] || "#2c3e50";
+            if(state.phase === "DAY_ANNOUNCE") document.body.style.color = "#000"; else document.body.style.color = "#fff";
+            document.getElementById("phaseIcon").innerText = PHASE_ICONS[state.phase] || "help";
+            
+            const title = document.getElementById("phaseTitle");
+            const desc = document.getElementById("phaseDesc");
+            const action = document.getElementById("actionArea");
+            action.classList.add("hidden");
+
+            switch(state.phase) {
+                case "STARTING":
+                    title.innerText = "GAME DIMULAI"; desc.innerText = "Siap-siap, peran akan dibagikan..."; break;
+                case "NIGHT":
+                    title.innerText = "MALAM HARI";
+                    const round = state.round || 1;
+                    const content = getNightContent(round);
+                    desc.innerHTML = `<b>Pertanyaan #${round}:</b><br>${content.text}`;
+                    action.classList.remove("hidden");
+                    renderGrid();
+                    break;
+                case "DAY_ANNOUNCE":
+                    title.innerText = "PENGUMUMAN"; desc.innerText = state.announcement || "Desa aman."; break;
+                case "DAY_DISCUSS":
+                    title.innerText = "DISKUSI"; desc.innerText = "Waktu berdebat! Cari siapa pelakunya."; break;
+                case "VOTING":
+                    title.innerText = "VOTING"; desc.innerText = "Pilih pemain untuk dieksekusi.";
+                    action.classList.remove("hidden"); renderGrid(); break;
+            }
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById("playerGrid");
+            grid.innerHTML = "";
+            Object.keys(allPlayers).forEach(key => {
+                if(key === myId) return; 
+                const p = allPlayers[key];
+                const div = document.createElement("div");
+                div.className = `p-card ${!p.isAlive ? 'dead' : ''}`;
+                div.innerHTML = `<span class="material-symbols-rounded small-icon">person</span> ${p.name}`;
+                if(p.isAlive) {
+                    div.onclick = () => {
+                        document.querySelectorAll(".p-card").forEach(c => c.classList.remove("selected"));
+                        div.classList.add("selected");
+                        selectedTarget = key;
+                        if(navigator.vibrate) navigator.vibrate(50);
+                    };
+                }
+                grid.appendChild(div);
+            });
+        }
+
+        window.submitAction = () => {
+            if(!selectedTarget) return alert("Pilih satu pemain!");
+            set(ref(db, `rooms/${roomCode}/actions/${myId}`), { target: selectedTarget, role: myRole });
+            document.getElementById("actionArea").classList.add("hidden");
+            document.getElementById("phaseDesc").innerHTML = "<span style='color:#2ecc71'>✅ Jawaban Terkirim</span><br>Menunggu pemain lain...";
+        }
+
+        window.toggleRole = () => document.getElementById("overlayRole").classList.remove("hidden");
+        
+        function updateRoleUI() {
+            document.getElementById("myRoleTitle").innerText = myRole;
+            let desc = "Warga biasa. Cari Wolf.";
+            let color = "#2ecc71"; // Green
+            
+            if(myRole === "WEREWOLF") { desc = "JAHAT. Mangsa warga tiap malam."; color = "#e74c3c"; }
+            if(myRole === "SEER") { desc = "DESA. Cek status pemain (Jahat/Baik)."; color = "#3498db"; }
+            if(myRole === "DOCTOR") { desc = "DESA. Lindungi 1 orang dari serangan."; color = "#9b59b6"; }
+            if(myRole === "BODYGUARD") { desc = "DESA. Lindungi orang. Jika diserang, kamu & penyerang mati."; color = "#e67e22"; }
+            if(myRole === "HUNTER") { desc = "DESA. Jika mati malam ini, tembakanmu aktif."; color = "#f39c12"; }
+            
+            document.getElementById("myRoleDesc").innerText = desc;
+            document.getElementById("myRoleTitle").style.color = color;
+        }
+
+        // ================= HOST LOGIC =================
+        let processing = false;
+
+        window.startGame = () => {
+            get(ref(db, `rooms/${roomCode}/players`)).then(snap => {
+                const ids = Object.keys(snap.val());
+                const count = ids.length;
+                let roles = [];
+
+                if (count >= 8) {
+                    roles.push("WEREWOLF", "SEER", "DOCTOR", "BODYGUARD");
+                } else {
+                    roles.push("WEREWOLF", "SEER");
+                }
+
+                while(roles.length < count) roles.push("VILLAGER");
+                roles.sort(() => Math.random() - 0.5);
+
+                ids.forEach((id, i) => update(ref(db, `rooms/${roomCode}/players/${id}`), { role: roles[i], isAlive: true, privateMsg: null }));
+                
+                update(ref(db, `rooms/${roomCode}`), { status: "PLAYING" });
+                hostLocalTimer = 5;
+                update(ref(db, `rooms/${roomCode}/gameState`), { phase: "STARTING", timer: 5, round: 1 });
+                startHostEngine();
+            });
+        }
+
+        function startHostEngine() {
+            if (window.hostInterval) clearInterval(window.hostInterval);
+            window.hostInterval = setInterval(hostLoop, 1000);
+        }
+
+        window.forceNextPhase = () => { hostLocalTimer = 0; processing = false; hostLoop(); }
+        
+        window.endGame = () => {
+            if(!confirm("Yakin akhiri game?")) return;
+            update(ref(db, `rooms/${roomCode}/gameState`), { phase: "GAME_OVER", winner: "DIBATALKAN HOST" });
+        }
+        
+        window.deleteRoom = () => {
+            if(!confirm("Yakin hapus room? Semua pemain akan keluar.")) return;
+            remove(ref(db, `rooms/${roomCode}`));
+            localStorage.clear();
+            location.reload();
+        }
+
+        function hostLoop() {
+            if (!isHost) return;
+            if (hostLocalTimer > 0) {
+                hostLocalTimer--;
+                set(ref(db, `rooms/${roomCode}/gameState/timer`), hostLocalTimer);
+                processing = false;
+            } else {
+                if (processing) return;
+                processing = true;
+                
+                get(ref(db, `rooms/${roomCode}/gameState`)).then(snap => {
+                    let s = snap.val();
+                    let next = "", time = 0, txt = "", r = s.round || 1;
+
+                    if(s.phase === "STARTING") { next="NIGHT"; time=60; remove(ref(db, `rooms/${roomCode}/actions`)); }
+                    else if(s.phase === "NIGHT") {
+                        processNight().then(res => {
+                            hostLocalTimer = 10;
+                            update(ref(db, `rooms/${roomCode}/gameState`), { phase:"DAY_ANNOUNCE", timer:10, announcement:res, round:r });
+                            checkWin();
+                        }); return;
+                    }
+                    else if(s.phase === "DAY_ANNOUNCE") { next="DAY_DISCUSS"; time=180; }
+                    else if(s.phase === "DAY_DISCUSS") { next="VOTING"; time=30; remove(ref(db, `rooms/${roomCode}/actions`)); }
+                    else if(s.phase === "VOTING") {
+                        processVote().then(res => {
+                            hostLocalTimer = 10;
+                            update(ref(db, `rooms/${roomCode}/gameState`), { phase:"DAY_ANNOUNCE", timer:10, announcement:res, round:r });
+                            checkWin();
+                        });
+                        setTimeout(() => {
+                            hostLocalTimer = 60;
+                            update(ref(db, `rooms/${roomCode}/gameState`), { phase:"NIGHT", timer:60, round: r+1 });
+                            remove(ref(db, `rooms/${roomCode}/actions`));
+                        }, 10000); return;
+                    }
+
+                    if(next) {
+                        hostLocalTimer = time;
+                        update(ref(db, `rooms/${roomCode}/gameState`), { phase:next, timer:time, announcement:txt, round:r });
+                    }
+                });
+            }
+        }
+
+        async function processNight() {
+            const snap = await get(ref(db, `rooms/${roomCode}/actions`));
+            const acts = snap.val() || {};
+            
+            let wolfVotes = {}, seerT = null, seerId = null;
+            let docTarget = null, bgTarget = null, bgId = null;
+            let hunterT = null, hunterId = null;
+
+            Object.keys(acts).forEach(k => {
+                const r = acts[k].role;
+                const t = acts[k].target;
+                if(r === "WEREWOLF") wolfVotes[t] = (wolfVotes[t]||0)+1;
+                if(r === "SEER") { seerT = t; seerId = k; }
+                if(r === "DOCTOR") docTarget = t;
+                if(r === "BODYGUARD") { bgTarget = t; bgId = k; }
+                if(r === "HUNTER") { hunterT = t; hunterId = k; }
+            });
+
+            let wolfTarget = null, max = 0;
+            Object.keys(wolfVotes).forEach(k => { if(wolfVotes[k] > max){ max = wolfVotes[k]; wolfTarget = k; }});
+
+            let deadList = [];
+            let story = "Malam tenang.";
+
+            if (wolfTarget) {
+                if (wolfTarget === docTarget) {
+                    story = "Seseorang diserang, tapi TABIB menyelamatkannya!";
+                    wolfTarget = null; 
+                } else if (wolfTarget === bgTarget) {
+                    story = "BODYGUARD berkorban! Dia membunuh satu Werewolf, tapi dia juga gugur.";
+                    deadList.push(bgId); 
+                    let wolfId = Object.keys(allPlayers).find(p => allPlayers[p].role === "WEREWOLF" && allPlayers[p].isAlive);
+                    if(wolfId) deadList.push(wolfId);
+                    wolfTarget = null; 
+                } else {
+                    deadList.push(wolfTarget);
+                    story = `Malam berdarah! ${allPlayers[wolfTarget].name} tewas.`;
+                }
+            }
+
+            if (hunterId && hunterT && deadList.includes(hunterId)) {
+                deadList.push(hunterT);
+                story += ` TAPI! HUNTER sempat menembak ${allPlayers[hunterT].name} sebelum mati!`;
+            }
+
+            deadList.forEach(id => update(ref(db, `rooms/${roomCode}/players/${id}`), { isAlive: false }));
+
+            if(seerT && seerId) {
+                const targetRole = allPlayers[seerT].role;
+                const isEvil = (targetRole === "WEREWOLF" || targetRole === "MINION"); 
+                const info = `Terawangan: ${allPlayers[seerT].name} adalah faksi ${isEvil ? "JAHAT" : "BAIK"}.`;
+                update(ref(db, `rooms/${roomCode}/players/${seerId}`), { privateMsg: info });
+            }
+
+            return story;
+        }
+
+        async function processVote() {
+            const snap = await get(ref(db, `rooms/${roomCode}/actions`));
+            const acts = snap.val() || {};
+            let votes = {}, victim = null, max = 0;
+            
+            Object.values(acts).forEach(v => votes[v.target] = (votes[v.target]||0)+1);
+            Object.keys(votes).forEach(k => { if(votes[k] > max){ max = votes[k]; victim = k; }});
+
+            if(victim && max >= 2) {
+                update(ref(db, `rooms/${roomCode}/players/${victim}`), { isAlive: false });
+                if (allPlayers[victim].role === "HUNTER") {
+                    return `Warga menggantung ${allPlayers[victim].name}. Dia adalah HUNTER!`;
+                }
+                return `Warga sepakat! ${allPlayers[victim].name} dieksekusi.`;
+            }
+            return "Voting seri/kurang. Tidak ada eksekusi.";
+        }
+
+        function checkWin() {
+            get(ref(db, `rooms/${roomCode}/players`)).then(s => {
+                let w=0, v=0;
+                Object.values(s.val()).forEach(p => { if(p.isAlive) p.role==="WEREWOLF" ? w++ : v++; });
+                if(w===0) update(ref(db, `rooms/${roomCode}/gameState`), { phase:"GAME_OVER", winner:"TIM DESA MENANG" });
+                else if(w>=v) update(ref(db, `rooms/${roomCode}/gameState`), { phase:"GAME_OVER", winner:"WEREWOLVES MENANG" });
+            });
+        }
+    </script>
+</body>
+</html>
