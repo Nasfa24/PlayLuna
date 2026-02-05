@@ -67,7 +67,7 @@
         .tile.blackhole { background: black; border: 2px solid #a29bfe; color: #a29bfe; box-shadow: inset 0 0 10px #a29bfe; }
         #tile-100 { background: #fdcb6e; color: #d35400; border: 2px solid white; box-shadow: inset 0 0 10px rgba(0,0,0,0.2); }
 
-        /* TOKEN SYSTEM */
+        /* TOKEN SYSTEM - UPDATED FOR STEP ANIMATION */
         #token-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 10;
@@ -77,7 +77,7 @@
             display: flex; justify-content: center; align-items: center;
             font-size: 14px; color: white; 
             filter: drop-shadow(0 3px 3px rgba(0,0,0,0.8));
-            transition: top 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            /* Transition akan di-set lewat JS supaya bisa dinamis (cepat saat jalan, lambat saat ular) */
             will-change: top, left; z-index: 20;
         }
         .shape-circle { border-radius: 50%; border: 2px solid white; }
@@ -220,7 +220,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- DATABASE KARTU BARU (30 ITEMS) ---
         const CARD_DB = [
             // ATTACK (Merah)
             { id: "SNAKE_BITE", name: "Snake Bite", icon: "🐍", type: "c-attack", target: "ENEMY", desc: "Mundurkan 1 musuh (10 langkah)." },
@@ -269,6 +268,9 @@
         let selectedCardIdx = null, selectedCardData = null;
         let turnTimerInterval = null;
         let isMyTurn = false, amIHost = false;
+
+        // TRACKER POSISI LOKAL UNTUK ANIMASI STEP
+        let localPlayerPositions = {}; 
 
         window.createRoom = createRoom; window.joinRoom = joinRoom;
         window.startGame = startGame; window.handleRollAnim = handleRollAnim; 
@@ -370,7 +372,7 @@
                 if(!game || !game.order) return;
                 if(game.status === "FINISHED") { document.getElementById('screen-winner').classList.remove('hidden'); document.getElementById('winner-name-text').innerText = game.winnerName; return; }
 
-                updateAllTokens(game.players, game.order);
+                updateAllTokens(game.players);
                 renderBoardEffects(game.boardEffects || {});
 
                 const turnPid = game.order[game.turnIndex % game.order.length];
@@ -423,29 +425,76 @@
             }
         }
 
+        // --- NEW: STEP-BY-STEP MOVEMENT LOGIC ---
         function updateAllTokens(players) {
             const layer = document.getElementById('token-layer');
-            const boardRect = document.getElementById('game-board-area').getBoundingClientRect();
             Array.from(layer.children).forEach(el => { if(!players[el.dataset.pid]) el.remove(); });
 
             for(let pid in players) {
                 const p = players[pid];
                 let token = document.querySelector(`.token[data-pid="${pid}"]`);
-                if(!token) { token = document.createElement('div'); token.className = `token shape-circle`; token.dataset.pid = pid; token.style.backgroundColor = p.color; token.innerText = p.avatar; layer.appendChild(token); }
                 
-                const targetTile = document.getElementById(`tile-${p.position}`);
-                if(targetTile) {
-                    const tileRect = targetTile.getBoundingClientRect();
-                    token.style.top = `${tileRect.top - boardRect.top}px`;
-                    token.style.left = `${tileRect.left - boardRect.left}px`;
+                if(!token) { 
+                    token = document.createElement('div'); 
+                    token.className = `token shape-circle`; 
+                    token.dataset.pid = pid; 
+                    token.style.backgroundColor = p.color; 
+                    token.innerText = p.avatar; 
+                    layer.appendChild(token);
+                    
+                    // Init First Position (Langsung)
+                    setTokenPos(token, p.position);
+                    localPlayerPositions[pid] = p.position;
+                } else {
+                    const currentVisPos = localPlayerPositions[pid] || 1;
+                    const targetPos = p.position;
+                    const diff = targetPos - currentVisPos;
+
+                    // Syarat Animasi Langkah: Bergerak Maju & Jarak Wajar (Max 12 aka 2 Dadu)
+                    if(diff > 0 && diff <= 12) {
+                        animateSteps(token, currentVisPos, targetPos, pid);
+                    } else {
+                        // Kalau mundur (ular) atau lompat jauh (portal), slide biasa
+                        setTokenPos(token, targetPos, true); // True = Slow slide
+                        localPlayerPositions[pid] = targetPos;
+                    }
                 }
-                
-                // Status Visuals
+
+                // Visual Status
                 token.style.border = "2px solid white";
                 if(p.status?.FREEZE) token.style.border = "3px solid cyan";
                 if(p.status?.POISON) token.style.boxShadow = "0 0 10px #00FF00";
                 if(p.status?.SHIELD) token.style.boxShadow = "0 0 10px yellow";
             }
+        }
+
+        function setTokenPos(token, posNumber, isSlow = false) {
+            const boardRect = document.getElementById('game-board-area').getBoundingClientRect();
+            const targetTile = document.getElementById(`tile-${posNumber}`);
+            if(targetTile) {
+                const tileRect = targetTile.getBoundingClientRect();
+                // Atur kecepatan transisi dinamis
+                token.style.transition = isSlow ? 'top 0.8s ease, left 0.8s ease' : 'top 0.2s linear, left 0.2s linear';
+                token.style.top = `${tileRect.top - boardRect.top}px`;
+                token.style.left = `${tileRect.left - boardRect.left}px`;
+            }
+        }
+
+        function animateSteps(token, start, end, pid) {
+            let current = start;
+            // Loop step dengan jeda
+            function step() {
+                if(current < end) {
+                    current++;
+                    setTokenPos(token, current, false); // False = Fast step
+                    setTimeout(step, 250); // Jeda antar langkah 250ms (Tek.. Tek.. Tek..)
+                } else {
+                    localPlayerPositions[pid] = end; // Sync akhir
+                }
+            }
+            step();
+            // Update lokal tracker supaya gak re-trigger
+            localPlayerPositions[pid] = end; 
         }
 
         function renderInventory(cards) {
@@ -514,7 +563,6 @@
                 const map = game.initialBoard || {};
                 const fx = game.boardEffects || {};
 
-                // Cek efek tile
                 if(fx[newPos]) {
                     if(p.status.SHIELD) {
                          logMsg += " 🛡️ Tahan Efek!";
@@ -524,7 +572,6 @@
                         if(fx[newPos].type === "BLACK_HOLE") { newPos = 1; logMsg += " 🕳️ TERSEDOT!"; }
                     }
                 } else if(map[newPos]) {
-                    // Logic Ular Tangga / Mystery
                     if(map[newPos] === "?") {
                         const rand = CARD_DB[Math.floor(Math.random()*CARD_DB.length)];
                         if(!p.cards) p.cards = []; p.cards.push(rand.id);
@@ -540,7 +587,6 @@
                     }
                 }
 
-                // 5. PREDATOR CHECK (Tabrak Lari)
                 if(newPos !== 1) {
                     for(let otherPid in game.players) {
                         if(otherPid !== pid && game.players[otherPid].position === newPos) {
@@ -553,12 +599,10 @@
                 p.position = newPos;
                 if(newPos === 100) { game.status = "FINISHED"; game.winnerName = p.name; }
 
-                // Decrement Shield/Anchor per turn
                 if(p.status.SHIELD) { p.status.SHIELD--; if(p.status.SHIELD<=0) delete p.status.SHIELD; }
 
                 addLog(game, `> ${p.name} (Roll ${totalRoll}) ke ${newPos}. ${logMsg}`);
                 
-                // Double Turn Check
                 if(p.status.DBL_TURN) { delete p.status.DBL_TURN; addLog(game, "🔄 Main lagi!"); }
                 else { game.turnIndex++; }
                 
@@ -594,9 +638,6 @@
                 const cid = selectedCardData.id;
                 let msg = `⚡ ${me.name} pakai ${selectedCardData.name}`;
 
-                // --- LOGIC 30 KARTU ---
-                
-                // ATTACK
                 if(cid === "SNAKE_BITE" && targetId) game.players[targetId].position = Math.max(1, game.players[targetId].position - 10);
                 if(cid === "BACKSTAB") {
                     let leadId=null, max=0; for(let pid in game.players) if(game.players[pid].position > max){max=game.players[pid].position; leadId=pid;}
@@ -614,17 +655,15 @@
                 if(cid === "EQUALIZER") { for(let pid in game.players) if(game.players[pid].position > me.position) game.players[pid].position = me.position; }
                 if(cid === "KAMIKAZE" && targetId) { me.position = 1; game.players[targetId].position = 1; }
 
-                // DEFENSE
                 if(cid === "NITRO") me.position = Math.min(100, me.position + 6);
                 if(cid === "SUPER_JUMP") me.position = Math.min(100, me.position + 12);
-                if(cid === "SHIELD") { if(!me.status) me.status={}; me.status.SHIELD = 1; } // 1 Turn
+                if(cid === "SHIELD") { if(!me.status) me.status={}; me.status.SHIELD = 1; } 
                 if(cid === "ANCHOR") { if(!me.status) me.status={}; me.status.ANCHOR = 1; }
                 if(cid === "WALL") { if(!game.boardEffects) game.boardEffects={}; game.boardEffects[me.position] = {type:"WALL"}; }
                 if(cid === "TRAP") { if(!game.boardEffects) game.boardEffects={}; game.boardEffects[me.position] = {type:"TRAP"}; }
                 if(cid === "CHECKPOINT") { if(!me.status) me.status={}; me.status.CHECKPOINT = me.position; }
                 if(cid === "PURIFY") { me.status = {}; }
 
-                // TRICK
                 if(cid === "PIRATE" && targetId) { 
                     if(game.players[targetId].cards?.length > 0) {
                         const stolen = game.players[targetId].cards.pop();
@@ -655,7 +694,6 @@
                 }
                 if(cid === "BLACK_HOLE") { if(!game.boardEffects) game.boardEffects={}; game.boardEffects[me.position] = {type:"BLACK_HOLE"}; }
 
-                // DICE GOD
                 if(!me.status) me.status = {};
                 if(cid === "DICE_1") me.status.FORCE_ROLL = 1;
                 if(cid === "DICE_6") me.status.FORCE_ROLL = 6;
