@@ -2,191 +2,1198 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PLAY LUNA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KONEKTA - Terhubung Lebih Dekat</title>
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://appkonekta.fun/">
+    <meta property="og:title" content="KONEKTA - Terhubung Lebih Dekat">
+    <meta property="og:description" content="Satu Aplikasi, Ribuan Koneksi. Gabung komunitas, kumpulkan poin, dan tukarkan manfaatnya!">
+    <meta property="og:image" content="https://appkonekta.fun/logo.png"> 
+    <meta property="og:image:width" content="300">
+    <meta property="og:image:height" content="300">
+
+    <link rel="icon" href="logo.png" type="image/png">
+    <link rel="shortcut icon" href="logo.png" type="image/png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
-        :root {
-            --bg-dark: #121212;
-            --card-bg: #1e1e2e;
-            --ww-accent: #ffd369; /* Kuning Werewolf */
-            --gw-accent: #00FF9D; /* Hijau Geometry */
-            --text-main: #ffffff;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        /* HEADER */
-        .header { text-align: center; margin-bottom: 30px; margin-top: 20px; }
-        .logo { 
-            font-size: 3rem; font-weight: 800; letter-spacing: 5px; margin: 0;
-            background: linear-gradient(to right, var(--gw-accent), var(--ww-accent));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .subtitle { font-size: 0.9rem; letter-spacing: 2px; opacity: 0.7; }
-
-        /* USER PROFILE INPUT */
-        .user-setup {
-            width: 100%; max-width: 400px; margin-bottom: 40px;
-            background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        input {
-            width: 100%; padding: 15px; border-radius: 10px; border: none;
-            background: rgba(0,0,0,0.3); color: white; text-align: center;
-            font-family: 'Poppins'; font-size: 1.1rem; outline: none;
-            border: 2px solid transparent; transition: 0.3s; box-sizing: border-box;
-        }
-        input:focus { border-color: var(--gw-accent); }
-
-        /* GAME GRID */
-        .game-grid {
-            display: grid; grid-template-columns: 1fr; gap: 20px;
-            width: 100%; max-width: 450px;
-        }
-
-        /* GAME CARD */
-        .game-card {
-            background: var(--card-bg); border-radius: 20px; overflow: hidden;
-            position: relative; transition: transform 0.2s; cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.1);
-            display: flex; flex-direction: column;
-        }
-        .game-card:active { transform: scale(0.98); }
-        
-        .card-banner { height: 100px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .card-icon { font-size: 4rem; z-index: 2; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .card-bg-glow { position: absolute; width: 100%; height: 100%; opacity: 0.3; top: 0; left: 0; }
-
-        .card-info { padding: 20px; text-align: left; }
-        .card-title { font-size: 1.5rem; font-weight: 800; margin: 0; text-transform: uppercase; }
-        .card-desc { font-size: 0.85rem; opacity: 0.7; margin: 5px 0 15px 0; line-height: 1.4; }
-        .tags { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 600; }
-        .tag { padding: 4px 10px; border-radius: 5px; background: rgba(255,255,255,0.1); }
-
-        /* THEME SPECIFIC */
-        .theme-ww .card-banner { background: linear-gradient(45deg, #2c3e50, #000); }
-        .theme-ww .card-title { color: var(--ww-accent); }
-        .theme-ww .btn-play { background: var(--ww-accent); color: #000; }
-
-        .theme-gw .card-banner { background: linear-gradient(45deg, #0f3460, #000); }
-        .theme-gw .card-title { color: var(--gw-accent); }
-        .theme-gw .btn-play { background: var(--gw-accent); color: #000; }
-
-        .btn-play {
-            width: 100%; padding: 12px; border: none; border-radius: 10px;
-            font-weight: 800; font-family: 'Poppins'; cursor: pointer; margin-top: 10px;
-            display: flex; align-items: center; justify-content: center; gap: 5px;
-        }
-
-        /* FOOTER & LINK STYLING */
-        .footer { margin-top: auto; font-size: 0.75rem; color: #666; padding-top: 30px; letter-spacing: 1px; }
-        .footer a {
-            color: #888; text-decoration: none; font-weight: 600;
-            transition: color 0.3s ease;
-            border-bottom: 1px dotted #555;
-        }
-        .footer a:hover {
-            color: var(--gw-accent); /* Berubah jadi hijau neon saat disentuh */
-            border-bottom-color: var(--gw-accent);
-        }
+        :root { --primary: #0f766e; --super: #111827; }
+        .bg-primary { background-color: var(--primary); }
+        .bg-super { background-color: var(--super); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .nav-active { color: #0f766e; font-weight: 900; border-top: 3px solid #0f766e; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        select { appearance: none; -webkit-appearance: none; }
+        /* Font SweetAlert disamakan */
+        .swal2-popup { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif !important; border-radius: 20px !important; }
+        .swal2-title { font-weight: 900 !important; color: #0f766e !important; }
     </style>
 </head>
-<body>
+<body class="bg-[#f0fdf4] pb-24 min-h-screen font-sans text-gray-900">
 
-    <div class="header">
-        <h1 class="logo">PLAY LUNA</h1>
-        <div class="subtitle">GAMING HUB</div>
-    </div>
-
-    <div class="user-setup">
-        <label style="font-size: 0.8rem; color:#aaa; display:block; margin-bottom:8px; text-align:left;">PLAYER NAME</label>
-        <input type="text" id="globalName" placeholder="Ketik Nama Kamu..." oninput="saveGlobalName()">
-    </div>
-
-    <div class="game-grid">
-        <div class="game-card theme-ww" onclick="launchGame('werewolf')">
-            <div class="card-banner">
-                <div class="card-bg-glow" style="background: var(--ww-accent);"></div>
-                <span class="material-symbols-rounded card-icon" style="color: var(--ww-accent);">dark_mode</span>
-            </div>
-            <div class="card-info">
-                <h2 class="card-title">Werewolf</h2>
-                <p class="card-desc">Cari pengkhianat di desa atau jadilah pemangsa. Permainan deduksi sosial.</p>
-                <div class="tags">
-                    <span class="tag">🎭 4-12 Orang</span>
-                    <span class="tag">🎤 Butuh Host</span>
-                </div>
-                <button class="btn-play">MAIN SEKARANG</button>
+    <div id="tab-awal" class="hidden p-6 max-w-md mx-auto text-center">
+        <div class="mb-10 pt-10 flex flex-col items-center">
+            <img src="logo.png" alt="Logo KONEKTA" class="w-24 h-auto mb-4 object-contain drop-shadow-sm">
+            <h1 class="text-5xl font-black text-[#0f766e] tracking-tighter mb-2">KONEKTA</h1>
+            <p class="text-gray-500 text-sm font-medium tracking-widest uppercase">Terhubung Lebih Dekat</p>
+            <div class="mt-8 mb-4 px-2">
+                <h3 class="text-lg font-black text-gray-800 italic mb-2">"Satu Aplikasi, Ribuan Koneksi."</h3>
+                <p class="text-gray-600 text-xs leading-relaxed font-medium">
+                    <span class="text-teal-700 font-bold">KONEKTA</span> adalah ekosistem digital untuk kita melangkah bersama. Jadikan setiap kehadiranmu bermakna.
+                </p>
             </div>
         </div>
 
-        <div class="game-card theme-gw" onclick="launchGame('geometry')">
-            <div class="card-banner">
-                <div class="card-bg-glow" style="background: var(--gw-accent);"></div>
-                <span class="material-symbols-rounded card-icon" style="color: var(--gw-accent);">token</span>
+        <div class="bg-white p-6 rounded-[2.5rem] shadow-xl border border-green-100 text-left relative z-10">
+            <div class="flex bg-gray-50 rounded-full p-1 mb-6 text-center">
+                <button id="btn-auth-member" class="flex-1 py-3 rounded-full text-[11px] font-black bg-white shadow-sm text-primary uppercase tracking-wide">Konektor</button>
+                <button id="btn-auth-gm" class="flex-1 py-3 rounded-full text-[11px] font-black text-gray-400 uppercase tracking-wide">Game Master</button>
             </div>
-            <div class="card-info">
-                <h2 class="card-title">Geometry War</h2>
-                <p class="card-desc">Ular tangga tempur dengan kartu serangan dan strategi neon.</p>
-                <div class="tags">
-                    <span class="tag">🎲 2-6 Orang</span>
-                    <span class="tag">⚡ Casual</span>
+
+            <div id="form-member">
+                <div id="member-register-fields" class="space-y-4">
+                    <input type="text" id="reg-name" placeholder="Nama Lengkap" class="w-full p-4 bg-white rounded-2xl border-2 border-gray-300 outline-none focus:border-primary transition-all font-bold text-gray-700">
+                    <input type="text" inputmode="numeric" id="reg-nik" placeholder="NIK (16 Digit)" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 16)" class="w-full p-4 bg-white rounded-2xl border-2 border-gray-300 outline-none focus:border-primary transition-all font-bold text-gray-700">
+                    
+                    <select id="reg-domicile" class="w-full p-4 bg-white rounded-2xl border-2 border-gray-300 outline-none focus:border-primary transition-all font-bold text-gray-700 text-sm">
+                        <option value="" disabled selected>Pilih Domisili (Kec/Kel)</option>
+                        <option value="LUAR SURABAYA">LUAR SURABAYA</option>
+                        <option value="(Asemrowo) Asemrowo">(Asemrowo) Asemrowo</option>
+                        <option value="(Asemrowo) Genting Kalianak">(Asemrowo) Genting Kalianak</option>
+                        <option value="(Asemrowo) Tambak Sarioso">(Asemrowo) Tambak Sarioso</option>
+                        <option value="(Benowo) Kandangan">(Benowo) Kandangan</option>
+                        <option value="(Benowo) Romokalisari">(Benowo) Romokalisari</option>
+                        <option value="(Benowo) Sememi">(Benowo) Sememi</option>
+                        <option value="(Benowo) Tambak Oso Wilangon">(Benowo) Tambak Oso Wilangon</option>
+                        <option value="(Bubutan) Alon-Alon Contong">(Bubutan) Alon-Alon Contong</option>
+                        <option value="(Bubutan) Bubutan">(Bubutan) Bubutan</option>
+                        <option value="(Bubutan) Gundih">(Bubutan) Gundih</option>
+                        <option value="(Bubutan) Jepara">(Bubutan) Jepara</option>
+                        <option value="(Bubutan) Tembok Dukuh">(Bubutan) Tembok Dukuh</option>
+                        <option value="(Bulak) Bulak">(Bulak) Bulak</option>
+                        <option value="(Bulak) Kedung Cowek">(Bulak) Kedung Cowek</option>
+                        <option value="(Bulak) Kenjeran">(Bulak) Kenjeran</option>
+                        <option value="(Bulak) Sukolilo Baru">(Bulak) Sukolilo Baru</option>
+                        <option value="(Dukuh Pakis) Dukuh Kupang">(Dukuh Pakis) Dukuh Kupang</option>
+                        <option value="(Dukuh Pakis) Dukuh Pakis">(Dukuh Pakis) Dukuh Pakis</option>
+                        <option value="(Dukuh Pakis) Gunungsari">(Dukuh Pakis) Gunungsari</option>
+                        <option value="(Dukuh Pakis) Pradahkali Kendal">(Dukuh Pakis) Pradahkali Kendal</option>
+                        <option value="(Gayungan) Dukuh Menanggal">(Gayungan) Dukuh Menanggal</option>
+                        <option value="(Gayungan) Gayungan">(Gayungan) Gayungan</option>
+                        <option value="(Gayungan) Ketintang">(Gayungan) Ketintang</option>
+                        <option value="(Gayungan) Menanggal">(Gayungan) Menanggal</option>
+                        <option value="(Genteng) Embong Kaliasin">(Genteng) Embong Kaliasin</option>
+                        <option value="(Genteng) Genteng">(Genteng) Genteng</option>
+                        <option value="(Genteng) Kapasari">(Genteng) Kapasari</option>
+                        <option value="(Genteng) Ketabang">(Genteng) Ketabang</option>
+                        <option value="(Genteng) Peneleh">(Genteng) Peneleh</option>
+                        <option value="(Gubeng) Airlangga">(Gubeng) Airlangga</option>
+                        <option value="(Gubeng) Baratajaya">(Gubeng) Baratajaya</option>
+                        <option value="(Gubeng) Gubeng">(Gubeng) Gubeng</option>
+                        <option value="(Gubeng) Kertajaya">(Gubeng) Kertajaya</option>
+                        <option value="(Gubeng) Mojo">(Gubeng) Mojo</option>
+                        <option value="(Gubeng) Pucang Sewu">(Gubeng) Pucang Sewu</option>
+                        <option value="(Gunung Anyar) Gunung Anyar">(Gunung Anyar) Gunung Anyar</option>
+                        <option value="(Gunung Anyar) Gunung Anyar Tambak">(Gunung Anyar) Gunung Anyar Tambak</option>
+                        <option value="(Gunung Anyar) Rungkut Menanggal">(Gunung Anyar) Rungkut Menanggal</option>
+                        <option value="(Gunung Anyar) Rungkut Tengah">(Gunung Anyar) Rungkut Tengah</option>
+                        <option value="(Jambangan) Jambangan">(Jambangan) Jambangan</option>
+                        <option value="(Jambangan) Karah">(Jambangan) Karah</option>
+                        <option value="(Jambangan) Kebonsari">(Jambangan) Kebonsari</option>
+                        <option value="(Jambangan) Pagesangan">(Jambangan) Pagesangan</option>
+                        <option value="(Karang Pilang) Karang Pilang">(Karang Pilang) Karang Pilang</option>
+                        <option value="(Karang Pilang) Kebraon">(Karang Pilang) Kebraon</option>
+                        <option value="(Karang Pilang) Kedurus">(Karang Pilang) Kedurus</option>
+                        <option value="(Karang Pilang) Warugunung">(Karang Pilang) Warugunung</option>
+                        <option value="(Kenjeran) Bulak Banteng">(Kenjeran) Bulak Banteng</option>
+                        <option value="(Kenjeran) Sidotopo Wetan">(Kenjeran) Sidotopo Wetan</option>
+                        <option value="(Kenjeran) Tambak Wedi">(Kenjeran) Tambak Wedi</option>
+                        <option value="(Kenjeran) Tanah Kali Kedinding">(Kenjeran) Tanah Kali Kedinding</option>
+                        <option value="(Krembangan) Dupak">(Krembangan) Dupak</option>
+                        <option value="(Krembangan) Kemayoran">(Krembangan) Kemayoran</option>
+                        <option value="(Krembangan) Krembangan Selatan">(Krembangan) Krembangan Selatan</option>
+                        <option value="(Krembangan) Morokrembangan">(Krembangan) Morokrembangan</option>
+                        <option value="(Krembangan) Perak Barat">(Krembangan) Perak Barat</option>
+                        <option value="(Lakarsantri) Bangkingan">(Lakarsantri) Bangkingan</option>
+                        <option value="(Lakarsantri) Jeruk">(Lakarsantri) Jeruk</option>
+                        <option value="(Lakarsantri) Lakarsantri">(Lakarsantri) Lakarsantri</option>
+                        <option value="(Lakarsantri) Lidah Kulon">(Lakarsantri) Lidah Kulon</option>
+                        <option value="(Lakarsantri) Lidah Wetan">(Lakarsantri) Lidah Wetan</option>
+                        <option value="(Lakarsantri) Sumur Welut">(Lakarsantri) Sumur Welut</option>
+                        <option value="(Mulyorejo) Dukuh Sutorejo">(Mulyorejo) Dukuh Sutorejo</option>
+                        <option value="(Mulyorejo) Kalijudan">(Mulyorejo) Kalijudan</option>
+                        <option value="(Mulyorejo) Kalisari">(Mulyorejo) Kalisari</option>
+                        <option value="(Mulyorejo) Kejawen Putih Tambak">(Mulyorejo) Kejawen Putih Tambak</option>
+                        <option value="(Mulyorejo) Manyar Sabrangan">(Mulyorejo) Manyar Sabrangan</option>
+                        <option value="(Mulyorejo) Mulyorejo">(Mulyorejo) Mulyorejo</option>
+                        <option value="(Pabean Cantian) Bongkaran">(Pabean Cantian) Bongkaran</option>
+                        <option value="(Pabean Cantian) Krembangan Utara">(Pabean Cantian) Krembangan Utara</option>
+                        <option value="(Pabean Cantian) Nyamplungan">(Pabean Cantian) Nyamplungan</option>
+                        <option value="(Pabean Cantian) Perak Timur">(Pabean Cantian) Perak Timur</option>
+                        <option value="(Pabean Cantian) Perak Utara">(Pabean Cantian) Perak Utara</option>
+                        <option value="(Pakal) Babat Jerawat">(Pakal) Babat Jerawat</option>
+                        <option value="(Pakal) Benowo">(Pakal) Benowo</option>
+                        <option value="(Pakal) Pakal">(Pakal) Pakal</option>
+                        <option value="(Pakal) Sumberrejo">(Pakal) Sumberrejo</option>
+                        <option value="(Rungkut) Kali Rungkut">(Rungkut) Kali Rungkut</option>
+                        <option value="(Rungkut) Kedung Baruk">(Rungkut) Kedung Baruk</option>
+                        <option value="(Rungkut) Medokan Ayu">(Rungkut) Medokan Ayu</option>
+                        <option value="(Rungkut) Penjaringan Sari">(Rungkut) Penjaringan Sari</option>
+                        <option value="(Rungkut) Rungkut Kidul">(Rungkut) Rungkut Kidul</option>
+                        <option value="(Rungkut) Wonorejo Rungkut">(Rungkut) Wonorejo Rungkut</option>
+                        <option value="(Sambikerep) Bringin">(Sambikerep) Bringin</option>
+                        <option value="(Sambikerep) Lontar">(Sambikerep) Lontar</option>
+                        <option value="(Sambikerep) Made">(Sambikerep) Made</option>
+                        <option value="(Sambikerep) Sambikerep">(Sambikerep) Sambikerep</option>
+                        <option value="(Sawahan) Banyu Urip">(Sawahan) Banyu Urip</option>
+                        <option value="(Sawahan) Kupang Krajan">(Sawahan) Kupang Krajan</option>
+                        <option value="(Sawahan) Pakis">(Sawahan) Pakis</option>
+                        <option value="(Sawahan) Petemon">(Sawahan) Petemon</option>
+                        <option value="(Sawahan) Putat Jaya">(Sawahan) Putat Jaya</option>
+                        <option value="(Sawahan) Sawahan">(Sawahan) Sawahan</option>
+                        <option value="(Semampir) Ampel">(Semampir) Ampel</option>
+                        <option value="(Semampir) Pegirian">(Semampir) Pegirian</option>
+                        <option value="(Semampir) Sidotopo">(Semampir) Sidotopo</option>
+                        <option value="(Semampir) Ujung">(Semampir) Ujung</option>
+                        <option value="(Semampir) Wonokusumo">(Semampir) Wonokusumo</option>
+                        <option value="(Simokerto) Kapasan">(Simokerto) Kapasan</option>
+                        <option value="(Simokerto) Sidodadi">(Simokerto) Sidodadi</option>
+                        <option value="(Simokerto) Simokerto">(Simokerto) Simokerto</option>
+                        <option value="(Simokerto) Simolawang">(Simokerto) Simolawang</option>
+                        <option value="(Simokerto) Tambakrejo">(Simokerto) Tambakrejo</option>
+                        <option value="(Suko Manunggal) Putat Gede">(Suko Manunggal) Putat Gede</option>
+                        <option value="(Suko Manunggal) Simomulyo">(Suko Manunggal) Simomulyo</option>
+                        <option value="(Suko Manunggal) Simomulyo Baru">(Suko Manunggal) Simomulyo Baru</option>
+                        <option value="(Suko Manunggal) Sono Kwijenan">(Suko Manunggal) Sono Kwijenan</option>
+                        <option value="(Suko Manunggal) Suko Manunggal">(Suko Manunggal) Suko Manunggal</option>
+                        <option value="(Suko Manunggal) Tanjungsari">(Suko Manunggal) Tanjungsari</option>
+                        <option value="(Sukolilo) Gebang Putih">(Sukolilo) Gebang Putih</option>
+                        <option value="(Sukolilo) Keputih">(Sukolilo) Keputih</option>
+                        <option value="(Sukolilo) Klampis Ngasem">(Sukolilo) Klampis Ngasem</option>
+                        <option value="(Sukolilo) Medokan Semampir">(Sukolilo) Medokan Semampir</option>
+                        <option value="(Sukolilo) Menur Pumpungan">(Sukolilo) Menur Pumpungan</option>
+                        <option value="(Sukolilo) Ngiden Jangkungan">(Sukolilo) Ngiden Jangkungan</option>
+                        <option value="(Sukolilo) Semolowaru">(Sukolilo) Semolowaru</option>
+                        <option value="(Tambaksari) Dukuh Setro">(Tambaksari) Dukuh Setro</option>
+                        <option value="(Tambaksari) Gading">(Tambaksari) Gading</option>
+                        <option value="(Tambaksari) Kapasmadya Baru">(Tambaksari) Kapasmadya Baru</option>
+                        <option value="(Tambaksari) Pacar Keling">(Tambaksari) Pacar Keling</option>
+                        <option value="(Tambaksari) Pacar Kembang">(Tambaksari) Pacar Kembang</option>
+                        <option value="(Tambaksari) Ploso">(Tambaksari) Ploso</option>
+                        <option value="(Tambaksari) Rangkah">(Tambaksari) Rangkah</option>
+                        <option value="(Tambaksari) Tambaksari">(Tambaksari) Tambaksari</option>
+                        <option value="(Tandes) Balongsari">(Tandes) Balongsari</option>
+                        <option value="(Tandes) Banjar Sugihan">(Tandes) Banjar Sugihan</option>
+                        <option value="(Tandes) Karangpoh">(Tandes) Karangpoh</option>
+                        <option value="(Tandes) Manukan Kulon">(Tandes) Manukan Kulon</option>
+                        <option value="(Tandes) Manukan Wetan">(Tandes) Manukan Wetan</option>
+                        <option value="(Tandes) Tandes">(Tandes) Tandes</option>
+                        <option value="(Tegalsari) Dr. Sutomo">(Tegalsari) Dr. Sutomo</option>
+                        <option value="(Tegalsari) Kedungdoro">(Tegalsari) Kedungdoro</option>
+                        <option value="(Tegalsari) Keputran">(Tegalsari) Keputran</option>
+                        <option value="(Tegalsari) Tegalsari">(Tegalsari) Tegalsari</option>
+                        <option value="(Tegalsari) Wonorejo Tegalsari">(Tegalsari) Wonorejo Tegalsari</option>
+                        <option value="(Tenggilis Mejoyo) Kendangsari">(Tenggilis Mejoyo) Kendangsari</option>
+                        <option value="(Tenggilis Mejoyo) Kutisari">(Tenggilis Mejoyo) Kutisari</option>
+                        <option value="(Tenggilis Mejoyo) Panjang Jiwo">(Tenggilis Mejoyo) Panjang Jiwo</option>
+                        <option value="(Tenggilis Mejoyo) Tenggilis Mejoyo">(Tenggilis Mejoyo) Tenggilis Mejoyo</option>
+                        <option value="(Wiyung) Babatan">(Wiyung) Babatan</option>
+                        <option value="(Wiyung) Balas Klumprik">(Wiyung) Balas Klumprik</option>
+                        <option value="(Wiyung) Jajar Tunggal">(Wiyung) Jajar Tunggal</option>
+                        <option value="(Wiyung) Wiyung">(Wiyung) Wiyung</option>
+                        <option value="(Wonocolo) Bendul Merisi">(Wonocolo) Bendul Merisi</option>
+                        <option value="(Wonocolo) Jemur Wonosari">(Wonocolo) Jemur Wonosari</option>
+                        <option value="(Wonocolo) Margorejo">(Wonocolo) Margorejo</option>
+                        <option value="(Wonocolo) Sidosermo">(Wonocolo) Sidosermo</option>
+                        <option value="(Wonocolo) Siwalankerto">(Wonocolo) Siwalankerto</option>
+                        <option value="(Wonokromo) Darmo">(Wonokromo) Darmo</option>
+                        <option value="(Wonokromo) Jagir">(Wonokromo) Jagir</option>
+                        <option value="(Wonokromo) Ngagel">(Wonokromo) Ngagel</option>
+                        <option value="(Wonokromo) Ngagelrejo">(Wonokromo) Ngagelrejo</option>
+                        <option value="(Wonokromo) Sawunggaling">(Wonokromo) Sawunggaling</option>
+                        <option value="(Wonokromo) Wonokromo">(Wonokromo) Wonokromo</option>
+                    </select>
+
+                    <input type="text" inputmode="numeric" id="reg-wa" placeholder="No. WhatsApp" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full p-4 bg-white rounded-2xl border-2 border-gray-300 outline-none focus:border-primary transition-all font-bold text-gray-700">
+                    <input type="text" id="reg-ref" placeholder="ID Pengajak (Opsional)" class="w-full p-4 bg-white rounded-2xl border-2 border-gray-300 outline-none text-xs uppercase focus:border-primary transition-all font-bold text-gray-700">
+                    <button id="btn-daftar" class="w-full bg-gradient-to-r from-teal-600 to-emerald-600 text-white py-4 rounded-2xl font-black uppercase text-xs active:scale-95 transition-all shadow-lg mt-2 tracking-widest">Gabung Jadi Konektor</button>
+                    <button id="btn-goto-login" class="text-primary text-[10px] font-black uppercase underline mt-4 block mx-auto italic text-center">Masuk dengan NIK</button>
                 </div>
-                <button class="btn-play">MAIN SEKARANG</button>
+                <div id="member-login-fields" class="hidden space-y-3 text-center">
+                    <input type="text" inputmode="numeric" id="login-nik" placeholder="16 Digit NIK" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 16)" class="w-full p-5 bg-white rounded-2xl border-2 border-gray-300 focus:border-primary outline-none text-center font-black text-lg tracking-widest text-primary">
+                    <button id="btn-masuk" class="w-full bg-primary text-white py-4 rounded-2xl font-black uppercase text-xs active:scale-95 shadow-lg">Masuk Aplikasi</button>
+                    <button id="btn-goto-register" class="text-gray-400 text-[10px] font-bold uppercase mt-4 block mx-auto italic text-center">Kembali Mendaftar</button>
+                </div>
+            </div>
+
+            <div id="form-gm" class="hidden space-y-4">
+                <input type="text" id="gm-user" placeholder="Username" class="w-full p-4 bg-white rounded-2xl border-2 border-gray-300 outline-none focus:border-primary font-bold text-gray-700">
+                <input type="password" id="gm-pass" placeholder="Password" class="w-full p-4 bg-white rounded-2xl border-2 border-gray-300 outline-none focus:border-primary font-bold text-gray-700">
+                <button id="btn-login-gm" class="w-full bg-gray-800 text-white py-4 rounded-2xl font-bold uppercase text-xs active:scale-95 shadow-lg">Login Console</button>
+            </div>
+        </div>
+        <div class="mt-8 flex flex-col gap-3">
+            <button id="btn-open-guide" class="text-teal-700 font-bold text-xs uppercase tracking-widest bg-white/50 px-6 py-4 rounded-2xl border border-teal-100 hover:bg-white transition-all shadow-sm">📘 Baca Panduan Pengguna</button>
+        </div>
+    </div>
+
+    <div id="tab-anggota" class="hidden p-5 max-w-md mx-auto text-center">
+        <div class="bg-gradient-to-br from-teal-600 to-emerald-800 text-white p-8 rounded-[2.5rem] shadow-2xl mb-6 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+            <p class="text-[10px] opacity-80 uppercase tracking-[0.2em] font-black text-center relative z-10">KONEKTA POIN</p>
+            <h1 id="user-points" class="text-7xl font-black mt-2 text-center relative z-10 tracking-tighter">0</h1>
+            <div class="mt-8 border-t border-white/20 pt-5 text-center relative z-10">
+                <p id="user-name" class="font-black text-xl uppercase italic text-center tracking-wide"></p>
+                <p id="user-id-text" class="bg-black/20 px-6 py-2 rounded-full font-mono text-xl font-bold mt-2 inline-block text-center backdrop-blur-sm border border-white/20 shadow-md"></p>
+            </div>
+        </div>
+        
+        <div id="section-qr">
+            <div class="grid grid-cols-2 gap-3 mb-4 text-center">
+                <div class="bg-white p-4 rounded-2xl border border-green-100 shadow-sm flex flex-col items-center justify-center">
+                    <span class="text-2xl mb-1">🆔</span>
+                    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">ID Konektor</span>
+                </div>
+                <button id="btn-scan-event" class="bg-white p-4 rounded-2xl border-2 border-dashed border-teal-500 shadow-lg active:scale-95 flex flex-col items-center justify-center group hover:bg-teal-50 transition-all">
+                    <span class="text-2xl mb-1 group-hover:scale-110 transition-transform">📷</span>
+                    <span class="text-[9px] font-black text-teal-600 uppercase tracking-widest">Scan QR / Link</span>
+                </button>
+            </div>
+            <div class="bg-white rounded-[2.5rem] shadow-sm border border-green-100 p-6 text-center">
+                <div id="qrcode-area" class="flex justify-center mb-6 p-2"></div>
+                <h4 class="text-[10px] font-black uppercase text-gray-400 mb-4 italic border-b pb-2 tracking-widest text-center">Jejak Aktivitas</h4>
+                <div id="history-list" class="space-y-2 max-h-64 overflow-y-auto hide-scrollbar"></div>
+                <button id="btn-logout-member" class="text-[9px] font-black text-red-400 mt-8 block mx-auto underline italic uppercase">Keluar Aplikasi</button>
+            </div>
+        </div>
+        <div id="section-redeem" class="hidden space-y-4">
+            <div id="redeem-catalog" class="grid grid-cols-1 gap-3"></div>
+        </div>
+    </div>
+
+    <div id="tab-gm" class="hidden p-5 max-w-md mx-auto text-center">
+        <div class="flex justify-between items-center mb-6 px-2">
+            <div class="flex items-center gap-3">
+                <img src="logo.png" alt="Logo" class="w-12 h-auto object-contain">
+                <div>
+                    <h2 class="text-2xl font-black uppercase text-[#0f766e] tracking-tighter text-left">KONEKTA</h2>
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest text-left">Console Admin</p>
+                </div>
+            </div>
+            <button id="btn-logout-gm" class="bg-red-50 text-red-500 px-4 py-2 rounded-full text-[10px] font-black uppercase hover:bg-red-100 transition-colors">Keluar</button>
+        </div>
+
+        <div id="super-stats" class="hidden grid grid-cols-1 mb-6 text-center">
+            <div class="bg-super text-white p-6 rounded-[2rem] shadow-xl relative overflow-hidden">
+                <p class="text-[10px] font-black uppercase tracking-[0.2em] opacity-60 text-center mb-2">Total Populasi</p>
+                <h3 id="total-members" class="text-5xl font-black mt-1 text-center tracking-tighter">0</h3>
+                <p class="text-[10px] opacity-40 uppercase mt-1">Konektor Terdaftar</p>
+                <div class="flex gap-2 mt-6">
+                    <button id="btn-view-regions" class="flex-1 bg-teal-800 text-white py-3 rounded-xl text-[10px] font-black uppercase active:scale-95 hover:bg-teal-900 transition-all border border-teal-700">Lihat Wilayah</button>
+                    <button id="btn-export-csv" class="flex-1 bg-white/10 border border-white/10 text-white py-3 rounded-xl text-[10px] font-black uppercase active:scale-95 hover:bg-white/20 transition-all">Download User .CSV</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex bg-white rounded-full p-1.5 mb-6 shadow-sm border border-green-50 text-center">
+            <button id="nav-gm-event" class="flex-1 py-3 rounded-full text-[10px] font-black bg-primary text-white uppercase text-center tracking-wide">Event Manager</button>
+            <button id="nav-gm-orders" class="flex-1 py-3 rounded-full text-[10px] font-black text-gray-400 uppercase text-center tracking-wide">Redeem</button>
+        </div>
+
+        <div id="gm-section-event">
+            <div id="gm-event-selector" class="mb-6 space-y-4">
+                <h3 class="text-[10px] font-black uppercase text-gray-400 tracking-widest text-center border-b border-gray-100 pb-2">Lokasi Aktif Hari Ini</h3>
+                <div id="active-locations-list" class="space-y-3"></div>
+                
+                <button id="btn-view-archive" class="hidden w-full py-4 bg-gray-100 border border-gray-200 rounded-3xl text-[10px] font-black text-gray-500 uppercase active:scale-95 transition-all text-center shadow-sm hover:bg-gray-200 mt-2">
+                    📂 Arsip Event Selesai
+                </button>
+
+                <button id="btn-show-create" class="w-full py-5 bg-white border-2 border-dashed border-teal-200 rounded-3xl text-[11px] font-black text-teal-600 uppercase active:scale-95 transition-all text-center shadow-sm hover:bg-teal-50 group mt-3">
+                    <span class="group-hover:scale-110 inline-block transition-transform mr-1">+</span> Buat Event Baru
+                </button>
+            </div>
+
+            <div id="gm-archive-list" class="hidden mb-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                    <h3 class="text-[10px] font-black uppercase text-gray-400 tracking-widest">Riwayat Event (Selesai)</h3>
+                    <button onclick="closeArchive()" class="text-xs font-bold text-red-500">Tutup</button>
+                </div>
+                <div id="archive-items" class="space-y-3"></div>
+            </div>
+
+            <div id="gm-create-event" class="hidden bg-white p-8 rounded-[3rem] shadow-2xl border border-green-100 space-y-4 relative">
+                <button id="btn-cancel-event" class="absolute top-6 right-6 text-gray-300 hover:text-red-500 font-bold text-xl">×</button>
+                <h3 class="text-center font-black uppercase text-lg text-gray-800 tracking-tight mb-4">Setup Lokasi</h3>
+                <input type="text" id="ev-name" placeholder="Nama Kegiatan" class="w-full p-4 bg-gray-50 rounded-2xl border-2 border-green-100 outline-none font-bold text-sm focus:border-primary transition-all">
+                
+                <div class="w-full text-left ml-2 mb-1 mt-2">
+                    <label class="text-[9px] font-black text-teal-600 uppercase tracking-widest">Tanggal Pelaksanaan</label>
+                </div>
+                <input type="date" id="ev-date" class="w-full p-4 bg-gray-50 rounded-2xl border-2 border-green-100 outline-none font-bold text-gray-700 text-center focus:border-primary transition-all cursor-pointer">
+                
+                <input type="text" id="ev-loc" placeholder="Lokasi (Contoh: Zona A)" class="w-full p-4 bg-gray-50 rounded-2xl border-2 border-green-100 outline-none font-bold text-sm focus:border-primary transition-all">
+                
+                <input type="text" id="ev-creator" placeholder="Nama Penanggung Jawab (Wajib)" class="w-full p-4 bg-gray-50 rounded-2xl border-2 border-green-100 outline-none font-bold text-sm focus:border-primary transition-all text-teal-700 mt-2">
+                <input type="text" inputmode="numeric" id="ev-wa" placeholder="No. WhatsApp Penanggung Jawab (Wajib)" class="w-full p-4 bg-gray-50 rounded-2xl border-2 border-green-100 outline-none font-bold text-sm focus:border-primary transition-all text-teal-700 mt-2">
+                
+                <select id="ev-points" class="w-full p-4 bg-gray-50 rounded-2xl border-2 border-green-100 outline-none font-black text-primary text-center">
+                    <option value="5">5 Poin</option><option value="10" selected>10 Poin</option><option value="20">20 Poin</option>
+                </select>
+                <button id="btn-submit-event" class="w-full bg-gradient-to-r from-teal-600 to-emerald-600 text-white py-5 rounded-2xl font-black shadow-lg uppercase text-xs active:scale-95 text-center tracking-widest mt-2">AKTIFKAN SEKARANG</button>
+            </div>
+
+            <div id="gm-active-display" class="hidden bg-white p-8 rounded-[3rem] shadow-2xl border-4 border-teal-500 text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-teal-500 animate-pulse"></div>
+                <h2 id="display-ev-name" class="text-3xl font-black italic text-gray-800 uppercase leading-tight text-center mb-1"></h2>
+                <p id="display-ev-info" class="text-[10px] font-bold text-teal-600 mt-1 uppercase tracking-widest text-center bg-teal-50 inline-block px-3 py-1 rounded-full"></p>
+                <p id="display-ev-creator" class="text-[9px] text-gray-400 mt-2 font-black uppercase tracking-widest"></p>
+
+                <div class="my-8 flex justify-center p-4 bg-white rounded-[2rem] shadow-inner border border-gray-100"><div id="ev-qrcode-area"></div></div>
+                <p class="text-[10px] text-gray-400 mb-4 italic font-bold">Konektor Scan QR di atas, ATAU</p>
+                
+                <button id="btn-gm-scan-member" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-black uppercase shadow-lg mb-2 flex justify-center items-center gap-3 active:scale-95 hover:bg-gray-800 transition-colors">
+                    <span class="text-xl">📷</span> <span class="text-[10px] tracking-widest">Scan QR Konektor</span>
+                </button>
+                <button id="btn-view-attendees" class="w-full bg-teal-50 text-teal-700 border border-teal-100 py-3 rounded-2xl font-black uppercase shadow-sm mb-4 flex justify-center items-center gap-2 active:scale-95 hover:bg-teal-100 transition-colors">
+                    <span class="text-lg">👥</span> <span class="text-[10px] tracking-widest">Lihat Data Peserta</span>
+                </button>
+                
+                <div class="flex gap-2">
+                    <button id="btn-close-view" class="flex-1 bg-gray-100 py-3 rounded-xl text-[9px] font-black uppercase active:scale-95 text-gray-500 hover:bg-gray-200">Kembali</button>
+                    <button id="btn-end-event" class="flex-1 bg-red-50 text-red-500 py-3 rounded-xl text-[9px] font-black uppercase active:scale-95 hover:bg-red-100">Event Selesai</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="gm-section-orders" class="hidden space-y-4">
+            <div id="gm-order-list" class="space-y-4 text-center"></div>
+        </div>
+    </div>
+
+    <div id="attendee-modal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col shadow-2xl relative">
+            <div class="p-6 pb-2 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-black text-[#0f766e] uppercase">Data Kehadiran</h2>
+                    <p id="attendee-count" class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">0 Peserta</p>
+                </div>
+                <button id="btn-close-attendee" class="bg-gray-200 w-8 h-8 rounded-full flex items-center justify-center text-gray-500 font-bold hover:bg-red-100 hover:text-red-500 transition-all">✕</button>
+            </div>
+            <div class="p-0 overflow-y-auto flex-1 bg-white">
+                <table class="w-full text-left">
+                    <thead class="bg-teal-50 text-teal-800 text-[9px] uppercase font-black tracking-wider sticky top-0">
+                        <tr>
+                            <th class="p-4 border-b border-teal-100">Nama / NIK</th>
+                            <th class="p-4 border-b border-teal-100 text-right">Waktu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendee-list-body" class="text-xs font-bold text-gray-600"></tbody>
+                </table>
+            </div>
+            <div class="p-4 border-t border-gray-100 bg-gray-50">
+                <button id="btn-download-attendee-csv" class="w-full bg-green-600 text-white py-3 rounded-xl font-black text-xs uppercase shadow-lg active:scale-95 hover:bg-green-700 flex justify-center items-center gap-2">
+                    📥 Download Laporan .CSV
+                </button>
             </div>
         </div>
     </div>
 
-    <div class="footer">
-        LUNA HUB v2.0 • Dibuat oleh <a href="https://www.instagram.com/mas_uuth/" target="_blank">Mas Uuth</a>
+    <div id="member-nav" class="hidden fixed bottom-6 left-6 right-6 bg-white/90 backdrop-blur-md border border-gray-200 p-2 rounded-full flex justify-around max-w-sm mx-auto z-40 shadow-2xl">
+        <button id="nav-qr" class="flex-1 py-3 rounded-full flex flex-col items-center justify-center nav-active transition-all">
+            <span class="text-xl mb-0.5">🏠</span><span class="text-[7px] font-black uppercase tracking-widest">Home</span>
+        </button>
+        <button id="nav-redeem" class="flex-1 py-3 rounded-full flex flex-col items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
+            <span class="text-xl mb-0.5">🎁</span><span class="text-[7px] font-black uppercase tracking-widest">Redeem</span>
+        </button>
     </div>
 
-    <script>
-        // 1. Load Nama saat Halaman Dibuka
-        window.onload = () => {
-            const savedName = localStorage.getItem("luna_global_name");
-            if(savedName) document.getElementById("globalName").value = savedName;
+    <div id="guide-modal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col shadow-2xl relative">
+            <button id="btn-close-guide" class="absolute top-4 right-4 bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center text-gray-500 hover:bg-red-100 hover:text-red-500 font-bold transition-all z-10">✕</button>
+            <div class="p-6 overflow-y-auto">
+                <h3 class="font-black text-gray-800 text-lg mb-4">Panduan Singkat</h3>
+                <p class="text-sm text-gray-600">Gunakan fitur ini untuk memahami cara kerja aplikasi KONEKTA bagi Member dan Game Master.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="scanner-modal" class="hidden fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-6 text-white text-center">
+        <div class="relative w-full max-w-sm aspect-square mb-8">
+            <div id="reader" class="w-full h-full rounded-3xl overflow-hidden border-4 border-teal-500"></div>
+        </div>
+        <button id="btn-close-scanner" class="bg-white/10 border border-white/20 text-white px-8 py-3 rounded-full text-xs font-black uppercase">Tutup Kamera</button>
+    </div>
+
+    <div id="region-stats-modal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col shadow-2xl relative">
+            <div class="p-6 pb-2 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-black text-[#0f766e] uppercase">Statistik Wilayah</h2>
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Sebaran Konektor</p>
+                </div>
+                <button id="btn-close-regions" class="bg-gray-200 w-8 h-8 rounded-full flex items-center justify-center text-gray-500 font-bold hover:bg-red-100 hover:text-red-500 transition-all">✕</button>
+            </div>
+            <div class="p-0 overflow-y-auto flex-1">
+                <table class="w-full text-left">
+                    <thead class="bg-teal-50 text-teal-800 text-[9px] uppercase font-black tracking-wider sticky top-0">
+                        <tr><th class="p-4 border-b border-teal-100">Kecamatan / Kelurahan</th><th class="p-4 border-b border-teal-100 text-center">Total</th></tr>
+                    </thead>
+                    <tbody id="region-table-body" class="text-xs font-bold text-gray-600"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc, increment, setDoc, collection, addDoc, query, where, orderBy, limit, getDocs, onSnapshot, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2nV-dKXEl-5ui0WQienkFiQ-XfugDzPE",
+            authDomain: "matur-suwon.firebaseapp.com",
+            projectId: "matur-suwon",
+            storageBucket: "matur-suwon.firebasestorage.app",
+            messagingSenderId: "293712183178",
+            appId: "1:293712183178:web:c9a8ab1e96e1fd68a91273"
         };
 
-        // 2. Simpan Nama Setiap Mengetik
-        function saveGlobalName() {
-            const name = document.getElementById("globalName").value.trim();
-            localStorage.setItem("luna_global_name", name);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        let html5QrCode = null;
+        let currentSelectedEventId = null;
+        let isGmScanning = false;
+        let currentAttendeeData = []; 
+
+        const CATALOG = [
+            { id: 'R01', name: 'Pulsa 20rb', cost: 100, type: 'Nomor HP' },
+            { id: 'R02', name: 'Beras 3kg', cost: 150, type: 'Alamat Lengkap' },
+            { id: 'R03', name: 'Paket Sembako', cost: 300, type: 'Alamat Lengkap' }
+        ];
+
+        function setupListeners() {
+            document.getElementById('btn-auth-member').onclick = () => toggleAuth('member');
+            document.getElementById('btn-auth-gm').onclick = () => toggleAuth('gm');
+            document.getElementById('btn-goto-login').onclick = () => toggleMemberView('login');
+            document.getElementById('btn-goto-register').onclick = () => toggleMemberView('register');
+            document.getElementById('btn-daftar').onclick = prosesDaftar;
+            document.getElementById('btn-masuk').onclick = restoreByNIK;
+            document.getElementById('btn-login-gm').onclick = loginAdmin;
+            document.getElementById('btn-logout-member').onclick = logout;
+            document.getElementById('btn-logout-gm').onclick = logout;
             
-            // Simpan juga ke key spesifik masing-masing game agar otomatis terisi
-            localStorage.setItem("ww_name", name.toUpperCase()); 
-            localStorage.setItem("ut_name", name);               
+            document.getElementById('btn-show-create').onclick = toggleEventForm;
+            document.getElementById('btn-cancel-event').onclick = toggleEventForm;
+            document.getElementById('btn-submit-event').onclick = createEvent;
+            document.getElementById('btn-close-view').onclick = closeEventView;
+            
+            document.getElementById('btn-end-event').onclick = endEvent;
+            
+            document.getElementById('btn-export-csv').onclick = exportDataCSV;
+            document.getElementById('btn-gm-scan-member').onclick = openGMScannerMode;
+
+            document.getElementById('nav-gm-event').onclick = () => showGMSection('event');
+            document.getElementById('nav-gm-orders').onclick = () => showGMSection('orders');
+            document.getElementById('nav-qr').onclick = () => showSection('qr');
+            document.getElementById('nav-redeem').onclick = () => showSection('redeem');
+            document.getElementById('btn-scan-event').onclick = openMemberScannerMode;
+            document.getElementById('btn-close-scanner').onclick = closeScanner;
+
+            document.getElementById('btn-open-guide').onclick = openGuide;
+            document.getElementById('btn-close-guide').onclick = closeGuide;
+
+            document.getElementById('btn-view-regions').onclick = openRegionStats;
+            document.getElementById('btn-close-regions').onclick = closeRegionStats;
+            
+            document.getElementById('btn-view-attendees').onclick = openAttendeeList;
+            document.getElementById('btn-close-attendee').onclick = closeAttendeeList;
+            document.getElementById('btn-download-attendee-csv').onclick = downloadAttendeeCSV;
+
+            document.getElementById('btn-view-archive').onclick = loadEventHistory;
         }
 
-        // 3. Navigasi ke Game
-        function launchGame(game) {
-            const name = document.getElementById("globalName").value.trim();
-            if(!name) {
-                alert("Isi nama dulu, Player!");
-                document.getElementById("globalName").focus();
-                return;
+        window.openGuide = () => { document.getElementById('guide-modal').classList.remove('hidden'); }
+        window.closeGuide = () => { document.getElementById('guide-modal').classList.add('hidden'); }
+        
+        window.openRegionStats = async () => {
+            const btn = document.getElementById('btn-view-regions');
+            const originalText = btn.innerText;
+            btn.innerText = "Memuat...";
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                const regionCounts = {};
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const dom = data.domicile || "Tidak Diketahui";
+                    regionCounts[dom] = (regionCounts[dom] || 0) + 1;
+                });
+                const sortedRegions = Object.entries(regionCounts).sort(([, a], [, b]) => b - a);
+                const tbody = document.getElementById('region-table-body');
+                tbody.innerHTML = "";
+                sortedRegions.forEach(([region, count], index) => {
+                    const isTop = index < 3 ? 'bg-yellow-50 text-yellow-800' : 'even:bg-gray-50';
+                    const rankIcon = index === 0 ? '🥇 ' : (index === 1 ? '🥈 ' : (index === 2 ? '🥉 ' : ''));
+                    tbody.innerHTML += `<tr class="${isTop} border-b border-gray-100 last:border-0 hover:bg-gray-100 transition-colors"><td class="p-4">${rankIcon}${region}</td><td class="p-4 text-center font-black">${count}</td></tr>`;
+                });
+                document.getElementById('region-stats-modal').classList.remove('hidden');
+            } catch (error) { Swal.fire("Error", error.message, "error"); } finally { btn.innerText = originalText; }
+        };
+
+        window.closeRegionStats = () => { document.getElementById('region-stats-modal').classList.add('hidden'); };
+
+        // --- FITUR HISTORY EVENT ---
+        window.loadEventHistory = async () => {
+            const list = document.getElementById('archive-items');
+            list.innerHTML = "<p class='text-center py-4 text-[10px] text-gray-400'>Memuat data...</p>";
+            document.getElementById('gm-archive-list').classList.remove('hidden');
+            document.getElementById('active-locations-list').classList.add('hidden');
+
+            const q = query(collection(db, "active_events"), where("status", "==", "ended"), limit(20));
+            const snap = await getDocs(q);
+
+            list.innerHTML = snap.empty ? '<p class="text-center py-4 text-[10px] text-gray-400 italic">Belum ada event selesai.</p>' : '';
+            
+            snap.forEach(d => {
+                const ev = d.data();
+                
+                let auditBtn = '';
+                if(ev.creatorWA) {
+                     const waMessage = `Apakah *"${ev.name}"* di *"${ev.location}"* pada tanggal *"${ev.date}"* benar adanya?\n\nMohon dikirim fotonya dong...`;
+                     const waLink = `https://wa.me/${ev.creatorWA}?text=${encodeURIComponent(waMessage)}`;
+                     auditBtn = `<a href="${waLink}" target="_blank" class="block text-center mt-2 text-[8px] font-black text-red-500 uppercase hover:underline">👮 Audit WA</a>`;
+                } else {
+                     auditBtn = `<span class="block text-center mt-2 text-[8px] font-bold text-gray-300 uppercase cursor-not-allowed">🚫 WA Tidak Tersedia (Data Lama)</span>`;
+                }
+
+                const item = document.createElement('div');
+                item.className = "w-full bg-gray-50 p-4 rounded-2xl border border-gray-200 mb-2";
+                item.innerHTML = `
+                    <div class="flex justify-between items-center cursor-pointer" onclick="selectLocation('${ev.id}')">
+                        <div class="text-left">
+                            <p class="text-[10px] font-black text-gray-600 line-through decoration-red-500">${ev.name}</p>
+                            <p class="text-[8px] text-gray-400">${ev.date} • ${ev.location}</p>
+                            <p class="text-[8px] font-bold text-teal-600">PJ: ${ev.creator || 'GM'}</p>
+                        </div>
+                        <span class="text-[9px] font-bold text-red-400 border border-red-200 px-2 py-1 rounded-lg">SELESAI</span>
+                    </div>
+                    ${auditBtn}
+                `;
+                list.appendChild(item);
+            });
+        };
+
+        window.closeArchive = () => {
+            document.getElementById('gm-archive-list').classList.add('hidden');
+            document.getElementById('active-locations-list').classList.remove('hidden');
+        };
+
+        window.openAttendeeList = async () => {
+            const modal = document.getElementById('attendee-modal');
+            const tbody = document.getElementById('attendee-list-body');
+            const countLabel = document.getElementById('attendee-count');
+            const btn = document.getElementById('btn-view-attendees');
+            
+            btn.innerText = "Memuat Data...";
+            currentAttendeeData = []; 
+            tbody.innerHTML = "";
+            
+            try {
+                const q = query(collection(db, "history"), where("activityId", "==", currentSelectedEventId));
+                const snap = await getDocs(q);
+                
+                countLabel.innerText = `${snap.size} Peserta`;
+                
+                if (snap.empty) {
+                    tbody.innerHTML = `<tr><td colspan="2" class="p-6 text-center text-gray-400 italic">Belum ada yang absen.</td></tr>`;
+                } else {
+                    const promises = snap.docs.map(async (docSnap) => {
+                        const data = docSnap.data();
+                        let name = data.userName;
+                        let nik = data.userNik || data.userId;
+                        if (!name) {
+                            try {
+                                const userRef = await getDoc(doc(db, "users", data.userId));
+                                if (userRef.exists()) { name = userRef.data().name; nik = userRef.data().nik; } 
+                                else { name = "Member Tidak Ditemukan"; }
+                            } catch (e) { name = "Error Mengambil Nama"; }
+                        }
+                        return {
+                            name: name,
+                            nik: nik,
+                            time: data.date ? new Date(data.date.seconds * 1000).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '-',
+                            fullTime: data.date ? new Date(data.date.seconds * 1000).toLocaleString('id-ID') : '-'
+                        };
+                    });
+
+                    const attendees = await Promise.all(promises);
+                    currentAttendeeData = attendees;
+
+                    attendees.forEach(p => {
+                        tbody.innerHTML += `
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="p-4">
+                                    <div class="font-black text-teal-800 uppercase">${p.name}</div>
+                                    <div class="text-[9px] text-gray-400 font-mono">${p.nik}</div>
+                                </td>
+                                <td class="p-4 text-right text-gray-500 font-medium">${p.time}</td>
+                            </tr>
+                        `;
+                    });
+                }
+                modal.classList.remove('hidden');
+            } catch (e) {
+                Swal.fire("Error", e.message, "error");
+            } finally {
+                btn.innerHTML = `<span class="text-lg">👥</span> <span class="text-[10px] tracking-widest">Lihat Data Peserta</span>`;
+            }
+        };
+
+        window.closeAttendeeList = () => { document.getElementById('attendee-modal').classList.add('hidden'); };
+
+        window.downloadAttendeeCSV = () => {
+            if (currentAttendeeData.length === 0) return Swal.fire("Info", "Data kosong!", "info");
+            let csv = "Nama Lengkap,NIK / ID,Waktu Absen\n";
+            currentAttendeeData.forEach(row => { csv += `"${row.name}","'${row.nik}",${row.fullTime}\n`; });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            const evName = document.getElementById('display-ev-name').innerText.replace(/\s+/g, '_');
+            a.download = `Laporan_Hadir_${evName}.csv`;
+            a.click();
+        };
+
+        window.toggleAuth = (t) => {
+            document.getElementById('form-member').classList.toggle('hidden', t !== 'member');
+            document.getElementById('form-gm').classList.toggle('hidden', t !== 'gm');
+            document.getElementById('btn-auth-member').className = t === 'member' ? "flex-1 py-3 rounded-full text-[11px] font-black bg-white shadow-sm text-primary uppercase tracking-wide" : "flex-1 py-3 rounded-full text-[11px] font-black text-gray-400 uppercase tracking-wide";
+            document.getElementById('btn-auth-gm').className = t === 'gm' ? "flex-1 py-3 rounded-full text-[11px] font-black bg-white shadow-sm text-primary uppercase tracking-wide" : "flex-1 py-3 rounded-full text-[11px] font-black text-gray-400 uppercase tracking-wide";
+        };
+
+        window.toggleMemberView = (m) => {
+            document.getElementById('member-register-fields').classList.toggle('hidden', m === 'login');
+            document.getElementById('member-login-fields').classList.toggle('hidden', m !== 'login');
+        };
+
+        window.showGMSection = (s) => {
+            document.getElementById('gm-section-event').classList.toggle('hidden', s !== 'event');
+            document.getElementById('gm-section-orders').classList.toggle('hidden', s !== 'orders');
+            document.getElementById('nav-gm-event').className = s === 'event' ? "flex-1 py-3 rounded-full text-[10px] font-black bg-primary text-white uppercase text-center" : "flex-1 py-3 rounded-full text-[10px] font-black text-gray-400 uppercase text-center";
+            document.getElementById('nav-gm-orders').className = s === 'orders' ? "flex-1 py-3 rounded-full text-[10px] font-black bg-primary text-white uppercase text-center" : "flex-1 py-3 rounded-full text-[10px] font-black text-gray-400 uppercase text-center";
+            if(s === 'orders') loadRedeemOrders();
+        };
+
+        window.showSection = (s) => {
+            document.getElementById('section-qr').classList.toggle('hidden', s !== 'qr');
+            document.getElementById('section-redeem').classList.toggle('hidden', s !== 'redeem');
+            document.getElementById('nav-qr').className = s === 'qr' ? 'flex-1 py-3 rounded-full flex flex-col items-center justify-center nav-active' : 'flex-1 py-3 rounded-full flex flex-col items-center justify-center text-gray-400';
+            document.getElementById('nav-redeem').className = s === 'redeem' ? 'flex-1 py-3 rounded-full flex flex-col items-center justify-center nav-active' : 'flex-1 py-3 rounded-full flex flex-col items-center justify-center text-gray-400';
+            if(s === 'redeem') renderCatalog();
+        };
+
+        window.toggleEventForm = () => {
+            document.getElementById('gm-event-selector').classList.toggle('hidden');
+            document.getElementById('gm-create-event').classList.toggle('hidden');
+        };
+
+        window.createEvent = async () => {
+            const btn = document.getElementById('btn-submit-event');
+            btn.innerText = "Memproses...";
+            const name = document.getElementById('ev-name').value;
+            const date = document.getElementById('ev-date').value;
+            const loc = document.getElementById('ev-loc').value;
+            const creator = document.getElementById('ev-creator').value; 
+            const creatorWA = document.getElementById('ev-wa').value; 
+            const pts = parseInt(document.getElementById('ev-points').value);
+            
+            if(!name || !date || !loc || !creator || !creatorWA) { 
+                Swal.fire("Data Kurang", "Lengkapi data! Nama & WA Penanggung Jawab wajib diisi.", "warning"); 
+                btn.innerText = "AKTIFKAN SEKARANG"; 
+                return; 
             }
             
-            // Animasi tekan sedikit (Visual Feedback)
-            setTimeout(() => {
-                // Pastikan file game bernama 'werewolf.html' dan 'ulartangga.html' ada di folder yang sama
-                if(game === 'werewolf') window.location.href = "werewolf.html"; 
-                if(game === 'geometry') window.location.href = "ulartangga.html"; 
-            }, 100);
+            let formattedWA = creatorWA.replace(/\D/g, '');
+            if (formattedWA.length < 10 || formattedWA.length > 14) {
+                Swal.fire("Nomor Invalid", "Nomor WhatsApp TIDAK VALID! Minimal 10 digit angka.", "warning");
+                btn.innerText = "AKTIFKAN SEKARANG";
+                return;
+            }
+            if (formattedWA.startsWith('0')) formattedWA = '62' + formattedWA.slice(1);
+            if (!formattedWA.startsWith('62')) {
+                Swal.fire("Nomor Invalid", "Harap masukkan nomor WhatsApp yang benar (08...)", "warning");
+                btn.innerText = "AKTIFKAN SEKARANG";
+                return;
+            }
+
+            const eventId = "EVT" + Date.now();
+            try {
+                await setDoc(doc(db, "active_events", eventId), { 
+                    name, date, location: loc, 
+                    creator: creator, 
+                    creatorWA: formattedWA, 
+                    points: pts, status: 'active', id: eventId 
+                });
+                Swal.fire("Sukses", "Event Berhasil Dibuat!", "success").then(() => location.reload());
+            } catch (e) { Swal.fire("Error", e.message, "error"); btn.innerText = "AKTIFKAN SEKARANG"; }
+        };
+
+        window.loadActiveLocations = () => {
+            const q = query(collection(db, "active_events"), where("status", "==", "active"));
+            const role = localStorage.getItem('ms_role');
+
+            onSnapshot(q, (snap) => {
+                const list = document.getElementById('active-locations-list');
+                list.innerHTML = snap.empty ? '<p class="text-center py-8 text-[10px] text-gray-300 font-bold uppercase tracking-widest border-2 border-dashed border-gray-100 rounded-3xl">Tidak ada lokasi aktif</p>' : '';
+                snap.forEach(d => {
+                    const ev = d.data();
+                    const dateObj = new Date(ev.date);
+                    const tglCantik = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+                    const waMessage = `Apakah *"${ev.name}"* di *"${ev.location}"* pada tanggal *"${tglCantik}"* benar adanya?\n\nMohon dikirim fotonya dong...`;
+                    const waLink = `https://wa.me/${ev.creatorWA}?text=${encodeURIComponent(waMessage)}`;
+                    
+                    const btn = document.createElement('div');
+                    btn.className = "w-full bg-white p-5 rounded-3xl border border-gray-100 shadow-sm mb-3";
+                    
+                    let auditButtonHTML = '';
+                    if (role === 'super_gm') {
+                        auditButtonHTML = `
+                        <a href="${waLink}" target="_blank" onclick="event.stopPropagation()" class="block w-full text-center bg-red-50 text-red-600 font-black text-[10px] uppercase py-2 rounded-xl mt-3 hover:bg-red-100 transition-colors border border-red-100">
+                            👮 Konfirmasi / Audit GM
+                        </a>`;
+                    }
+
+                    btn.innerHTML = `
+                        <div class="flex justify-between items-center cursor-pointer" onclick="selectLocation('${ev.id}')">
+                            <div class="text-left">
+                                <p class="text-[12px] font-black uppercase text-teal-700">Lokasi: ${ev.location}</p>
+                                <p class="text-[10px] font-bold text-gray-400 uppercase">${ev.name}</p>
+                                <p class="text-[8px] font-bold text-teal-500 uppercase mt-1">PJ: ${ev.creator || 'GM'}</p>
+                            </div>
+                            <span class="bg-teal-50 text-teal-600 text-[9px] px-4 py-2 rounded-full font-black uppercase">Buka</span>
+                        </div>
+                        ${auditButtonHTML}
+                    `;
+                    list.appendChild(btn);
+                });
+            });
+        };
+
+        window.selectLocation = async (eventId) => {
+            currentSelectedEventId = eventId;
+            const ev = await getDoc(doc(db, "active_events", eventId));
+            if(ev.exists()) {
+                const d = ev.data();
+                document.getElementById('gm-event-selector').classList.add('hidden');
+                document.getElementById('gm-active-display').classList.remove('hidden');
+                document.getElementById('display-ev-name').innerText = d.name;
+                document.getElementById('display-ev-info').innerText = `${d.date} • ${d.location}`;
+                document.getElementById('display-ev-creator').innerText = `DIBUAT OLEH: ${d.creator || 'GM'}`;
+                document.getElementById('ev-qrcode-area').innerHTML = "";
+                new QRCode(document.getElementById('ev-qrcode-area'), { text: eventId, width: 220, height: 220, colorDark: "#0f766e" });
+                
+                const role = localStorage.getItem('ms_role');
+                if(role === 'super_gm') {
+                    const btnEnd = document.getElementById('btn-end-event');
+                    btnEnd.innerText = "HAPUS EVENT & TARIK POIN";
+                    btnEnd.classList.remove('hidden');
+                } else {
+                    const btnEnd = document.getElementById('btn-end-event');
+                    if(d.status === 'active') {
+                        btnEnd.innerText = "Event Selesai";
+                        btnEnd.classList.remove('hidden');
+                    } else {
+                        btnEnd.classList.add('hidden');
+                    }
+                }
+            }
+        };
+
+        window.closeEventView = () => {
+            document.getElementById('gm-event-selector').classList.remove('hidden');
+            document.getElementById('gm-active-display').classList.add('hidden');
+        };
+
+        window.endEvent = async () => { 
+            const role = localStorage.getItem('ms_role');
+            if(role === 'super_gm') {
+                Swal.fire({
+                    title: 'PERINGATAN KERAS!',
+                    text: 'Anda akan MENGHAPUS event ini. Semua poin peserta yang sudah absen akan DITARIK KEMBALI. Lanjutkan?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'YA, HAPUS!',
+                    cancelButtonText: 'Batal'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        const btnEnd = document.getElementById('btn-end-event');
+                        btnEnd.innerText = "Sedang Menghapus...";
+                        try {
+                            const evRef = doc(db, "active_events", currentSelectedEventId);
+                            const evSnap = await getDoc(evRef);
+                            if(!evSnap.exists()) { Swal.fire("Error", "Event tidak ditemukan!", "error"); return; }
+                            const pointsToRollback = evSnap.data().points;
+
+                            const qHistory = query(collection(db, "history"), where("activityId", "==", currentSelectedEventId));
+                            const historySnap = await getDocs(qHistory);
+
+                            const promises = historySnap.docs.map(async (hDoc) => {
+                                const hData = hDoc.data();
+                                const userRef = doc(db, "users", hData.userId);
+                                await updateDoc(userRef, { points: increment(-pointsToRollback), presence_count: increment(-1) });
+                                await deleteDoc(doc(db, "history", hDoc.id));
+                            });
+
+                            await Promise.all(promises);
+                            await updateDoc(evRef, { status: 'deleted' });
+
+                            Swal.fire("SUKSES!", `Event dihapus. Poin ditarik dari ${historySnap.size} peserta.`, "success").then(() => location.reload());
+                        } catch (e) { Swal.fire("Gagal", e.message, "error"); }
+                    } 
+                });
+            } else {
+                Swal.fire({
+                    title: 'Akhiri Event?',
+                    text: "Sesi absensi akan ditutup.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Selesai',
+                    confirmButtonColor: '#0f766e'
+                }).then(async (result) => {
+                    if(result.isConfirmed) {
+                        await updateDoc(doc(db, "active_events", currentSelectedEventId), { status: 'ended' }); 
+                        location.reload();
+                    }
+                });
+            }
+        };
+
+        window.openMemberScannerMode = () => { isGmScanning = false; startScanner(); };
+        window.openGMScannerMode = () => { isGmScanning = true; startScanner(); };
+
+        // --- SCANNER CERDAS DENGAN SWEETALERT ---
+        function startScanner() {
+            document.getElementById('scanner-modal').classList.remove('hidden');
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { fps: 15, qrbox: 250 };
+            
+            html5QrCode.start({ facingMode: "environment" }, config, async (txt) => {
+                await html5QrCode.stop();
+                document.getElementById('scanner-modal').classList.add('hidden');
+
+                // JIKA LINK TERDETEKSI
+                if (txt.toLowerCase().startsWith("http") || txt.toLowerCase().startsWith("www")) {
+                    Swal.fire({
+                        title: 'Link Terdeteksi!',
+                        text: 'Ingin membuka link ini?',
+                        input: 'text',
+                        inputValue: txt,
+                        icon: 'info',
+                        showCancelButton: true,
+                        confirmButtonText: 'YA, BUKA',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#0f766e'
+                    }).then((result) => {
+                        if (result.isConfirmed) window.open(txt, '_blank');
+                    });
+                    return; 
+                }
+
+                if (isGmScanning) { await processGmScan(txt); } else { await processMemberScan(txt); }
+            });
         }
+
+        async function processGmScan(memberId) {
+            if (!memberId.includes("MS")) return Swal.fire("Gagal", "Bukan QR Member!", "error");
+            const evSnap = await getDoc(doc(db, "active_events", currentSelectedEventId));
+            const memberRef = doc(db, "users", memberId);
+            const memberSnap = await getDoc(memberRef);
+            if(!memberSnap.exists()) return Swal.fire("Gagal", "Member tidak ditemukan!", "error");
+            const ev = evSnap.data();
+            const logId = `${memberId}_${ev.id}`;
+            const logCheck = await getDoc(doc(db, "history", logId));
+            if(logCheck.exists()) { Swal.fire("Info", `Member ${memberSnap.data().name} SUDAH ABSEN!`, "warning"); } 
+            else {
+                const uData = memberSnap.data();
+                const newCount = (uData.presence_count || 0) + 1;
+                await updateDoc(memberRef, { points: increment(ev.points), presence_count: newCount });
+                await setDoc(doc(db, "history", logId), { 
+                    userId: memberId,
+                    userName: uData.name, 
+                    userNik: uData.nik,   
+                    activityId: ev.id, 
+                    activity: `Hadir (Manual): ${ev.name}`, 
+                    points: ev.points, 
+                    date: serverTimestamp(), 
+                    eventDate: ev.date 
+                });
+                Swal.fire("SUKSES!", `${uData.name} berhasil diabsen.`, "success");
+            }
+        }
+
+        // --- FUNGSI ABSEN MEMBER YANG SUDAH DIPERBAIKI (CLEAN) ---
+        async function processMemberScan(eventId) {
+            const deviceHistory = JSON.parse(localStorage.getItem('ms_device_history') || '{}');
+            if (deviceHistory[eventId]) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Stop!',
+                    text: 'Perangkat ini sudah digunakan untuk absen di kegiatan ini!',
+                    confirmButtonColor: '#f59e0b'
+                });
+                return;
+            }
+
+            const evSnap = await getDoc(doc(db, "active_events", eventId));
+            
+            if(evSnap.exists() && evSnap.data().status === 'active') {
+                const ev = evSnap.data();
+                const uid = localStorage.getItem('ms_user_id');
+                const uRef = doc(db, "users", uid);
+                const uSnap = await getDoc(uRef);
+                const uData = uSnap.data();
+                const logId = `${uid}_${ev.id}`;
+                const logCheck = await getDoc(doc(db, "history", logId));
+                
+                if(logCheck.exists()) { 
+                    Swal.fire('Info', "Anda sudah absen di kegiatan ini!", 'warning'); 
+                }
+                else {
+                    const newCount = (uData.presence_count || 0) + 1;
+                    await updateDoc(uRef, { points: increment(ev.points), presence_count: newCount });
+                    await setDoc(doc(db, "history", logId), { 
+                        userId: uid,
+                        userName: uData.name,
+                        userNik: uData.nik,
+                        activityId: ev.id, 
+                        activity: `Hadir: ${ev.name}`, 
+                        points: ev.points, 
+                        date: serverTimestamp(), 
+                        eventDate: ev.date 
+                    });
+                    
+                    deviceHistory[eventId] = true;
+                    localStorage.setItem('ms_device_history', JSON.stringify(deviceHistory));
+
+                    Swal.fire({
+                        title: 'BERHASIL!',
+                        text: 'Kehadiranmu telah tercatat.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        background: '#f0fdf4',
+                        color: '#064e3b'
+                    }).then(() => { location.reload(); });
+                }
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: 'QR Code tidak valid atau Event sudah selesai!',
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'Coba Lagi'
+                });
+            }
+        }
+
+        window.closeScanner = () => { if(html5QrCode) html5QrCode.stop(); document.getElementById('scanner-modal').classList.add('hidden'); };
+
+        window.loginAdmin = () => {
+            const user = document.getElementById('gm-user').value;
+            const pass = document.getElementById('gm-pass').value;
+            if(user === "supergm" && btoa(pass) === "amFudWFyaTIwMjY=") { localStorage.setItem('ms_role', 'super_gm'); loadApp(); }
+            else if(user === "gmbiasa" && btoa(pass) === "TUFUVVIyMDI2") { localStorage.setItem('ms_role', 'gm'); loadApp(); }
+            else { Swal.fire("Akses Ditolak", "Username atau Password salah!", "error"); }
+        };
+
+        window.prosesDaftar = async () => {
+            const n = document.getElementById('reg-name').value;
+            const nik = document.getElementById('reg-nik').value;
+            const dom = document.getElementById('reg-domicile').value;
+            const wa = document.getElementById('reg-wa').value;
+            const refID = document.getElementById('reg-ref').value.trim().toUpperCase();
+            if(!n || nik.length !== 16 || !dom) return Swal.fire("Data Kurang", "Lengkapi data dan NIK harus 16 digit!", "warning");
+            try {
+                const id = `MS${nik.substring(nik.length - 4)}${Date.now().toString().slice(-4)}`;
+                const userData = { name: n, nik: nik, domicile: dom, whatsapp: wa, points: 10, role: 'member', presence_count: 0 };
+                if(refID) {
+                    const refDoc = await getDoc(doc(db, "users", refID));
+                    if(refDoc.exists()) { userData.referred_by = refID; await updateDoc(doc(db, "users", refID), { points: increment(25) }); }
+                }
+                await setDoc(doc(db, "users", id), userData);
+                localStorage.setItem('ms_user_id', id); localStorage.setItem('ms_role', 'member'); location.reload();
+            } catch (e) { Swal.fire("Error", e.message, "error"); }
+        };
+
+        window.restoreByNIK = async () => {
+            const nik = document.getElementById('login-nik').value;
+            const q = query(collection(db, "users"), where("nik", "==", nik), limit(1));
+            const snap = await getDocs(q);
+            if(!snap.empty) { localStorage.setItem('ms_user_id', snap.docs[0].id); localStorage.setItem('ms_role', 'member'); location.reload(); }
+            else Swal.fire("Gagal", "NIK tidak terdaftar.", "error");
+        };
+
+        window.logout = () => { 
+            Swal.fire({
+                title: 'Keluar?',
+                text: "Anda harus login ulang nanti.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Keluar',
+                confirmButtonColor: '#d33'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.clear(); 
+                    location.reload(); 
+                }
+            });
+        };
+
+        window.exportDataCSV = async () => {
+            const snap = await getDocs(collection(db, "users"));
+            let csv = "ID Member,Nama,NIK,Domisili,WA,Poin\n";
+            snap.forEach(d => { const u = d.data(); csv += `${d.id},${u.name},${u.nik},${u.domicile || '-'},${u.whatsapp},${u.points}\n`; });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Data_KONEKTA.csv`; a.click();
+        };
+
+        window.processRedeem = async (id, cost, name, type) => {
+            const uid = localStorage.getItem('ms_user_id');
+            const uSnap = await getDoc(doc(db, "users", uid));
+            if(uSnap.data().points < cost) return Swal.fire("Gagal", "Poin kurang!", "error");
+            
+            Swal.fire({
+                title: 'Tukar Poin',
+                text: `Masukkan ${type} untuk pengiriman:`,
+                input: 'text',
+                showCancelButton: true,
+                confirmButtonText: 'Kirim Permintaan',
+                confirmButtonColor: '#0f766e'
+            }).then(async (result) => {
+                if (result.isConfirmed && result.value) {
+                    await updateDoc(doc(db, "users", uid), { points: increment(-cost) });
+                    await addDoc(collection(db, "redeem_orders"), { userId: uid, userName: uSnap.data().name, userWA: uSnap.data().whatsapp, itemName: name, targetInfo: result.value, date: serverTimestamp() });
+                    Swal.fire("Berhasil!", "Permintaan penukaran terkirim.", "success").then(() => location.reload());
+                }
+            });
+        };
+
+async function loadRedeemOrders() {
+            const q = query(collection(db, "redeem_orders"), orderBy("date", "asc"));
+            onSnapshot(q, (snap) => {
+                const list = document.getElementById('gm-order-list');
+                
+                // Jika kosong tampilkan teks
+                list.innerHTML = snap.empty ? '<p class="text-center py-10 text-[10px] text-gray-300">Kosong</p>' : '';
+                
+                snap.forEach(docSnap => {
+                    const o = docSnap.data();
+                    
+                    // --- LOGIKA PESAN WA OTOMATIS (OPSI 2) ---
+                    let pesanWA = "";
+                    
+                    if (o.itemName.toLowerCase().includes("pulsa")) {
+                        // Jika PULSA -> Sebutkan NOMOR HP target
+                        pesanWA = `Halo, kak. Apakah benar redeem *${o.itemName}* untuk nomor *${o.targetInfo}*? Mohon konfirmasinya...`;
+                    } else {
+                        // Jika BARANG (Beras/Sembako) -> Sebutkan ALAMAT target
+                        pesanWA = `Halo, kak. Apakah benar redeem *${o.itemName}* untuk alamat *${o.targetInfo}*? Mohon konfirmasinya...`;
+                    }
+
+                    // Buat Link WA
+                    const linkWA = `https://wa.me/${o.userWA}?text=${encodeURIComponent(pesanWA)}`;
+                    // -------------------------------------------
+
+                    // Render Tampilan (Perhatikan bagian href="${linkWA}")
+                    list.innerHTML += `
+                    <div class="bg-white p-5 rounded-3xl border border-gray-100 mb-3">
+                        <p class="text-[11px] font-black text-teal-700 uppercase">${o.userName}</p>
+                        <p class="text-[10px] font-bold text-gray-500 uppercase mb-3">${o.itemName}</p>
+                        <div class="bg-gray-50 p-3 rounded-xl text-[10px] italic mb-4 text-gray-600 border border-gray-100">${o.targetInfo}</div>
+                        
+                        <div class="flex gap-2">
+                            <a href="${linkWA}" target="_blank" class="flex-1 bg-emerald-50 text-emerald-600 text-center py-3 rounded-2xl text-[9px] font-black uppercase border border-emerald-100 hover:bg-emerald-100 transition-colors">
+                                Chat WhatsApp
+                            </a>
+                            <button onclick="completeOrder('${docSnap.id}')" class="flex-1 bg-gray-800 text-white py-3 rounded-2xl text-[9px] font-black uppercase active:scale-95 shadow-lg">
+                                Selesai
+                            </button>
+                        </div>
+                    </div>`;
+                });
+            });
+        }
+
+        function renderCatalog() {
+            document.getElementById('redeem-catalog').innerHTML = CATALOG.map(i => `<div class="bg-white p-5 rounded-3xl flex items-center justify-between border border-gray-100 shadow-sm transition-all"><div><p class="font-black text-xs uppercase italic text-gray-800">${i.name}</p><p class="text-teal-600 font-bold text-[10px]">${i.cost} Poin</p></div><button onclick="processRedeem('${i.id}', ${i.cost}, '${i.name}', '${i.type}')" class="bg-gray-900 text-white text-[9px] font-black px-6 py-3 rounded-full">TUKAR</button></div>`).join('');
+        }
+
+        function loadHistory(uid) {
+            const q = query(collection(db, "history"), where("userId", "==", uid));
+            onSnapshot(q, (snap) => {
+                const list = document.getElementById('history-list');
+                if(snap.empty) { list.innerHTML = '<p class="text-[9px] text-gray-300 py-6 uppercase font-black text-center italic">Belum ada riwayat</p>'; return; }
+                const docs = snap.docs.map(d => d.data()).sort((a,b) => (b.date?.seconds || 0) - (a.date?.seconds || 0));
+                list.innerHTML = docs.map(h => `<div class="p-4 bg-gray-50 rounded-2xl flex justify-between items-center text-[10px] font-bold uppercase border border-gray-100 mb-2"><div class="text-left"><p class="text-gray-700">${h.activity}</p><p class="text-[8px] text-gray-400 font-medium mt-0.5">${h.eventDate || 'Hari ini'}</p></div><span class="${h.points < 0 ? 'text-red-500' : 'text-teal-600'} text-xs font-black">+${h.points}</span></div>`).join('');
+            });
+        }
+
+        async function loadApp() {
+            setupListeners();
+            const role = localStorage.getItem('ms_role');
+            const uid = localStorage.getItem('ms_user_id');
+
+            console.log("Status Login:", role);
+
+            if (role && role.includes('gm')) {
+                document.getElementById('tab-awal').classList.add('hidden');
+                document.getElementById('tab-gm').classList.remove('hidden');
+                
+                if(role === 'super_gm') {
+                    document.getElementById('super-stats').classList.remove('hidden');
+                    document.getElementById('btn-view-archive').classList.remove('hidden');
+                    try {
+                        const mSnap = await getDocs(collection(db, "users"));
+                        document.getElementById('total-members').innerText = `${mSnap.size}`;
+                    } catch (e) { console.log("Gagal ambil stats:", e); }
+                }
+                
+                loadActiveLocations(); 
+            } else if (role === 'member' && uid) {
+                document.getElementById('tab-awal').classList.add('hidden');
+                document.getElementById('tab-anggota').classList.remove('hidden');
+                document.getElementById('member-nav').classList.remove('hidden');
+                
+                try {
+                    const uSnap = await getDoc(doc(db, "users", uid));
+                    if(uSnap.exists()) {
+                        const d = uSnap.data();
+                        document.getElementById('user-points').innerText = d.points.toLocaleString();
+                        document.getElementById('user-name').innerText = d.name;
+                        document.getElementById('user-id-text').innerText = "ID: " + uid;
+                        document.getElementById("qrcode-area").innerHTML = "";
+                        new QRCode(document.getElementById("qrcode-area"), { text: uid, width: 200, height: 200, colorDark: "#0f766e" });
+                        loadHistory(uid);
+                    } else {
+                        Swal.fire("Info", "Data akun tidak ditemukan. Silakan daftar ulang.", "info").then(() => logout());
+                    }
+                } catch (e) {
+                    console.log("Error Member:", e);
+                }
+            } else {
+                document.getElementById('tab-awal').classList.remove('hidden');
+                document.getElementById('tab-gm').classList.add('hidden');
+                document.getElementById('tab-anggota').classList.add('hidden');
+                document.getElementById('member-nav').classList.add('hidden');
+            }
+        }
+        
+        loadApp();
     </script>
 </body>
 </html>
