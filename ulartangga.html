@@ -4,7 +4,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M75 10 L40 40 L25 50 L40 60 L75 90 L55 50 Z' stroke='%2300FF9D' stroke-width='4' fill='%23121212'/><circle cx='40' cy='50' r='5' fill='%23ff4757'/></svg>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LUNA: Geometry War (Ultimate)</title>
+    <title>LUNA: Geometry War (Cinematic)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
@@ -49,95 +49,58 @@
 
         /* GAME BOARD AREA */
         #game-board-area { 
-            display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; /* Gap diperbesar sedikit agar tactile lebih terasa */
+            display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; 
             background: #2f3542; padding: 8px; border-radius: 8px; margin-bottom: 20px; 
             position: relative; aspect-ratio: 1 / 1; border: 2px solid #57606f; 
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
-        /* --- VISUAL UPDATE: TACTILE TILES --- */
+        /* TACTILE TILES */
         .tile { 
             background: #353b48; color: rgba(255, 255, 255, 0.3); 
-			border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             display: flex; justify-content: center; align-items: center; 
             font-size: 14px; border-radius: 3px; font-weight: bold; user-select: none; position: relative;
-            /* Efek Tombol Timbul (Keypad) */
-            box-shadow: 
-                inset 1px 1px 0 rgba(255,255,255,0.1), /* Highlight Atas */
-                inset -1px -1px 0 rgba(0,0,0,0.5),    /* Shadow Dalam Bawah */
-                0 2px 0 rgba(0,0,0,0.2);              /* Shadow Luar (Tebal) */
+            box-shadow: inset 1px 1px 0 rgba(255,255,255,0.1), inset -1px -1px 0 rgba(0,0,0,0.5), 0 2px 0 rgba(0,0,0,0.2);
             transition: all 0.1s;
         }
-
-        /* Class untuk efek injakan (diaktifkan JS) */
         .tile.stepped-on {
-            background: var(--primary) !important;
-            color: #000 !important;
-            box-shadow: inset 0 0 5px rgba(0,0,0,0.5) !important; /* Efek tombol ditekan */
-            transform: translateY(1px);
-            z-index: 5;
+            background: var(--primary) !important; color: #000 !important;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5) !important; transform: translateY(1px); z-index: 5;
         }
 
-        /* --- VISUAL UPDATE: ZONA SPESIAL --- */
+        /* ZONA SPESIAL */
         .tile.ladder { 
-            /* Efek Grid Neon Hijau */
             background-color: #006266;
-            background-image: 
-                linear-gradient(rgba(0, 255, 157, 0.3) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 157, 0.3) 1px, transparent 1px);
-            background-size: 4px 4px;
-            color: white; border: 1px solid #55efc4; 
+            background-image: linear-gradient(rgba(0, 255, 157, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 157, 0.3) 1px, transparent 1px);
+            background-size: 4px 4px; color: white; border: 1px solid #55efc4; 
         }
-        
         .tile.snake { 
-            /* Efek Hazard Stripes (Garis Bahaya) */
-            background: repeating-linear-gradient(
-                45deg,
-                #c0392b,
-                #c0392b 5px,
-                #e74c3c 5px,
-                #e74c3c 10px
-            );
+            background: repeating-linear-gradient(45deg, #c0392b, #c0392b 5px, #e74c3c 5px, #e74c3c 10px);
             color: white; border: 1px solid #ff7675; text-shadow: 0 0 2px black;
         }
-        
         .tile.mystery { 
-            background: #6c5ce7; color: white; font-size: 14px; 
-            border: 1px solid #a29bfe; 
-            /* Animasi Berdenyut */
+            background: #6c5ce7; color: white; font-size: 14px; border: 1px solid #a29bfe; 
             animation: pulse-purple 1.5s infinite alternate;
         }
-        @keyframes pulse-purple {
-            from { box-shadow: 0 0 2px #a29bfe; transform: scale(1); }
-            to { box-shadow: 0 0 10px #a29bfe; transform: scale(1.05); }
-        }
-
+        @keyframes pulse-purple { from { box-shadow: 0 0 2px #a29bfe; transform: scale(1); } to { box-shadow: 0 0 10px #a29bfe; transform: scale(1.05); } }
         .tile.trap { background: #000; border: 2px solid red; color: red; }
         .tile.wall { background: #7f8fa6; border: 2px solid white; color: white; }
         .tile.blackhole { background: black; border: 2px solid #a29bfe; color: #a29bfe; box-shadow: inset 0 0 10px #a29bfe; }
-        
-        #tile-100 { 
-            background: #fdcb6e; color: #d35400; border: 2px solid white; 
-            box-shadow: inset 0 0 10px rgba(255,255,255,0.5), 0 0 10px gold; 
-        }
+        #tile-100 { background: #fdcb6e; color: #d35400; border: 2px solid white; box-shadow: inset 0 0 10px rgba(255,255,255,0.5), 0 0 10px gold; }
 
-        /* TOKEN SYSTEM - UPDATED FOR STEP ANIMATION */
-        #token-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 10;
-        }
+        /* TOKEN SYSTEM */
+        #token-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         .token { 
             width: 8%; height: 8%; position: absolute; 
             display: flex; justify-content: center; align-items: center;
-            font-size: 14px; color: white; 
-            filter: drop-shadow(0 3px 3px rgba(0,0,0,0.8));
-            /* Transition akan di-set lewat JS supaya bisa dinamis (cepat saat jalan, lambat saat ular) */
+            font-size: 14px; color: white; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.8));
             will-change: top, left; z-index: 20;
         }
         .shape-circle { border-radius: 50%; border: 2px solid white; }
         .token.active-turn { z-index: 30; transform: scale(1.3); filter: drop-shadow(0 0 8px white); }
 
-        /* DICE */
+        /* DICE & UI */
         #dice-container { display: flex; justify-content: center; gap: 15px; margin: 10px 0; }
         .dice {
             width: 50px; height: 50px; background: white; border-radius: 8px;
@@ -145,34 +108,76 @@
             font-size: 24px; font-weight: bold; color: #2d3436; border: 2px solid #dfe6e9;
         }
         .dice.shaking { animation: shake 0.5s infinite; background: #ffeaa7; }
-        @keyframes shake {
-            0% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 50% { transform: rotate(-10deg); } 75% { transform: rotate(5deg); } 100% { transform: rotate(0deg); }
-        }
+        @keyframes shake { 0% { transform: rotate(0deg); } 25% { transform: rotate(10deg); } 50% { transform: rotate(-10deg); } 75% { transform: rotate(5deg); } 100% { transform: rotate(0deg); } }
 
-        /* INVENTORY */
-        #inventory-area { 
-            background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; height: 170px; 
-            display: flex; gap: 10px; overflow-x: auto; align-items: center; border: 1px solid #57606f; 
-        }
-        .card-item { 
-            min-width: 90px; height: 140px; background: #2f3542; color: white; border-radius: 10px; 
-            border-bottom: 5px solid #57606f; display: flex; flex-direction: column; justify-content: flex-start; 
-            align-items: center; padding: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; position: relative;
-        }
+        #inventory-area { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; height: 170px; display: flex; gap: 10px; overflow-x: auto; align-items: center; border: 1px solid #57606f; }
+        .card-item { min-width: 90px; height: 140px; background: #2f3542; color: white; border-radius: 10px; border-bottom: 5px solid #57606f; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-align: center; position: relative; }
         .card-item:active { transform: scale(0.95); }
         .card-name { font-size: 10px; font-weight: 800; text-transform: uppercase; margin-top: 5px; height: 25px; display: flex; align-items: center; justify-content: center; }
         .card-icon { font-size: 36px; margin: 2px 0; }
         .card-desc { font-size: 9px; line-height: 1.1; opacity: 0.9; margin-top: auto; padding-bottom: 5px; }
-
         .card-item.c-attack { border-bottom-color: #ff4757; background: linear-gradient(180deg, #2f3542 0%, #3e1619 100%); }
         .card-item.c-defense { border-bottom-color: #2ed573; background: linear-gradient(180deg, #2f3542 0%, #113822 100%); }
         .card-item.c-trick { border-bottom-color: #a29bfe; background: linear-gradient(180deg, #2f3542 0%, #262242 100%); }
         .card-item.c-god { border-bottom-color: #fbc531; background: linear-gradient(180deg, #2f3542 0%, #423812 100%); }
 
+        /* LEGEND AREA */
+        #card-legend {
+            display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+            margin-top: 8px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 8px;
+            font-size: 10px; color: #ccc; border: 1px solid #333;
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+
         #timer-container { width: 100%; height: 6px; background: #2f3640; margin-top: 10px; border-radius: 3px; overflow: hidden; }
         #timer-bar { height: 100%; width: 100%; background: var(--primary); transition: width 1s linear; }
 
-        /* MODAL */
+        /* --- NEW: CINEMATIC VISUALS --- */
+        #toast-container {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 4000; width: 90%; max-width: 300px; text-align: center; pointer-events: none;
+        }
+        .toast {
+            background: rgba(30, 30, 46, 0.95); color: white; padding: 12px 20px;
+            border-radius: 8px; margin-bottom: 10px; font-size: 12px; font-weight: bold;
+            border: 1px solid var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            animation: slideDown 0.3s ease-out; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        #custom-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 5000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .custom-modal {
+            background: #2f3542; width: 85%; max-width: 350px; padding: 25px;
+            border-radius: 15px; border: 2px solid var(--primary);
+            text-align: center; box-shadow: 0 0 30px rgba(0, 255, 157, 0.2);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-title { font-size: 1.2rem; font-weight: 800; color: white; margin-bottom: 10px; text-transform: uppercase; }
+        .modal-text { font-size: 0.9rem; color: #ccc; margin-bottom: 20px; line-height: 1.4; }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        
+        #splash-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 4500; pointer-events: none;
+        }
+        .splash-content { text-align: center; animation: splashAnim 2s forwards; }
+        .splash-icon { font-size: 100px; filter: drop-shadow(0 0 20px white); }
+        .splash-text { font-size: 2rem; font-weight: 900; color: white; text-transform: uppercase; text-shadow: 0 0 10px var(--primary); margin-top: -10px; }
+        @keyframes splashAnim {
+            0% { transform: scale(0); opacity: 0; }
+            20% { transform: scale(1.2); opacity: 1; }
+            30% { transform: scale(1); opacity: 1; }
+            80% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
         #modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0, 0, 0, 0.9); z-index: 2000; display: flex; justify-content: center; align-items: flex-end; }
         .modal-box { background: #1e272e; padding: 25px; border-radius: 20px 20px 0 0; width: 100%; max-width: 500px; text-align: center; display: flex; flex-direction: column; max-height: 85vh; }
         .target-btn { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 15px; margin: 8px 0; background: #2f3542; color: white; border-radius: 12px; }
@@ -180,6 +185,10 @@
     </style>
 </head>
 <body>
+
+    <div id="toast-container"></div>
+    <div id="splash-overlay" class="hidden"></div>
+    <div id="custom-modal-overlay" class="hidden"></div>
 
     <div id="main-container" class="container">
         <div id="screen-login">
@@ -237,6 +246,12 @@
                 
                 <div style="text-align:left; margin-top:10px; font-size:12px; color:white;">INVENTORY KARTU (Geser):</div>
                 <div id="inventory-area"></div>
+                <div id="card-legend">
+                    <div class="legend-item"><div class="dot" style="background:#ff4757"></div><span>SERANG</span></div>
+                    <div class="legend-item"><div class="dot" style="background:#2ed573"></div><span>BERTAHAN</span></div>
+                    <div class="legend-item"><div class="dot" style="background:#a29bfe"></div><span>TRIK</span></div>
+                    <div class="legend-item"><div class="dot" style="background:#fbc531"></div><span>DICE GOD</span></div>
+                </div>
             </div>
         </div>
     </div>
@@ -274,8 +289,49 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // --- HELPER VISUAL (PENGGANTI ALERT & CONFIRM) ---
+        window.showToast = function(msg, isError = false) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = isError ? `⚠️ ${msg}` : `ℹ️ ${msg}`;
+            if(isError) toast.style.border = "1px solid #ff4757";
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        };
+
+        window.showConfirmModal = function(title, text, onConfirm) {
+            const overlay = document.getElementById('custom-modal-overlay');
+            overlay.innerHTML = `
+                <div class="custom-modal">
+                    <div class="modal-title">${title}</div>
+                    <div class="modal-text">${text}</div>
+                    <div class="modal-actions">
+                        <button id="modal-yes" class="btn-green" style="width:auto; padding:10px 20px;">YA</button>
+                        <button id="modal-no" class="btn-red" style="width:auto; padding:10px 20px;">BATAL</button>
+                    </div>
+                </div>
+            `;
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('modal-yes').onclick = () => { overlay.classList.add('hidden'); onConfirm(); };
+                document.getElementById('modal-no').onclick = () => { overlay.classList.add('hidden'); };
+            }, 50);
+        };
+
+        window.showCardSplash = function(name, icon) {
+            const splash = document.getElementById('splash-overlay');
+            splash.innerHTML = `
+                <div class="splash-content">
+                    <div class="splash-icon">${icon}</div>
+                    <div class="splash-text">${name}</div>
+                </div>
+            `;
+            splash.classList.remove('hidden');
+            setTimeout(() => splash.classList.add('hidden'), 2000);
+        };
+
         const CARD_DB = [
-            // ATTACK (Merah)
             { id: "SNAKE_BITE", name: "Snake Bite", icon: "🐍", type: "c-attack", target: "ENEMY", desc: "Mundurkan 1 musuh (10 langkah)." },
             { id: "BACKSTAB", name: "Backstab", icon: "🔪", type: "c-attack", target: "NONE", desc: "Rank 1 mundur 10 langkah." },
             { id: "FREEZE", name: "Freeze", icon: "❄️", type: "c-attack", target: "ENEMY", desc: "Skip giliran musuh." },
@@ -284,8 +340,6 @@
             { id: "MAGNET", name: "Magnet", icon: "🧲", type: "c-attack", target: "NONE", desc: "Tarik semua musuh 5 langkah ke arahmu." },
             { id: "EQUALIZER", name: "Equalizer", icon: "⚖️", type: "c-attack", target: "NONE", desc: "Musuh di depan ditarik sejajar denganmu." },
             { id: "KAMIKAZE", name: "Kamikaze", icon: "✈️", type: "c-attack", target: "ENEMY", desc: "Kamu & Target kembali ke Start." },
-            
-            // DEFENSE (Hijau)
             { id: "NITRO", name: "Nitro", icon: "🚀", type: "c-defense", target: "SELF", desc: "Maju 6 langkah." },
             { id: "SUPER_JUMP", name: "Super Jump", icon: "🦗", type: "c-defense", target: "SELF", desc: "Maju 12 langkah." },
             { id: "SHIELD", name: "Shield", icon: "🛡️", type: "c-defense", target: "SELF", desc: "Kebal Ular/Trap (1 Turn)." },
@@ -294,8 +348,6 @@
             { id: "TRAP", name: "Trap Set", icon: "💣", type: "c-defense", target: "NONE", desc: "Pasang ranjau di posisimu." },
             { id: "CHECKPOINT", name: "Checkpt", icon: "🚩", type: "c-defense", target: "SELF", desc: "Set spawn point di sini." },
             { id: "PURIFY", name: "Purify", icon: "💊", type: "c-defense", target: "SELF", desc: "Hapus racun/beku/status buruk." },
-
-            // TRICK (Ungu)
             { id: "PIRATE", name: "Pirate", icon: "🏴‍☠️", type: "c-trick", target: "ENEMY", desc: "Curi 1 kartu musuh." },
             { id: "PORTAL", name: "Portal", icon: "🌀", type: "c-trick", target: "ENEMY", desc: "Tukar posisi dengan target." },
             { id: "SWAP_RND", name: "Swap Rnd", icon: "🎲", type: "c-trick", target: "NONE", desc: "Tukar posisi dengan acak orang." },
@@ -303,8 +355,6 @@
             { id: "REPEL", name: "Repel", icon: "💨", type: "c-trick", target: "NONE", desc: "Dorong musuh dekat menjauh 5 langkah." },
             { id: "TAX", name: "Taxman", icon: "💸", type: "c-trick", target: "NONE", desc: "Musuh -1, Kamu maju totalnya." },
             { id: "BLACK_HOLE", name: "Blk Hole", icon: "🕳️", type: "c-trick", target: "NONE", desc: "Buat lubang hitam (Reset ke 1)." },
-
-            // DICE GOD (Kuning)
             { id: "DICE_1", name: "Dice 1", icon: "1️⃣", type: "c-god", target: "SELF", desc: "Roll selanjutnya pasti 1." },
             { id: "DICE_6", name: "Dice 6", icon: "6️⃣", type: "c-god", target: "SELF", desc: "Roll selanjutnya pasti 6." },
             { id: "DOUBLE", name: "Double", icon: "🎰", type: "c-god", target: "SELF", desc: "Hasil dadu x2." },
@@ -322,8 +372,6 @@
         let selectedCardIdx = null, selectedCardData = null;
         let turnTimerInterval = null;
         let isMyTurn = false, amIHost = false;
-
-        // TRACKER POSISI LOKAL UNTUK ANIMASI STEP
         let localPlayerPositions = {}; 
 
         window.createRoom = createRoom; window.joinRoom = joinRoom;
@@ -357,12 +405,10 @@
 
         function createRoom() {
             myName = document.getElementById('username').value.trim();
-            if(!myName) return alert("Isi nama dulu!");
+            if(!myName) return showToast("Isi nama dulu!", true);
             myPlayerId = "p_" + Date.now();
             const roomId = Math.random().toString(36).substring(2,6).toUpperCase();
-            
             const pData = { name: myName, isHost: true, position: 1, color: COLORS[0], avatar: AVATARS[0], id: myPlayerId, cards: [], status: {} };
-
             set(ref(db, `games/${roomId}`), {
                 status: "LOBBY", host: myPlayerId, turnIndex: 0, lastTurnTime: Date.now(),
                 initialBoard: generateRandomMap(), players: { [myPlayerId]: pData }
@@ -375,19 +421,18 @@
         function joinRoom() {
             myName = document.getElementById('username').value.trim();
             const code = document.getElementById('room-code-input').value.trim().toUpperCase();
-            if(!myName || !code) return alert("Lengkapi data!");
+            if(!myName || !code) return showToast("Lengkapi data!", true);
             myPlayerId = "p_" + Date.now();
-
             get(ref(db, `games/${code}`)).then(snap => {
                 if(snap.exists() && snap.val().status === "LOBBY") {
                     const currentPlayers = Object.keys(snap.val().players || {}).length;
-                    if(currentPlayers >= 6) return alert("Room Penuh!");
+                    if(currentPlayers >= 6) return showToast("Room Penuh!", true);
                     const pData = { name: myName, isHost: false, position: 1, color: COLORS[currentPlayers % COLORS.length], avatar: AVATARS[Math.floor(Math.random()*AVATARS.length)], id: myPlayerId, cards: [], status: {} };
                     set(ref(db, `games/${code}/players/${myPlayerId}`), pData).then(() => {
                         localStorage.setItem("ut_pid", myPlayerId); localStorage.setItem("ut_room", code); localStorage.setItem("ut_name", myName);
                         enterLobby(code, false);
                     });
-                } else alert("Room tidak tersedia!");
+                } else showToast("Room tidak tersedia!", true);
             });
         }
 
@@ -397,7 +442,6 @@
             document.getElementById('screen-lobby').classList.remove('hidden');
             document.getElementById('display-room-code').innerText = roomId;
             if(amIHost) document.getElementById('host-controls').classList.remove('hidden');
-
             onValue(ref(db, `games/${roomId}/players`), snap => {
                 if(!snap.exists()) return;
                 const list = document.getElementById('player-list-ul'); list.innerHTML = ""; playerList = [];
@@ -408,18 +452,20 @@
 
         function startGame() {
             if(!amIHost) return;
+            // RULES: CEGAH MAIN SENDIRI
+            if(playerList.length < 2) return showToast("Minimal 2 Pemain untuk memulai pertempuran!", true);
+            
             playerList.sort((a,b) => a.id.localeCompare(b.id));
             update(ref(db, `games/${currentRoomId}`), { status: "PLAYING", order: playerList.map(p => p.id), lastTurnTime: Date.now() });
         }
 
-        // --- UPDATE ADMIN LOGIC ---
         function forceEndGame() { 
-            if(confirm("Selesaikan paksa?")) {
+            showConfirmModal("SELESAIKAN GAME?", "Semua pemain akan dikeluarkan.", () => {
                 update(ref(db, `games/${currentRoomId}`), { 
                     status: "FINISHED", 
-                    winnerName: "HOST_FORCE_END" // Special Code
+                    winnerName: "HOST_FORCE_END" 
                 });
-            }
+            });
         }
 
         function initGame() {
@@ -440,7 +486,7 @@
 
                     if(game.winnerName === "HOST_FORCE_END") {
                         titleEl.innerText = "GAME OVER";
-                        titleEl.style.color = "#ff4757"; // Red color
+                        titleEl.style.color = "#ff4757"; 
                         nameEl.innerText = "PERMAINAN DISELESAIKAN HOST";
                         nameEl.style.fontSize = "1.5rem";
                     } else {
@@ -452,21 +498,37 @@
                     return; 
                 }
 
-                updateAllTokens(game.players);
-                renderBoardEffects(game.boardEffects || {});
+                // --- SINKRONISASI DADU DARI DB (Single Source of Truth) ---
+                if(game.lastDice) {
+                    document.getElementById('dice-1').innerText = game.lastDice[0];
+                    document.getElementById('dice-2').innerText = game.lastDice[1];
+                }
 
+                // --- LOGIC DELAY & UPDATE (DIPERTAHANKAN 100% DARI ABAB.html) ---
+                const isNewUpdate = (Date.now() - (game.lastTurnTime || 0)) < 2000;
+                const delayTime = isNewUpdate ? 1000 : 0; 
+
+                // Update info giliran langsung
                 const turnPid = game.order[game.turnIndex % game.order.length];
                 document.getElementById('turn-name').innerText = game.players[turnPid].name;
-                document.getElementById('game-log').innerHTML = (game.logs || []).slice(-5).join("<br>");
                 document.getElementById('round-info').innerText = `RND: ${Math.floor(game.turnIndex / game.order.length) + 1}`;
                 
-                if(game.players[myPlayerId]) renderInventory(game.players[myPlayerId].cards || []);
-
+                // Set tombol
                 isMyTurn = (turnPid === myPlayerId);
                 const btn = document.getElementById('btn-roll');
                 btn.disabled = !isMyTurn; btn.className = isMyTurn ? "btn-green" : "btn-disabled";
                 btn.innerText = isMyTurn ? "🎲 KOCOK DADU" : "⏳ MENUNGGU...";
 
+                if(game.players[myPlayerId]) renderInventory(game.players[myPlayerId].cards || []);
+
+                // DELAYED ACTION: Gerakan Pion & Log (INI YANG MENJAGA KESTABILAN ABAB.HTML)
+                setTimeout(() => {
+                    updateAllTokens(game.players);
+                    renderBoardEffects(game.boardEffects || {});
+                    document.getElementById('game-log').innerHTML = (game.logs || []).slice(-5).join("<br>");
+                }, delayTime);
+
+                // Timer UI Update
                 if(turnTimerInterval) clearInterval(turnTimerInterval);
                 turnTimerInterval = setInterval(() => {
                     const timeLeft = Math.max(0, 15 - Math.floor((Date.now() - (game.lastTurnTime || Date.now()))/1000));
@@ -496,9 +558,8 @@
                 const tile = document.getElementById(`tile-${i}`);
                 if(!tile) continue;
                 tile.classList.remove('trap', 'snake', 'wall', 'blackhole');
-                // Reset styles
                 tile.style.border = "";
-                if(!tile.classList.contains('ladder') && !tile.classList.contains('mystery') && !tile.id.includes('100')) {
+                if(!tile.classList.contains('ladder') && !tile.classList.contains('snake') && !tile.classList.contains('mystery') && !tile.id.includes('100')) {
                      // Keep base style if not special
                 }
 
@@ -525,8 +586,6 @@
                     token.style.backgroundColor = p.color; 
                     token.innerText = p.avatar; 
                     layer.appendChild(token);
-                    
-                    // Init First Position (Langsung)
                     setTokenPos(token, p.position);
                     localPlayerPositions[pid] = p.position;
                 } else {
@@ -554,34 +613,28 @@
             const targetTile = document.getElementById(`tile-${posNumber}`);
             if(targetTile) {
                 const tileRect = targetTile.getBoundingClientRect();
-                // Atur kecepatan transisi dinamis
+                const top = tileRect.top - boardRect.top + (tileRect.height * 0.15); 
+                const left = tileRect.left - boardRect.left + (tileRect.width * 0.15);
                 token.style.transition = isSlow ? 'top 0.8s ease, left 0.8s ease' : 'top 0.2s linear, left 0.2s linear';
-                token.style.top = `${tileRect.top - boardRect.top}px`;
-                token.style.left = `${tileRect.left - boardRect.left}px`;
+                token.style.top = `${top}px`;
+                token.style.left = `${left}px`;
             }
         }
 
-        // --- UPDATED ANIMATION: Footstep Feedback ---
         function animateSteps(token, start, end, pid) {
             let current = start;
             function step() {
                 if(current < end) {
                     current++;
-                    setTokenPos(token, current, false); // False = Fast step
-                    
-                    // Visual Feedback: Light up the tile!
+                    setTokenPos(token, current, false);
                     const tileEl = document.getElementById('tile-' + current);
                     if(tileEl) {
                         tileEl.classList.add('stepped-on');
-                        // Remove class after short delay
-                        setTimeout(() => {
-                            if(tileEl) tileEl.classList.remove('stepped-on');
-                        }, 200);
+                        setTimeout(() => { if(tileEl) tileEl.classList.remove('stepped-on'); }, 200);
                     }
-
-                    setTimeout(step, 250); // Jeda antar langkah
+                    setTimeout(step, 250); 
                 } else {
-                    localPlayerPositions[pid] = end; // Sync akhir
+                    localPlayerPositions[pid] = end; 
                 }
             }
             step();
@@ -642,6 +695,10 @@
                 if(p.status.DICE_MOD) { totalRoll = Math.floor(totalRoll * p.status.DICE_MOD); delete p.status.DICE_MOD; }
                 if(p.status.CONFUSE) { totalRoll = -totalRoll; p.status.CONFUSE--; if(p.status.CONFUSE<=0) delete p.status.CONFUSE; logMsg += " 💫 Bingung!"; }
 
+                // --- UPDATE: SIMPAN DADU KE DB UNTUK SINKRONISASI VISUAL ---
+                game.lastDice = [roll1, roll2];
+
+                const oldPos = p.position;
                 let newPos = p.position + totalRoll;
                 if(newPos > 100) newPos = 100 - (newPos - 100);
                 if(newPos < 1) newPos = 1;
@@ -687,7 +744,7 @@
 
                 if(p.status.SHIELD) { p.status.SHIELD--; if(p.status.SHIELD<=0) delete p.status.SHIELD; }
 
-                addLog(game, `> ${p.name} (Roll ${totalRoll}) ke ${newPos}. ${logMsg}`);
+                addLog(game, `> ${p.name} (Roll ${totalRoll}) dari ${oldPos} ke ${newPos}. ${logMsg}`);
                 
                 if(p.status.DBL_TURN) { delete p.status.DBL_TURN; addLog(game, "🔄 Main lagi!"); }
                 else { game.turnIndex++; }
@@ -698,11 +755,12 @@
         }
 
         function clickCard(idx, cid) {
-            if(!isMyTurn) return alert("Bukan giliranmu!");
+            if(!isMyTurn) return showToast("Bukan giliranmu!", true);
             const c = CARD_DB.find(x => x.id === cid);
             selectedCardIdx = idx; selectedCardData = c;
+            
             if(c.target === "ENEMY") showTargetModal();
-            else if(confirm(`Gunakan ${c.name}?`)) executeCard(null);
+            else showConfirmModal(c.name, c.desc, () => executeCard(null));
         }
 
         function showTargetModal() {
@@ -717,6 +775,8 @@
         function confirmTarget(tid) { closeModal(); executeCard(tid); }
 
         function executeCard(targetId) {
+            showCardSplash(selectedCardData.name, selectedCardData.icon);
+
             runTransaction(ref(db, `games/${currentRoomId}`), (game) => {
                 if(!game) return;
                 const me = game.players[myPlayerId];
