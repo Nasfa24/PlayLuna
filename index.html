@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PLAY LUNA</title>
-    
+
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="apple-touch-icon" href="icon.svg">
-
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet">
     
     <style>
+        /* [VISUAL CORE] TAMPILAN MAMA.HTML (PERTAHANAN 100%) */
         :root {
             --bg-dark: #121212;
             --card-bg: #1e1e2e;
@@ -35,95 +35,129 @@
         }
 
         /* HEADER */
-        .header { text-align: center; margin-bottom: 30px; animation: fadeIn 1s; }
-        .header h1 { font-size: 3rem; margin: 0; letter-spacing: 5px; background: -webkit-linear-gradient(#fff, #999); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .header p { font-size: 0.9rem; color: #888; margin-top: 5px; letter-spacing: 2px; }
-
-        /* INPUT NAMA */
-        .input-group { margin-bottom: 40px; width: 100%; max-width: 350px; text-align: center; }
-        .input-group label { display: block; font-size: 0.8rem; color: #aaa; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        input {
-            width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #333;
-            background: #0f0f0f; color: white; font-size: 1.1rem; text-align: center;
-            font-weight: bold; outline: none; transition: 0.3s; box-sizing: border-box;
+        .header { text-align: center; margin-bottom: 30px; margin-top: 20px; }
+        .logo { 
+            font-size: 3rem; font-weight: 800; letter-spacing: 5px; margin: 0;
+            background: linear-gradient(to right, var(--gw-accent), var(--ww-accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
-        input:focus { border-color: var(--gw-accent); box-shadow: 0 0 15px rgba(0, 255, 157, 0.2); }
+        .subtitle { font-size: 0.9rem; letter-spacing: 2px; opacity: 0.7; }
 
-        /* PILIHAN GAME */
-        .game-list { display: flex; flex-direction: column; gap: 20px; width: 100%; max-width: 400px; }
-        
+        /* USER PROFILE INPUT */
+        .user-setup {
+            width: 100%; max-width: 400px; margin-bottom: 40px;
+            background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        input {
+            width: 100%; padding: 15px; border-radius: 10px; border: none;
+            background: rgba(0,0,0,0.3); color: white; text-align: center;
+            font-family: 'Poppins'; font-size: 1.1rem; outline: none;
+            border: 2px solid transparent; transition: 0.3s; box-sizing: border-box;
+        }
+        input:focus { border-color: var(--gw-accent); }
+
+        /* GAME GRID */
+        .game-grid {
+            display: grid; grid-template-columns: 1fr; gap: 20px;
+            width: 100%; max-width: 450px;
+        }
+
+        /* GAME CARD */
         .game-card {
-            background: var(--card-bg); border-radius: 20px; padding: 20px;
-            display: flex; align-items: center; gap: 20px; cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s; border: 1px solid rgba(255,255,255,0.05);
-            position: relative; overflow: hidden;
+            background: var(--card-bg); border-radius: 20px; overflow: hidden;
+            position: relative; transition: transform 0.2s; cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex; flex-direction: column;
         }
         .game-card:active { transform: scale(0.98); }
         
-        /* Tema Werewolf */
-        .game-card.ww:hover { border-color: var(--ww-accent); box-shadow: 0 0 20px rgba(255, 211, 105, 0.1); }
-        .game-card.ww .icon-box { background: rgba(255, 211, 105, 0.1); color: var(--ww-accent); }
-        
-        /* Tema Geometry */
-        .game-card.gw:hover { border-color: var(--gw-accent); box-shadow: 0 0 20px rgba(0, 255, 157, 0.1); }
-        .game-card.gw .icon-box { background: rgba(0, 255, 157, 0.1); color: var(--gw-accent); }
+        .card-banner { height: 100px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .card-icon { font-size: 4rem; z-index: 2; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .card-bg-glow { position: absolute; width: 100%; height: 100%; opacity: 0.3; top: 0; left: 0; }
 
-        .icon-box {
-            width: 60px; height: 60px; border-radius: 15px;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 2rem; flex-shrink: 0;
+        .card-info { padding: 20px; text-align: left; }
+        .card-title { font-size: 1.5rem; font-weight: 800; margin: 0; text-transform: uppercase; }
+        .card-desc { font-size: 0.85rem; opacity: 0.7; margin: 5px 0 15px 0; line-height: 1.4; }
+        .tags { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 600; }
+        .tag { padding: 4px 10px; border-radius: 5px; background: rgba(255,255,255,0.1); }
+
+        /* THEME SPECIFIC */
+        .theme-ww .card-banner { background: linear-gradient(45deg, #2c3e50, #000); }
+        .theme-ww .card-title { color: var(--ww-accent); }
+        .theme-ww .btn-play { background: var(--ww-accent); color: #000; }
+
+        .theme-gw .card-banner { background: linear-gradient(45deg, #0f3460, #000); }
+        .theme-gw .card-title { color: var(--gw-accent); }
+        .theme-gw .btn-play { background: var(--gw-accent); color: #000; }
+
+        .btn-play {
+            width: 100%; padding: 12px; border: none; border-radius: 10px;
+            font-weight: 800; font-family: 'Poppins'; cursor: pointer; margin-top: 10px;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
         }
-        
-        .info-box { flex-grow: 1; }
-        .info-box h3 { margin: 0; font-size: 1.2rem; text-transform: uppercase; }
-        .info-box p { margin: 5px 0 0 0; font-size: 0.8rem; color: #888; }
 
-        .arrow { font-size: 1.5rem; opacity: 0.5; }
-
-        /* FOOTER */
-        .footer { margin-top: auto; padding-top: 40px; text-align: center; color: #444; font-size: 0.7rem; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        /* FOOTER & LINK STYLING */
+        .footer { margin-top: auto; font-size: 0.75rem; color: #666; padding-top: 30px; letter-spacing: 1px; }
+        .footer a {
+            color: #888; text-decoration: none; font-weight: 600;
+            transition: color 0.3s ease;
+            border-bottom: 1px dotted #555;
+        }
+        .footer a:hover {
+            color: var(--gw-accent);
+            border-bottom-color: var(--gw-accent);
+        }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>LUNA</h1>
-        <p>PHYGITAL BOARD GAMES</p>
+        <h1 class="logo">PLAY LUNA</h1>
+        <div class="subtitle">GAMING HUB</div>
     </div>
 
-    <div class="input-group">
-        <label>IDENTITAS PEMAIN</label>
-        <input type="text" id="globalName" placeholder="TULIS NAMAMU DI SINI" oninput="saveGlobalName()">
+    <div class="user-setup">
+        <label style="font-size: 0.8rem; color:#aaa; display:block; margin-bottom:8px; text-align:left;">PLAYER NAME</label>
+        <input type="text" id="globalName" placeholder="Ketik Nama Kamu..." oninput="saveGlobalName()">
     </div>
 
-    <div class="game-list">
-        <div class="game-card ww" onclick="launchGame('werewolf')">
-            <div class="icon-box">
-                <span class="material-symbols-rounded">dark_mode</span>
+    <div class="game-grid">
+        <div class="game-card theme-ww" onclick="launchGame('werewolf')">
+            <div class="card-banner">
+                <div class="card-bg-glow" style="background: var(--ww-accent);"></div>
+                <span class="material-symbols-rounded card-icon" style="color: var(--ww-accent);">dark_mode</span>
             </div>
-            <div class="info-box">
-                <h3>Werewolf</h3>
-                <p>Social Deduction • 4-15 Players</p>
+            <div class="card-info">
+                <h2 class="card-title">Werewolf</h2>
+                <p class="card-desc">Cari pengkhianat di desa atau jadilah pemangsa. Permainan deduksi sosial.</p>
+                <div class="tags">
+                    <span class="tag">👥 4-15 Orang</span>
+                    <span class="tag">🎭 Butuh Host</span>
+                </div>
+                <button class="btn-play">MAIN SEKARANG</button>
             </div>
-            <span class="material-symbols-rounded arrow">chevron_right</span>
         </div>
 
-        <div class="game-card gw" onclick="launchGame('geometry')">
-            <div class="icon-box">
-                <span class="material-symbols-rounded">category</span>
+        <div class="game-card theme-gw" onclick="launchGame('geometry')">
+            <div class="card-banner">
+                <div class="card-bg-glow" style="background: var(--gw-accent);"></div>
+                <span class="material-symbols-rounded card-icon" style="color: var(--gw-accent);">token</span>
             </div>
-            <div class="info-box">
-                <h3>Geometry War</h3>
-                <p>Strategy Board • 2-6 Players</p>
+            <div class="card-info">
+                <h2 class="card-title">Geometry War</h2>
+                <p class="card-desc">Ular tangga tempur dengan kartu serangan dan strategi neon.</p>
+                <div class="tags">
+                    <span class="tag">🎲 2-6 Orang</span>
+                    <span class="tag">⚡ Casual</span>
+                </div>
+                <button class="btn-play">MAIN SEKARANG</button>
             </div>
-            <span class="material-symbols-rounded arrow">chevron_right</span>
         </div>
     </div>
 
     <div class="footer">
-        CREATED WITH ❤️ BY MAS UUTH<br>LUNA ENGINE V1.0
+        LUNA HUB v2.1 • Dibuat oleh <a href="https://www.instagram.com/mas_uuth/" target="_blank">Mas Uuth</a>
     </div>
 
     <script>
@@ -160,7 +194,7 @@
             }, 100);
         }
 
-        // 4. REGISTRASI PWA (Service Worker)
+        // 4. [INJECTED SYSTEM] REGISTRASI PWA DARI PAPA.HTML
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
@@ -169,6 +203,5 @@
             });
         }
     </script>
-
 </body>
 </html>
