@@ -4,7 +4,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M75 10 L40 40 L25 50 L40 60 L75 90 L55 50 Z' stroke='%2300FF9D' stroke-width='4' fill='%23121212'/><circle cx='40' cy='50' r='5' fill='%23ff4757'/></svg>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LUNA: Geometry War (Cinematic)</title>
+    <title>LUNA: Geometry War (Final Fix)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     
     <style>
@@ -213,8 +213,16 @@
             <div id="display-room-code" style="font-size:3em; font-weight:800; color:var(--primary); letter-spacing: 5px; background:#2f3542; padding:10px; border-radius:10px;">----</div>
             <p style="text-align:left; font-weight:bold;">Pemain:</p>
             <ul id="player-list-ul" style="list-style:none; padding:0; text-align:left;"></ul>
-            <div id="host-controls" class="hidden"><button class="btn-green" onclick="startGame()">MULAI PERTEMPURAN</button></div>
+            
+            <div id="host-controls" class="hidden">
+                <button class="btn-green" onclick="startGame()">MULAI PERTEMPURAN</button>
+            </div>
+            
             <p id="waiting-msg" style="color:#a4b0be; font-size:12px;">Menunggu Host...</p>
+
+            <button class="btn-red" onclick="leaveLobby()" style="margin-top: 15px; font-size:12px; padding: 10px;">
+                🚪 KELUAR / BATALKAN
+            </button>
         </div>
 
         <div id="screen-game" class="hidden">
@@ -275,7 +283,7 @@
         if (savedHubName && !document.getElementById("username").value) document.getElementById("username").value = savedHubName;
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, get, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, update, get, runTransaction, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBR01mYbrPNVKk5JqMWeNTyr2yDhiXo4Rg",
@@ -375,6 +383,7 @@
         let localPlayerPositions = {}; 
 
         window.createRoom = createRoom; window.joinRoom = joinRoom;
+        window.leaveLobby = leaveLobby; // Register fungsi baru
         window.startGame = startGame; window.handleRollAnim = handleRollAnim; 
         window.clickCard = clickCard; window.closeModal = closeModal; window.confirmTarget = confirmTarget;
         window.resetLocalData = resetLocalData; window.forceEndGame = forceEndGame;
@@ -441,18 +450,55 @@
             document.getElementById('screen-login').classList.add('hidden');
             document.getElementById('screen-lobby').classList.remove('hidden');
             document.getElementById('display-room-code').innerText = roomId;
-            if(amIHost) document.getElementById('host-controls').classList.remove('hidden');
+            
+            if(amIHost) {
+                document.getElementById('host-controls').classList.remove('hidden');
+                document.getElementById('waiting-msg').classList.add('hidden');
+            } else {
+                document.getElementById('host-controls').classList.add('hidden');
+                document.getElementById('waiting-msg').classList.remove('hidden');
+            }
+
             onValue(ref(db, `games/${roomId}/players`), snap => {
-                if(!snap.exists()) return;
+                if(!snap.exists()) {
+                    if(!amIHost) { // JIKA ROOM DIHAPUS HOST
+                        localStorage.removeItem("ut_pid");
+                        localStorage.removeItem("ut_room");
+                        alert("Room telah dibubarkan oleh Host.");
+                        location.reload();
+                    }
+                    return;
+                }
                 const list = document.getElementById('player-list-ul'); list.innerHTML = ""; playerList = [];
                 snap.forEach(c => { const p = c.val(); playerList.push(p); list.innerHTML += `<li style="padding:5px; border-left:4px solid ${p.color}; color:white;">${p.avatar} ${p.name}</li>`; });
             });
+
             onValue(ref(db, `games/${roomId}/status`), snap => { if(snap.val() === "PLAYING" || snap.val() === "FINISHED") initGame(); });
+        }
+
+        function leaveLobby() {
+            if (!currentRoomId) return location.reload();
+            if (amIHost) {
+                showConfirmModal("BUBARKAN ROOM?", "Semua pemain akan dikeluarkan.", () => {
+                    remove(ref(db, `games/${currentRoomId}`)).then(() => {
+                        localStorage.removeItem("ut_pid");
+                        localStorage.removeItem("ut_room");
+                        location.reload();
+                    });
+                });
+            } else {
+                showConfirmModal("KELUAR?", "Kamu akan kembali ke menu utama.", () => {
+                    remove(ref(db, `games/${currentRoomId}/players/${myPlayerId}`)).then(() => {
+                        localStorage.removeItem("ut_pid");
+                        localStorage.removeItem("ut_room");
+                        location.reload();
+                    });
+                });
+            }
         }
 
         function startGame() {
             if(!amIHost) return;
-            // RULES: CEGAH MAIN SENDIRI
             if(playerList.length < 2) return showToast("Minimal 2 Pemain untuk memulai pertempuran!", true);
             
             playerList.sort((a,b) => a.id.localeCompare(b.id));
@@ -498,22 +544,18 @@
                     return; 
                 }
 
-                // --- SINKRONISASI DADU DARI DB (Single Source of Truth) ---
                 if(game.lastDice) {
                     document.getElementById('dice-1').innerText = game.lastDice[0];
                     document.getElementById('dice-2').innerText = game.lastDice[1];
                 }
 
-                // --- LOGIC DELAY & UPDATE (DIPERTAHANKAN 100% DARI ABAB.html) ---
                 const isNewUpdate = (Date.now() - (game.lastTurnTime || 0)) < 2000;
                 const delayTime = isNewUpdate ? 1000 : 0; 
 
-                // Update info giliran langsung
                 const turnPid = game.order[game.turnIndex % game.order.length];
                 document.getElementById('turn-name').innerText = game.players[turnPid].name;
                 document.getElementById('round-info').innerText = `RND: ${Math.floor(game.turnIndex / game.order.length) + 1}`;
                 
-                // Set tombol
                 isMyTurn = (turnPid === myPlayerId);
                 const btn = document.getElementById('btn-roll');
                 btn.disabled = !isMyTurn; btn.className = isMyTurn ? "btn-green" : "btn-disabled";
@@ -521,14 +563,12 @@
 
                 if(game.players[myPlayerId]) renderInventory(game.players[myPlayerId].cards || []);
 
-                // DELAYED ACTION: Gerakan Pion & Log (INI YANG MENJAGA KESTABILAN ABAB.HTML)
                 setTimeout(() => {
                     updateAllTokens(game.players);
                     renderBoardEffects(game.boardEffects || {});
                     document.getElementById('game-log').innerHTML = (game.logs || []).slice(-5).join("<br>");
                 }, delayTime);
 
-                // Timer UI Update
                 if(turnTimerInterval) clearInterval(turnTimerInterval);
                 turnTimerInterval = setInterval(() => {
                     const timeLeft = Math.max(0, 15 - Math.floor((Date.now() - (game.lastTurnTime || Date.now()))/1000));
@@ -559,10 +599,6 @@
                 if(!tile) continue;
                 tile.classList.remove('trap', 'snake', 'wall', 'blackhole');
                 tile.style.border = "";
-                if(!tile.classList.contains('ladder') && !tile.classList.contains('snake') && !tile.classList.contains('mystery') && !tile.id.includes('100')) {
-                     // Keep base style if not special
-                }
-
                 if(fx[i]) {
                     if(fx[i].type==="TRAP") { tile.classList.add('trap'); tile.innerText="💣"; }
                     if(fx[i].type==="WALL") { tile.classList.add('wall'); tile.innerText="🧱"; }
@@ -578,7 +614,6 @@
             for(let pid in players) {
                 const p = players[pid];
                 let token = document.querySelector(`.token[data-pid="${pid}"]`);
-                
                 if(!token) { 
                     token = document.createElement('div'); 
                     token.className = `token shape-circle`; 
@@ -600,7 +635,6 @@
                         localPlayerPositions[pid] = targetPos;
                     }
                 }
-
                 token.style.border = "2px solid white";
                 if(p.status?.FREEZE) token.style.border = "3px solid cyan";
                 if(p.status?.POISON) token.style.boxShadow = "0 0 10px #00FF00";
@@ -695,9 +729,7 @@
                 if(p.status.DICE_MOD) { totalRoll = Math.floor(totalRoll * p.status.DICE_MOD); delete p.status.DICE_MOD; }
                 if(p.status.CONFUSE) { totalRoll = -totalRoll; p.status.CONFUSE--; if(p.status.CONFUSE<=0) delete p.status.CONFUSE; logMsg += " 💫 Bingung!"; }
 
-                // --- UPDATE: SIMPAN DADU KE DB UNTUK SINKRONISASI VISUAL ---
                 game.lastDice = [roll1, roll2];
-
                 const oldPos = p.position;
                 let newPos = p.position + totalRoll;
                 if(newPos > 100) newPos = 100 - (newPos - 100);
@@ -740,6 +772,7 @@
                 }
 
                 p.position = newPos;
+                // FIX: CEK KEMENANGAN
                 if(newPos === 100) { game.status = "FINISHED"; game.winnerName = p.name; }
 
                 if(p.status.SHIELD) { p.status.SHIELD--; if(p.status.SHIELD<=0) delete p.status.SHIELD; }
@@ -847,6 +880,9 @@
                 if(cid === "OVERDRIVE") me.status.OVERDRIVE = true;
                 if(cid === "GAMBLER") me.status.GAMBLER = true;
                 if(cid === "DBL_TURN") me.status.DBL_TURN = true;
+
+                // FIX: CEK KEMENANGAN SETELAH KARTU
+                if (me.position === 100) { game.status = "FINISHED"; game.winnerName = me.name; }
 
                 me.cards.splice(selectedCardIdx, 1);
                 addLog(game, msg);
