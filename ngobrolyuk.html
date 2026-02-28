@@ -10,7 +10,7 @@
 
   <style>
     :root {
-      /* PALET: Warm Rose */
+      /* PALET WARM ROSE */
       --primary-color: #be123c;  
       --primary-dark: #881337;   
       --accent-color: #ffe4e6;   
@@ -188,9 +188,10 @@
 
     <div id="tombol-aksi-game" style="margin-top: 20px;"></div>
 
-    <div id="area-host-kontrol" style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #fecdd3; display: none;">
-      <p style="font-size: 12px; color: #fb7185; margin-top: 0;">Kontrol Darurat Host:</p>
-      <button class="btn-primary" style="background-color: var(--danger-color); padding: 10px;" onclick="hentikanGamePaksa()">🛑 Selesaikan Permainan Sekarang</button>
+    <div id="area-host-kontrol" style="margin-top: 40px; padding-top: 20px; border-top: 2px dashed #fecdd3; display: none;">
+      <p style="font-size: 12px; color: #fb7185; margin-top: 0; font-weight: bold; text-align: left;">KONTROL DARURAT HOST:</p>
+      <button class="btn-primary btn-outline" style="margin-bottom: 10px; padding: 12px; font-size: 14px;" onclick="putarSpinner()">🔄 Putar Paksa (Bypass Jika Macet)</button>
+      <button class="btn-primary" style="background-color: var(--danger-color); padding: 12px; font-size: 14px; box-shadow: none;" onclick="hentikanGamePaksa()">🛑 Selesaikan Permainan Sekarang</button>
     </div>
   </div>
 
@@ -223,8 +224,6 @@
     
     let isHostLokal = false;
     let daftarNamaPemain = [];
-    let sudahVoteTurnIni = false;
-    let sudahVoteRahasia = false;
     let sudahLihatAturan = false; 
 
     function getCurrentDate() {
@@ -272,17 +271,11 @@
         }).catch(() => { resetDataLokal(); });
       } else {
         document.getElementById('layar-beranda').style.display = 'block';
-        // PERBAIKAN LOGIKA: Tarik otomatis nama yang dikirim dari LUNA HUB
-        if (myPlayerName) {
-          document.getElementById('input-nama').value = myPlayerName;
-        }
       }
     };
 
     window.resetDataLokal = function() {
-      localStorage.removeItem('myPlayerId');
-      localStorage.removeItem('currentRoomCode');
-      // Jangan hapus myPlayerName agar dari index.html tidak hilang
+      localStorage.clear();
       location.reload();
     }
 
@@ -310,6 +303,7 @@
         localStorage.setItem('myPlayerId', myPlayerId);
         localStorage.setItem('currentRoomCode', currentRoomCode);
         
+        isHostLokal = true; // FIX: Pastikan status Host tercatat di memori lokal saat buat room
         bukaLobby(currentRoomCode, true);
       } catch (error) { Swal.fire('Error', error.message, 'error'); }
     }
@@ -335,6 +329,7 @@
           localStorage.setItem('myPlayerId', myPlayerId);
           localStorage.setItem('currentRoomCode', currentRoomCode);
           
+          isHostLokal = false;
           bukaLobby(currentRoomCode, false);
         } else {
           Swal.fire('Oops', 'Ruangan tidak ditemukan. Cek lagi kodenya!', 'warning');
@@ -343,6 +338,7 @@
     }
 
     function bukaLobby(roomCode, isHost) {
+      isHostLokal = isHost; // FIX PENTING: Menjamin hak askes Host tidak hilang
       document.getElementById('layar-beranda').style.display = 'none';
       document.getElementById('layar-lobby').style.display = 'block';
       document.getElementById('display-kode-room').innerText = roomCode;
@@ -366,7 +362,7 @@
           papanSkorDiv.innerHTML += `<div class="player-item"><span>${pData.name}</span> ${badges}</div>`;
         });
 
-        if (isHost) {
+        if (isHostLokal) {
           if (daftarNamaPemain.length >= 2) {
              document.getElementById('area-tombol-host').innerHTML = `<button class="btn-primary" onclick="mulaiGame()">Mulai Game Sekarang</button>`;
           } else {
@@ -398,9 +394,7 @@
         if (roomData.status === "playing") {
           if (!sudahLihatAturan) {
             sudahLihatAturan = true;
-            tampilkanAturanMain().then(() => {
-              transisiKeLayarGame(roomData);
-            });
+            tampilkanAturanMain().then(() => { transisiKeLayarGame(roomData); });
           } else {
             transisiKeLayarGame(roomData);
           }
@@ -412,10 +406,20 @@
       document.getElementById('layar-lobby').style.display = 'none';
       document.getElementById('layar-game').style.display = 'block';
       
+      // Panel kontrol host dimunculkan
       if (isHostLokal) document.getElementById('area-host-kontrol').style.display = 'block';
       else document.getElementById('area-host-kontrol').style.display = 'none';
+
+      // FIX ANTI-LOOP REFRESH (Cek turnIndex via local storage)
+      let turnSekarang = roomData.turnIndex;
+      let lastVotedTurn = parseInt(localStorage.getItem('lastVotedTurn')) || 0;
+      let sudahVoteTurnIniLocal = (turnSekarang === lastVotedTurn);
+
+      let lastSecretVoteTurn = parseInt(localStorage.getItem('lastSecretVoteTurn')) || 0;
+      let sudahVoteRahasiaLocal = (turnSekarang === lastSecretVoteTurn);
       
       if (roomData.isVotingPhase) {
+        // ================= FASE VOTING =================
         document.getElementById('area-normal-game').style.display = 'none';
         document.getElementById('area-voting').style.display = 'block';
         document.getElementById('tombol-aksi-game').innerHTML = ""; 
@@ -427,12 +431,12 @@
         const areaTombolVote = document.getElementById('daftar-tombol-vote');
         areaTombolVote.innerHTML = "";
         
-        if(!sudahVoteRahasia) {
+        if(!sudahVoteRahasiaLocal) {
           const iconVote = roomData.votingType === "disayang" ? "💖" : "🛡️";
           daftarNamaPemain.forEach(p => {
             if(p.id !== myPlayerId) {
               areaTombolVote.innerHTML += `
-                <button class="btn-vote" onclick="kirimVoteRahasia('${p.id}', '${roomData.votingType}')">
+                <button class="btn-vote" onclick="kirimVoteRahasia('${p.id}', '${roomData.votingType}', ${turnSekarang})">
                   <span class="icon">${iconVote}</span> 
                   <span>${p.name}</span>
                 </button>
@@ -440,6 +444,8 @@
             }
           });
           document.getElementById('pesan-selesai-vote').style.display = 'none';
+        } else {
+          document.getElementById('pesan-selesai-vote').style.display = 'block';
         }
 
         if (myPlayerId === roomData.turnOwnerId) {
@@ -447,9 +453,9 @@
         }
 
       } else {
+        // ================= FASE GAME NORMAL =================
         document.getElementById('area-normal-game').style.display = 'block';
         document.getElementById('area-voting').style.display = 'none';
-        sudahVoteRahasia = false; 
 
         if (roomData.currentPlayer === "" || roomData.currentQuestion === "") {
           document.getElementById('area-pertanyaan').style.display = 'none';
@@ -457,7 +463,6 @@
           document.getElementById('pesan-tunggu').style.display = 'none';
           document.getElementById('area-spinner').classList.remove('spinning-dagdigdug');
           document.getElementById('teks-spinner').innerText = "SIAP?";
-          sudahVoteTurnIni = false; 
 
           if (myPlayerId === roomData.turnOwnerId) {
             document.getElementById('tombol-aksi-game').innerHTML = `<button class="btn-primary" style="font-size: 18px; padding: 20px;" onclick="putarSpinner()">Putar Spinner Sekarang!</button>`;
@@ -475,6 +480,8 @@
           const totalPemain = daftarNamaPemain.length;
           const totalYangHarusVote = totalPemain - 1; 
           const jumlahVoteMasuk = roomData.votesCast || 0;
+          // Memastikan angka vote tidak meluber ke 4/3 jika ada ghost player
+          let displayVote = Math.min(jumlahVoteMasuk, totalYangHarusVote);
 
           if (myPlayerId === roomData.currentPlayerId) {
             document.getElementById('area-penilaian').style.display = 'none';
@@ -484,18 +491,18 @@
               document.getElementById('tombol-aksi-game').innerHTML = `<button class="btn-primary" style="font-size: 18px; padding: 20px;" onclick="putarSpinner()">Semua telah menilai! Putar Selanjutnya</button>`;
             } else {
               document.getElementById('pesan-tunggu').style.display = 'block';
-              document.getElementById('pesan-tunggu').innerText = `Menunggu teman menilai... (${jumlahVoteMasuk}/${totalYangHarusVote})`;
+              document.getElementById('pesan-tunggu').innerText = `Menunggu teman menilai... (${displayVote}/${totalYangHarusVote})`;
               document.getElementById('tombol-aksi-game').innerHTML = ""; 
             }
           } 
           else {
-            if(!sudahVoteTurnIni) {
+            if(!sudahVoteTurnIniLocal) {
               document.getElementById('area-penilaian').style.display = 'block';
               document.getElementById('pesan-tunggu').style.display = 'none';
             } else {
               document.getElementById('area-penilaian').style.display = 'none';
               document.getElementById('pesan-tunggu').style.display = 'block';
-              document.getElementById('pesan-tunggu').innerText = `Menunggu pemain lain menilai... (${jumlahVoteMasuk}/${totalYangHarusVote})`;
+              document.getElementById('pesan-tunggu').innerText = `Menunggu pemain lain menilai... (${displayVote}/${totalYangHarusVote})`;
             }
             document.getElementById('tombol-aksi-game').innerHTML = "";
           }
@@ -523,7 +530,7 @@
 
     window.hentikanGamePaksa = async function() {
       Swal.fire({
-        title: 'Hentikan Game?', text: 'Game akan langsung diakhiri dan masuk ke layar penghargaan.',
+        title: 'Hentikan Game?', text: 'Game akan diakhiri dan masuk ke layar penghargaan.',
         icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48', confirmButtonText: 'Ya, Selesaikan!'
       }).then(async (result) => {
         if (result.isConfirmed) {
@@ -544,14 +551,14 @@
       const turnSekarang = roomSnap.data().turnIndex;
       const lastVotingTurn = roomSnap.data().lastVotingTurn || 0;
 
+      // Cek fase voting
       if (turnSekarang > 0 && turnSekarang % 7 === 0 && !roomSnap.data().isVotingPhase && lastVotingTurn !== turnSekarang) {
         const jenisVote = (turnSekarang % 14 === 7) ? "disayang" : "jujur";
         await updateDoc(roomRef, { 
           isVotingPhase: true, 
           votingType: jenisVote, 
-          currentPlayer: "", 
-          currentQuestion: "",
-          lastVotingTurn: turnSekarang 
+          currentPlayer: "", currentQuestion: "",
+          lastVotingTurn: turnSekarang
         });
         return; 
       }
@@ -594,12 +601,14 @@
     }
 
     window.beriNilai = async function(angka) {
-      sudahVoteTurnIni = true;
       document.getElementById('area-penilaian').style.display = 'none';
       
       const roomRef = doc(db, "rooms", currentRoomCode);
       const roomSnap = await getDoc(roomRef);
       if (roomSnap.exists()) {
+        const currentTurn = roomSnap.data().turnIndex;
+        localStorage.setItem('lastVotedTurn', currentTurn); // KUNCI ANTI DOUBLE VOTE
+
         const targetPlayerId = roomSnap.data().currentPlayerId;
         const targetPlayerRef = doc(db, "rooms", currentRoomCode, "players", targetPlayerId);
         
@@ -608,8 +617,9 @@
       }
     }
 
-    window.kirimVoteRahasia = async function(targetPlayerId, tipeVote) {
-      sudahVoteRahasia = true;
+    window.kirimVoteRahasia = async function(targetPlayerId, tipeVote, turnSekarang) {
+      localStorage.setItem('lastSecretVoteTurn', turnSekarang); // KUNCI ANTI DOUBLE VOTE
+
       document.getElementById('daftar-tombol-vote').innerHTML = ""; 
       document.getElementById('pesan-selesai-vote').style.display = 'block';
 
