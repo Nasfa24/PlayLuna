@@ -10,13 +10,13 @@
 
   <style>
     :root {
-      /* Palet Warna Utama */
-      --primary-color: #03754c;  
-      --primary-dark: #025034;   
-      --accent-color: #e8f5e9;   
+      /* PALET WARM ROSE (Fokus pada Resonansi & Empati) */
+      --primary-color: #be123c;  
+      --primary-dark: #881337;   
+      --accent-color: #ffe4e6;   
       --gold-color: #d97706;     
-      --bg-color: #f4f7f6;       
-      --text-color: #2c3e50;     
+      --bg-color: #fff1f2;       
+      --text-color: #3f3f46;     
       --danger-color: #e11d48;
     }
 
@@ -34,7 +34,7 @@
     }
 
     .input-box {
-      width: 100%; padding: 15px; border: 2px solid #c8e6c9; border-radius: 12px;
+      width: 100%; padding: 15px; border: 2px solid #fecdd3; border-radius: 12px;
       font-size: 16px; margin-bottom: 15px; box-sizing: border-box; text-align: center;
       transition: border-color 0.3s; background-color: white; color: var(--text-color);
     }
@@ -43,11 +43,11 @@
     .btn-primary {
       background-color: var(--primary-color); color: white; border: none; padding: 15px 20px;
       border-radius: 12px; font-size: 16px; font-weight: bold;
-      width: 100%; cursor: pointer; box-shadow: 0 4px 6px rgba(3, 117, 76, 0.3);
+      width: 100%; cursor: pointer; box-shadow: 0 4px 6px rgba(190, 18, 60, 0.3);
       transition: all 0.2s; margin-bottom: 15px;
     }
-    .btn-primary:active { transform: translateY(2px); box-shadow: 0 2px 4px rgba(3, 117, 76, 0.2); }
-    .btn-primary:disabled { background-color: #7f8c8d !important; cursor: not-allowed; box-shadow: none; transform: none; opacity: 0.6; }
+    .btn-primary:active { transform: translateY(2px); box-shadow: 0 2px 4px rgba(190, 18, 60, 0.2); }
+    .btn-primary:disabled { background-color: #f43f5e !important; cursor: not-allowed; box-shadow: none; transform: none; opacity: 0.6; }
     
     .btn-outline {
       background-color: white; color: var(--primary-color); border: 2px solid var(--primary-color);
@@ -64,18 +64,18 @@
       padding: 15px 20px; border-radius: 15px; font-size: 18px; font-weight: bold; width: 100%;
       cursor: pointer; margin-bottom: 15px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex; align-items: center; justify-content: flex-start; gap: 15px;
-      box-shadow: 0 4px 6px rgba(3, 117, 76, 0.1);
+      box-shadow: 0 4px 6px rgba(190, 18, 60, 0.1);
     }
     .btn-vote:hover {
       background-color: var(--primary-color); color: white;
-      transform: translateY(-4px); box-shadow: 0 8px 15px rgba(3, 117, 76, 0.25);
+      transform: translateY(-4px); box-shadow: 0 8px 15px rgba(190, 18, 60, 0.25);
     }
     .btn-vote span.icon { font-size: 26px; }
 
     /* DESAIN TOMBOL SKALA EMPATI (1-5) */
     .btn-rating {
       background-color: white; color: var(--text-color);
-      border: 2px solid #e2e8f0;
+      border: 2px solid #fecdd3;
       padding: 12px 15px; border-radius: 12px; font-size: 15px; font-weight: bold;
       cursor: pointer; transition: all 0.2s;
       display: flex; align-items: center; justify-content: flex-start; gap: 12px;
@@ -90,7 +90,7 @@
 
     .card {
       margin: 15px 0; padding: 20px; background: white;
-      border-radius: 16px; box-shadow: 0 4px 15px rgba(3, 117, 76, 0.08); text-align: left;
+      border-radius: 16px; box-shadow: 0 4px 15px rgba(190, 18, 60, 0.08); text-align: left;
       border-top: 5px solid var(--primary-color);
     }
 
@@ -109,7 +109,7 @@
     .spinner-container {
       margin: 30px auto; padding: 10px; background: white; border-radius: 50%;
       width: 160px; height: 160px; display: flex; align-items: center; justify-content: center;
-      border: 8px solid var(--primary-color); box-shadow: 0 10px 25px rgba(3,117,76,0.2);
+      border: 8px solid var(--primary-color); box-shadow: 0 10px 25px rgba(190,18,60,0.2);
       transition: all 0.3s ease;
     }
     .spinning-dagdigdug {
@@ -132,7 +132,7 @@
 <body>
 
   <div id="layar-beranda" class="container">
-    <div style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; padding: 35px 20px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 10px 20px rgba(3,117,76,0.3);">
+    <div style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; padding: 35px 20px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 10px 20px rgba(190,18,60,0.3);">
       <h1 style="margin: 0; font-size: 30px; letter-spacing: 1px;">Ruang Refleksi</h1>
       <p style="margin: 10px 0 0 0; opacity: 0.9;">Kenali lebih dalam, mainkan dengan rasa.</p>
     </div>
@@ -143,17 +143,17 @@
       <button class="btn-primary" onclick="buatRoom()">Buat Room Baru</button>
       
       <div style="display: flex; align-items: center; margin: 15px 0;">
-        <hr style="flex: 1; border: none; border-top: 1px solid #c8e6c9;">
-        <span style="padding: 0 10px; color: #7f8c8d; font-size: 14px;">ATAU</span>
-        <hr style="flex: 1; border: none; border-top: 1px solid #c8e6c9;">
+        <hr style="flex: 1; border: none; border-top: 1px solid #fecdd3;">
+        <span style="padding: 0 10px; color: #fb7185; font-size: 14px;">ATAU</span>
+        <hr style="flex: 1; border: none; border-top: 1px solid #fecdd3;">
       </div>
       
       <input type="text" id="input-kode" class="input-box" placeholder="Kode Room (Contoh: N8YT)" style="text-transform: uppercase;" maxlength="4">
       <button class="btn-primary btn-outline" onclick="gabungRoom()">Gabung Room Teman</button>
     </div>
 
-    <div class="card" style="border-top: 3px solid var(--danger-color); background-color: #ffebee; margin-top: 30px;">
-      <p style="margin-top:0; font-size: 13px; color: #c62828; text-align: center;">Jika aplikasi bermasalah atau kamu ingin keluar dari sesi, gunakan tombol ini.</p>
+    <div class="card" style="border-top: 3px solid var(--danger-color); background-color: #fff1f2; margin-top: 30px;">
+      <p style="margin-top:0; font-size: 13px; color: #9f1239; text-align: center;">Jika aplikasi bermasalah atau kamu ingin keluar dari sesi, gunakan tombol ini.</p>
       <button class="btn-danger-outline" onclick="resetDataLokal()">⚠ Bersihkan Memori Perangkat</button>
     </div>
   </div>
@@ -185,7 +185,7 @@
       </div>
 
       <div id="area-pertanyaan" class="card" style="display: none; text-align: center;">
-        <p style="font-size: 14px; color: #7f8c8d; margin-top: 0;">Giliran <b id="nama-terpilih" style="color: var(--primary-color); font-size: 18px;"></b> menjawab:</p>
+        <p style="font-size: 14px; color: #fb7185; margin-top: 0;">Giliran <b id="nama-terpilih" style="color: var(--primary-color); font-size: 18px;"></b> menjawab:</p>
         <h3 id="teks-pertanyaan" style="color: var(--text-color); line-height: 1.5; margin-bottom: 0;"></h3>
       </div>
       
@@ -205,8 +205,8 @@
 
     <div id="tombol-aksi-game" style="margin-top: 20px;"></div>
 
-    <div id="area-host-kontrol" style="margin-top: 40px; padding-top: 20px; border-top: 2px dashed #c8e6c9; display: none;">
-      <p style="font-size: 12px; color: #7f8c8d; margin-top: 0; font-weight: bold; text-align: left;">KONTROL DARURAT HOST:</p>
+    <div id="area-host-kontrol" style="margin-top: 40px; padding-top: 20px; border-top: 2px dashed #fecdd3; display: none;">
+      <p style="font-size: 12px; color: #fb7185; margin-top: 0; font-weight: bold; text-align: left;">KONTROL DARURAT HOST:</p>
       <button class="btn-primary btn-outline" style="margin-bottom: 10px; padding: 12px; font-size: 14px;" onclick="putarSpinner()">🔄 Putar Paksa (Bypass Jika Macet)</button>
       <button class="btn-primary" style="background-color: var(--danger-color); padding: 12px; font-size: 14px; box-shadow: none;" onclick="hentikanGamePaksa()">🛑 Selesaikan Permainan Sekarang</button>
     </div>
@@ -214,7 +214,7 @@
 
   <div id="layar-akhir" class="container">
     <h1 style="color: var(--primary-color); margin-bottom: 5px;">Sesi Selesai</h1>
-    <p style="color: #7f8c8d; margin-top: 0; margin-bottom: 30px;">Terima kasih telah berbagi ruang aman hari ini.</p>
+    <p style="color: #fb7185; margin-top: 0; margin-bottom: 30px;">Terima kasih telah berbagi ruang aman hari ini.</p>
     <div id="area-penghargaan"></div>
     <button class="btn-primary btn-outline" style="margin-top: 30px; background-color: white;" onclick="resetDataLokal()">Kembali ke Beranda</button>
   </div>
@@ -268,11 +268,11 @@
               <li>Pemain lain wajib mendengarkan dan memberi apresiasi empati (1-5).</li>
               <li>Setiap 7 pertanyaan, kita akan melakukan voting rahasia.</li>
             </ol>
-            <p style="text-align: center; color: var(--primary-color); font-weight: bold; margin-top: 25px;">Siapkan hatimu, mari kita mulai!</p>
+            <p style="text-align: center; color: #be123c; font-weight: bold; margin-top: 25px;">Siapkan hatimu, mari kita mulai!</p>
           </div>
         `,
-        icon: 'info', iconColor: 'var(--primary-color)',
-        confirmButtonColor: 'var(--primary-color)', confirmButtonText: 'Saya Siap & Paham!',
+        icon: 'info', iconColor: '#be123c',
+        confirmButtonColor: '#be123c', confirmButtonText: 'Saya Siap & Paham!',
         allowOutsideClick: false
       });
     }
@@ -386,7 +386,7 @@
              document.getElementById('area-tombol-host').innerHTML = `<button class="btn-primary" disabled>Menunggu Minimal 2 Pemain...</button>`;
           }
         } else {
-          document.getElementById('area-tombol-host').innerHTML = `<p style="color: #7f8c8d; font-weight:bold;">Menunggu Host memulai...</p>`;
+          document.getElementById('area-tombol-host').innerHTML = `<p style="color: #fb7185; font-weight:bold;">Menunggu Host memulai...</p>`;
         }
 
         if (isHostLokal && daftarNamaPemain.length >= 2) {
@@ -480,7 +480,7 @@
           if (myPlayerId === roomData.turnOwnerId) {
             document.getElementById('tombol-aksi-game').innerHTML = `<button class="btn-primary" style="font-size: 18px; padding: 20px;" onclick="putarSpinner()">Putar Spinner Sekarang!</button>`;
           } else {
-            document.getElementById('tombol-aksi-game').innerHTML = `<p style="color: #7f8c8d; font-weight:bold;">Menunggu putaran spinner...</p>`;
+            document.getElementById('tombol-aksi-game').innerHTML = `<p style="color: #fb7185; font-weight:bold;">Menunggu putaran spinner...</p>`;
           }
         } 
         else {
