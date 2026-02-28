@@ -58,7 +58,6 @@
       padding: 12px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 10px;
     }
 
-    /* DESAIN TOMBOL VOTING BARU YANG LEBIH MENARIK */
     .btn-vote {
       background-color: white; color: var(--primary-color); border: 2px solid var(--primary-color);
       padding: 15px 20px; border-radius: 15px; font-size: 18px; font-weight: bold; width: 100%;
@@ -226,7 +225,7 @@
     let daftarNamaPemain = [];
     let sudahVoteTurnIni = false;
     let sudahVoteRahasia = false;
-    let sudahLihatAturan = false; // Pelacak pop-up aturan main
+    let sudahLihatAturan = false; 
 
     function getCurrentDate() {
       const today = new Date();
@@ -240,7 +239,6 @@
       return result;
     }
 
-    // Fungsi POP-UP ATURAN MAIN
     function tampilkanAturanMain() {
       return Swal.fire({
         title: 'Mulai Ruang Refleksi',
@@ -274,11 +272,17 @@
         }).catch(() => { resetDataLokal(); });
       } else {
         document.getElementById('layar-beranda').style.display = 'block';
+        // PERBAIKAN LOGIKA: Tarik otomatis nama yang dikirim dari LUNA HUB
+        if (myPlayerName) {
+          document.getElementById('input-nama').value = myPlayerName;
+        }
       }
     };
 
     window.resetDataLokal = function() {
-      localStorage.clear();
+      localStorage.removeItem('myPlayerId');
+      localStorage.removeItem('currentRoomCode');
+      // Jangan hapus myPlayerName agar dari index.html tidak hilang
       location.reload();
     }
 
@@ -297,7 +301,7 @@
         await setDoc(roomRef, {
           roomId: currentRoomCode, hostName: myPlayerName, status: "waiting", 
           createdAt: getCurrentDate(), currentPlayer: "", currentPlayerId: "", currentQuestion: "", 
-          turnIndex: 0, isVotingPhase: false, votingType: "", lastVotingTurn: 0, // Ditambahkan track untuk anti-loop
+          turnIndex: 0, isVotingPhase: false, votingType: "", lastVotingTurn: 0, 
           turnOwnerId: myPlayerId, votesCast: 0 
         });
         await setDoc(playerRef, { name: myPlayerName, role: "host", score: 0, lovedVotes: 0, honestVotes: 0, pickedCount: 0 });
@@ -372,7 +376,6 @@
           document.getElementById('area-tombol-host').innerHTML = `<p style="color: #fb7185; font-weight:bold;">Menunggu Host memulai...</p>`;
         }
 
-        // CEK KONDISI SELISIH 30 POIN
         if (isHostLokal && daftarNamaPemain.length >= 2) {
           const sortedPlayers = [...daftarNamaPemain].sort((a, b) => b.score - a.score);
           if (sortedPlayers[0].score > 0 && (sortedPlayers[0].score - sortedPlayers[1].score) >= 30) {
@@ -393,8 +396,6 @@
         }
 
         if (roomData.status === "playing") {
-          
-          // Memicu Pop-Up Aturan sebelum membuka layar permainan
           if (!sudahLihatAturan) {
             sudahLihatAturan = true;
             tampilkanAturanMain().then(() => {
@@ -407,7 +408,6 @@
       });
     }
 
-    // Pemisahan Logika UI Game agar tidak berbenturan dengan Pop-Up
     function transisiKeLayarGame(roomData) {
       document.getElementById('layar-lobby').style.display = 'none';
       document.getElementById('layar-game').style.display = 'block';
@@ -416,7 +416,6 @@
       else document.getElementById('area-host-kontrol').style.display = 'none';
       
       if (roomData.isVotingPhase) {
-        // ================= FASE VOTING =================
         document.getElementById('area-normal-game').style.display = 'none';
         document.getElementById('area-voting').style.display = 'block';
         document.getElementById('tombol-aksi-game').innerHTML = ""; 
@@ -432,7 +431,6 @@
           const iconVote = roomData.votingType === "disayang" ? "💖" : "🛡️";
           daftarNamaPemain.forEach(p => {
             if(p.id !== myPlayerId) {
-              // Tampilan Kotak Vote Baru
               areaTombolVote.innerHTML += `
                 <button class="btn-vote" onclick="kirimVoteRahasia('${p.id}', '${roomData.votingType}')">
                   <span class="icon">${iconVote}</span> 
@@ -449,12 +447,10 @@
         }
 
       } else {
-        // ================= FASE GAME NORMAL =================
         document.getElementById('area-normal-game').style.display = 'block';
         document.getElementById('area-voting').style.display = 'none';
         sudahVoteRahasia = false; 
 
-        // STATE 1: Spinner Belum Berputar
         if (roomData.currentPlayer === "" || roomData.currentQuestion === "") {
           document.getElementById('area-pertanyaan').style.display = 'none';
           document.getElementById('area-penilaian').style.display = 'none';
@@ -469,7 +465,6 @@
             document.getElementById('tombol-aksi-game').innerHTML = `<p style="color: #fb7185; font-weight:bold;">Menunggu putaran spinner...</p>`;
           }
         } 
-        // STATE 2: Spinner Selesai & Giliran Menjawab
         else {
           document.getElementById('teks-spinner').innerText = roomData.currentPlayer;
           document.getElementById('area-spinner').classList.remove('spinning-dagdigdug');
@@ -549,7 +544,6 @@
       const turnSekarang = roomSnap.data().turnIndex;
       const lastVotingTurn = roomSnap.data().lastVotingTurn || 0;
 
-      // PERBAIKAN BUG LOOP: Cek apakah turn ini sudah divoting sebelumnya
       if (turnSekarang > 0 && turnSekarang % 7 === 0 && !roomSnap.data().isVotingPhase && lastVotingTurn !== turnSekarang) {
         const jenisVote = (turnSekarang % 14 === 7) ? "disayang" : "jujur";
         await updateDoc(roomRef, { 
@@ -557,7 +551,7 @@
           votingType: jenisVote, 
           currentPlayer: "", 
           currentQuestion: "",
-          lastVotingTurn: turnSekarang // Tandai bahwa turn ini sudah masuk fase voting
+          lastVotingTurn: turnSekarang 
         });
         return; 
       }

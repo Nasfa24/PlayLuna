@@ -12,13 +12,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet">
     
     <style>
-        /* [VISUAL CORE] TAMPILAN MAMA.HTML */
         :root {
             --bg-dark: #121212;
             --card-bg: #1e1e2e;
-            --ww-accent: #ffd369; /* Kuning Werewolf */
-            --gw-accent: #00FF9D; /* Hijau Geometry */
-            --rr-accent: #f43f5e; /* Merah Muda Ruang Refleksi */
+            --ww-accent: #ffd369; 
+            --gw-accent: #00FF9D; 
+            --rr-accent: #f43f5e; 
             --text-main: #ffffff;
         }
 
@@ -35,7 +34,6 @@
             box-sizing: border-box;
         }
 
-        /* HEADER */
         .header { text-align: center; margin-bottom: 30px; margin-top: 20px; }
         .logo { 
             font-size: 3rem; font-weight: 800; letter-spacing: 5px; margin: 0;
@@ -44,7 +42,6 @@
         }
         .subtitle { font-size: 0.9rem; letter-spacing: 2px; opacity: 0.7; }
 
-        /* USER PROFILE INPUT */
         .user-setup {
             width: 100%; max-width: 400px; margin-bottom: 40px;
             background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px;
@@ -58,13 +55,11 @@
         }
         input:focus { border-color: var(--rr-accent); }
 
-        /* GAME GRID */
         .game-grid {
             display: grid; grid-template-columns: 1fr; gap: 20px;
             width: 100%; max-width: 450px;
         }
 
-        /* GAME CARD */
         .game-card {
             background: var(--card-bg); border-radius: 20px; overflow: hidden;
             position: relative; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;
@@ -83,19 +78,16 @@
         .tags { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 600; }
         .tag { padding: 4px 10px; border-radius: 5px; background: rgba(255,255,255,0.1); }
 
-        /* THEME SPECIFIC - WEREWOLF */
         .theme-ww .card-banner { background: linear-gradient(45deg, #2c3e50, #000); }
         .theme-ww .card-title { color: var(--ww-accent); }
         .theme-ww .btn-play { background: var(--ww-accent); color: #000; }
         .game-card.theme-ww:hover { border-color: var(--ww-accent); box-shadow: 0 0 20px rgba(255, 211, 105, 0.15); }
 
-        /* THEME SPECIFIC - GEOMETRY WAR */
         .theme-gw .card-banner { background: linear-gradient(45deg, #0f3460, #000); }
         .theme-gw .card-title { color: var(--gw-accent); }
         .theme-gw .btn-play { background: var(--gw-accent); color: #000; }
         .game-card.theme-gw:hover { border-color: var(--gw-accent); box-shadow: 0 0 20px rgba(0, 255, 157, 0.15); }
 
-        /* THEME SPECIFIC - RUANG REFLEKSI */
         .theme-rr .card-banner { background: linear-gradient(45deg, #881337, #000); }
         .theme-rr .card-title { color: var(--rr-accent); }
         .theme-rr .btn-play { background: var(--rr-accent); color: #fff; }
@@ -107,7 +99,6 @@
             display: flex; align-items: center; justify-content: center; gap: 5px;
         }
 
-        /* FOOTER */
         .footer { margin-top: auto; font-size: 0.75rem; color: #666; padding-top: 30px; letter-spacing: 1px; }
         .footer a {
             color: #888; text-decoration: none; font-weight: 600;
@@ -183,28 +174,23 @@
     </div>
 
     <div class="footer">
-        LUNA HUB v3.0 • Dibuat oleh <a href="https://www.instagram.com/mas_uuth/" target="_blank">Mas Uuth</a>
+        LUNA HUB v3.1 • Dibuat oleh <a href="https://www.instagram.com/mas_uuth/" target="_blank">Mas Uuth</a>
     </div>
 
     <script>
-        // 1. Load Nama saat Halaman Dibuka
         window.onload = () => {
             const savedName = localStorage.getItem("luna_global_name");
             if(savedName) document.getElementById("globalName").value = savedName;
         };
 
-        // 2. Simpan Nama Setiap Mengetik
         function saveGlobalName() {
             const name = document.getElementById("globalName").value.trim();
             localStorage.setItem("luna_global_name", name);
-            
-            // Simpan juga ke key spesifik masing-masing game agar otomatis terisi
-            localStorage.setItem("ww_name", name.toUpperCase());  // Werewolf
-            localStorage.setItem("ut_name", name);                // Geometry War
-            localStorage.setItem("myPlayerName", name);           // Ruang Refleksi (Baru)
+            localStorage.setItem("ww_name", name.toUpperCase());  
+            localStorage.setItem("ut_name", name);                
+            localStorage.setItem("myPlayerName", name);           
         }
 
-        // 3. Navigasi ke Game
         function launchGame(game) {
             const name = document.getElementById("globalName").value.trim();
             if(!name) {
@@ -213,15 +199,16 @@
                 return;
             }
             
-            // Animasi tekan sedikit (Visual Feedback)
+            // FIX LOGIKA: Selalu paksa simpan (backup) nama sebelum pindah halaman
+            saveGlobalName(); 
+            
             setTimeout(() => {
                 if(game === 'werewolf') window.location.href = "werewolf.html"; 
                 if(game === 'geometry') window.location.href = "ulartangga.html"; 
-                if(game === 'refleksi') window.location.href = "ngobrolyuk.html"; // Routing Game Baru
+                if(game === 'refleksi') window.location.href = "ngobrolyuk.html"; 
             }, 100);
         }
 
-        // 4. REGISTRASI PWA (Service Worker)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
