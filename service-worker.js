@@ -1,10 +1,11 @@
 const CACHE_NAME = 'luna-game-v1';
 const urlsToCache = [
-  './index.html',
+'./index.html',
   './werewolf.html',
   './ulartangga.html',
+  './ngobrolyuk.html',
   './manifest.json',
-  './icon.svg' 
+  './icon.svg'
 ];
 
 // ... (kode bawahnya sama persis seperti sebelumnya) ...

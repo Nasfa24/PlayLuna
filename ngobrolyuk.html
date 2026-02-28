@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Ruang Refleksi | Game Psikologi</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="questions.js"></script>
+
+  <style>
+    :root {
+      /* PALET: Warm Rose */
+      --primary-color: #be123c;  
+      --primary-dark: #881337;   
+      --accent-color: #ffe4e6;   
+      --gold-color: #d97706;     
+      --bg-color: #fff1f2;       
+      --text-color: #3f3f46;     
+      --danger-color: #e11d48;
+    }
+
+    body {
+      margin: 0; padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color); color: var(--text-color);
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 100%; max-width: 480px; padding: 20px;
+      box-sizing: border-box; text-align: center;
+    }
+
+    .input-box {
+      width: 100%; padding: 15px; border: 2px solid #fecdd3; border-radius: 12px;
+      font-size: 16px; margin-bottom: 15px; box-sizing: border-box; text-align: center;
+      transition: border-color 0.3s; background-color: white; color: var(--text-color);
+    }
+    .input-box:focus { border-color: var(--primary-color); outline: none; }
+
+    .btn-primary {
+      background-color: var(--primary-color); color: white; border: none; padding: 15px 20px;
+      border-radius: 12px; font-size: 16px; font-weight: bold;
+      width: 100%; cursor: pointer; box-shadow: 0 4px 6px rgba(190, 18, 60, 0.3);
+      transition: all 0.2s; margin-bottom: 15px;
+    }
+    .btn-primary:active { transform: translateY(2px); box-shadow: 0 2px 4px rgba(190, 18, 60, 0.2); }
+    .btn-primary:disabled { background-color: #f43f5e !important; cursor: not-allowed; box-shadow: none; transform: none; opacity: 0.6; }
+    
+    .btn-outline {
+      background-color: white; color: var(--primary-color); border: 2px solid var(--primary-color);
+    }
+    
+    .btn-danger-outline {
+      background-color: transparent; color: var(--danger-color); border: 2px solid var(--danger-color);
+      padding: 12px; border-radius: 12px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 10px;
+    }
+
+    /* DESAIN TOMBOL VOTING BARU YANG LEBIH MENARIK */
+    .btn-vote {
+      background-color: white; color: var(--primary-color); border: 2px solid var(--primary-color);
+      padding: 15px 20px; border-radius: 15px; font-size: 18px; font-weight: bold; width: 100%;
+      cursor: pointer; margin-bottom: 15px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; align-items: center; justify-content: flex-start; gap: 15px;
+      box-shadow: 0 4px 6px rgba(190, 18, 60, 0.1);
+    }
+    .btn-vote:hover {
+      background-color: var(--primary-color); color: white;
+      transform: translateY(-4px); box-shadow: 0 8px 15px rgba(190, 18, 60, 0.25);
+    }
+    .btn-vote span.icon { font-size: 26px; }
+
+    .card {
+      margin: 15px 0; padding: 20px; background: white;
+      border-radius: 16px; box-shadow: 0 4px 15px rgba(190, 18, 60, 0.08); text-align: left;
+      border-top: 5px solid var(--primary-color);
+    }
+
+    .player-item {
+      padding: 12px 0; border-bottom: 1px solid var(--accent-color);
+      display: flex; justify-content: space-between; align-items: center;
+      font-weight: bold; color: var(--text-color);
+    }
+    .player-item:last-child { border-bottom: none; }
+
+    .score-badge {
+      background-color: var(--gold-color); color: white;
+      padding: 4px 12px; border-radius: 20px; font-size: 14px;
+    }
+
+    .spinner-container {
+      margin: 30px auto; padding: 10px; background: white; border-radius: 50%;
+      width: 160px; height: 160px; display: flex; align-items: center; justify-content: center;
+      border: 8px solid var(--primary-color); box-shadow: 0 10px 25px rgba(190,18,60,0.2);
+      transition: all 0.3s ease;
+    }
+    .spinning-dagdigdug {
+      animation: heartbeat 0.4s infinite;
+      border-color: var(--danger-color) !important;
+      box-shadow: 0 0 30px rgba(225, 29, 72, 0.6) !important;
+    }
+    @keyframes heartbeat {
+      0% { transform: scale(1); }
+      25% { transform: scale(1.15); }
+      50% { transform: scale(1); }
+      75% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+    #teks-spinner { margin: 0; color: var(--primary-dark); font-size: 22px; font-weight: 900; word-break: break-word; text-transform: uppercase; text-align: center; }
+
+    #layar-beranda, #layar-lobby, #layar-game, #layar-akhir { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="layar-beranda" class="container">
+    <div style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; padding: 35px 20px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 10px 20px rgba(190,18,60,0.3);">
+      <h1 style="margin: 0; font-size: 30px; letter-spacing: 1px;">Ruang Refleksi</h1>
+      <p style="margin: 10px 0 0 0; opacity: 0.9;">Kenali lebih dalam, mainkan dengan rasa.</p>
+    </div>
+    
+    <div class="card" style="border-top: none; padding: 25px 20px; text-align: center;">
+      <h3 style="margin-top: 0; color: var(--primary-color);">Masuk ke Ruangan</h3>
+      <input type="text" id="input-nama" class="input-box" placeholder="Ketik nama panggilanmu...">
+      <button class="btn-primary" onclick="buatRoom()">Buat Room Baru</button>
+      
+      <div style="display: flex; align-items: center; margin: 15px 0;">
+        <hr style="flex: 1; border: none; border-top: 1px solid #fecdd3;">
+        <span style="padding: 0 10px; color: #fb7185; font-size: 14px;">ATAU</span>
+        <hr style="flex: 1; border: none; border-top: 1px solid #fecdd3;">
+      </div>
+      
+      <input type="text" id="input-kode" class="input-box" placeholder="Kode Room (Contoh: N8YT)" style="text-transform: uppercase;" maxlength="4">
+      <button class="btn-primary btn-outline" onclick="gabungRoom()">Gabung Room Teman</button>
+    </div>
+
+    <div class="card" style="border-top: 3px solid var(--danger-color); background-color: #fff1f2; margin-top: 30px;">
+      <p style="margin-top:0; font-size: 13px; color: #9f1239; text-align: center;">Jika aplikasi bermasalah atau kamu ingin keluar dari sesi, gunakan tombol ini.</p>
+      <button class="btn-danger-outline" onclick="resetDataLokal()">⚠ Bersihkan Memori Perangkat</button>
+    </div>
+  </div>
+
+  <div id="layar-lobby" class="container">
+    <div style="background-color: var(--primary-color); color: white; padding: 20px; border-radius: 16px; margin-bottom: 20px;">
+      <h3 style="margin: 0; font-weight: normal; opacity: 0.8; font-size: 16px;">Kode Room:</h3>
+      <h1 style="margin: 5px 0 0 0; font-size: 45px; letter-spacing: 6px; color: var(--accent-color);" id="display-kode-room"></h1>
+    </div>
+    
+    <div class="card" id="daftar-pemain"></div>
+    <div id="area-tombol-host"></div>
+    <button class="btn-danger-outline" style="margin-top: 30px;" onclick="resetDataLokal()">Keluar dari Room</button>
+  </div>
+
+  <div id="layar-game" class="container">
+    <div class="card" id="papan-skor" style="margin-top: 0; padding: 15px;"></div>
+
+    <div id="area-voting" class="card" style="display: none; text-align: center; background-color: var(--accent-color); border: 2px solid var(--gold-color);">
+      <h2 id="judul-voting" style="color: var(--gold-color); margin-top: 0;">Waktunya Voting!</h2>
+      <p id="deskripsi-voting" style="color: var(--text-color); font-weight: bold; font-size: 16px; margin-bottom: 25px;"></p>
+      <div id="daftar-tombol-vote" style="margin-top: 20px;"></div>
+      <div id="pesan-selesai-vote" style="display: none; color: var(--primary-color); font-weight: bold; margin-top: 15px; font-size: 18px;">✨ Suaramu telah disimpan!</div>
+    </div>
+
+    <div id="area-normal-game">
+      <div class="spinner-container" id="area-spinner">
+        <h2 id="teks-spinner">Siap?</h2>
+      </div>
+
+      <div id="area-pertanyaan" class="card" style="display: none; text-align: center;">
+        <p style="font-size: 14px; color: #fb7185; margin-top: 0;">Giliran <b id="nama-terpilih" style="color: var(--primary-color); font-size: 18px;"></b> menjawab:</p>
+        <h3 id="teks-pertanyaan" style="color: var(--text-color); line-height: 1.5; margin-bottom: 0;"></h3>
+      </div>
+      
+      <div id="area-penilaian" class="card" style="display: none; text-align: center;">
+        <p style="margin-top: 0; margin-bottom: 15px; font-weight: bold;">Seberapa dalam jawaban ini?</p>
+        <div style="display: flex; gap: 8px; justify-content: center;">
+          <button class="btn-primary" style="padding: 10px; flex: 1; margin:0; background-color: #fda4af;" onclick="beriNilai(1)">1</button>
+          <button class="btn-primary" style="padding: 10px; flex: 1; margin:0; background-color: #fb7185;" onclick="beriNilai(2)">2</button>
+          <button class="btn-primary" style="padding: 10px; flex: 1; margin:0; background-color: #f43f5e;" onclick="beriNilai(3)">3</button>
+          <button class="btn-primary" style="padding: 10px; flex: 1; margin:0; background-color: #e11d48;" onclick="beriNilai(4)">4</button>
+          <button class="btn-primary" style="padding: 10px; flex: 1; margin:0; background-color: var(--gold-color);" onclick="beriNilai(5)">5</button>
+        </div>
+      </div>
+
+      <div id="pesan-tunggu" style="display: none; color: #e11d48; margin-top: 20px; font-weight: bold; background-color: var(--accent-color); padding: 10px; border-radius: 8px;"></div>
+    </div>
+
+    <div id="tombol-aksi-game" style="margin-top: 20px;"></div>
+
+    <div id="area-host-kontrol" style="margin-top: 40px; padding-top: 20px; border-top: 1px dashed #fecdd3; display: none;">
+      <p style="font-size: 12px; color: #fb7185; margin-top: 0;">Kontrol Darurat Host:</p>
+      <button class="btn-primary" style="background-color: var(--danger-color); padding: 10px;" onclick="hentikanGamePaksa()">🛑 Selesaikan Permainan Sekarang</button>
+    </div>
+  </div>
+
+  <div id="layar-akhir" class="container">
+    <h1 style="color: var(--primary-color); margin-bottom: 5px;">Sesi Selesai</h1>
+    <p style="color: #fb7185; margin-top: 0; margin-bottom: 30px;">Terima kasih telah berbagi ruang aman hari ini.</p>
+    <div id="area-penghargaan"></div>
+    <button class="btn-primary btn-outline" style="margin-top: 30px; background-color: white;" onclick="resetDataLokal()">Kembali ke Beranda</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA9Xnx8GgUKO0labH9h8HIIBy9Sxhr6biY",
+      authDomain: "ngobrol-a1a0d.firebaseapp.com",
+      projectId: "ngobrol-a1a0d",
+      storageBucket: "ngobrol-a1a0d.firebasestorage.app",
+      messagingSenderId: "351855622064",
+      appId: "1:351855622064:web:98e3301caa1366c7e88875"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let myPlayerName = localStorage.getItem('myPlayerName') || "";
+    let myPlayerId = localStorage.getItem('myPlayerId') || "";
+    let currentRoomCode = localStorage.getItem('currentRoomCode') || "";
+    
+    let isHostLokal = false;
+    let daftarNamaPemain = [];
+    let sudahVoteTurnIni = false;
+    let sudahVoteRahasia = false;
+    let sudahLihatAturan = false; // Pelacak pop-up aturan main
+
+    function getCurrentDate() {
+      const today = new Date();
+      return `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+    }
+
+    function generateRoomCode() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < 4; i++) { result += chars.charAt(Math.floor(Math.random() * chars.length)); }
+      return result;
+    }
+
+    // Fungsi POP-UP ATURAN MAIN
+    function tampilkanAturanMain() {
+      return Swal.fire({
+        title: 'Mulai Ruang Refleksi',
+        html: `
+          <div style="text-align: left; font-size: 15px; color: #3f3f46;">
+            <p><b>🎯 Tujuan Permainan:</b><br>Menciptakan ruang aman untuk saling mengenal lebih dalam, tanpa penghakiman.</p>
+            <p><b>📜 Cara Bermain:</b></p>
+            <ol style="padding-left: 20px; line-height: 1.6;">
+              <li>Spinner akan menunjuk 1 orang secara adil.</li>
+              <li>Orang terpilih harus menjawab pertanyaan sejujurnya.</li>
+              <li>Pemain lain wajib mendengarkan dan memberi nilai empati (1-5).</li>
+              <li>Setiap 7 pertanyaan, kita akan melakukan voting rahasia.</li>
+            </ol>
+            <p style="text-align: center; color: var(--primary-color); font-weight: bold; margin-top: 25px;">Siapkan hatimu, mari kita mulai!</p>
+          </div>
+        `,
+        icon: 'info', iconColor: 'var(--primary-color)',
+        confirmButtonColor: 'var(--primary-color)', confirmButtonText: 'Saya Siap & Paham!',
+        allowOutsideClick: false
+      });
+    }
+
+    window.onload = function() {
+      if (currentRoomCode && myPlayerId && myPlayerName) {
+        const roomRef = doc(db, "rooms", currentRoomCode);
+        getDoc(roomRef).then((docSnap) => {
+          if (docSnap.exists() && docSnap.data().status !== "ended") {
+            isHostLokal = (docSnap.data().hostName === myPlayerName);
+            bukaLobby(currentRoomCode, isHostLokal);
+          } else { resetDataLokal(); }
+        }).catch(() => { resetDataLokal(); });
+      } else {
+        document.getElementById('layar-beranda').style.display = 'block';
+      }
+    };
+
+    window.resetDataLokal = function() {
+      localStorage.clear();
+      location.reload();
+    }
+
+    window.buatRoom = async function() {
+      const nama = document.getElementById('input-nama').value.trim();
+      if (!nama) return Swal.fire('Oops', 'Isi nama panggilanmu dulu ya!', 'warning');
+      
+      myPlayerName = nama;
+      currentRoomCode = generateRoomCode();
+      myPlayerId = "player_" + Math.random().toString(36).substr(2, 9);
+      
+      try {
+        const roomRef = doc(db, "rooms", currentRoomCode);
+        const playerRef = doc(db, "rooms", currentRoomCode, "players", myPlayerId); 
+        
+        await setDoc(roomRef, {
+          roomId: currentRoomCode, hostName: myPlayerName, status: "waiting", 
+          createdAt: getCurrentDate(), currentPlayer: "", currentPlayerId: "", currentQuestion: "", 
+          turnIndex: 0, isVotingPhase: false, votingType: "", lastVotingTurn: 0, // Ditambahkan track untuk anti-loop
+          turnOwnerId: myPlayerId, votesCast: 0 
+        });
+        await setDoc(playerRef, { name: myPlayerName, role: "host", score: 0, lovedVotes: 0, honestVotes: 0, pickedCount: 0 });
+        
+        localStorage.setItem('myPlayerName', myPlayerName);
+        localStorage.setItem('myPlayerId', myPlayerId);
+        localStorage.setItem('currentRoomCode', currentRoomCode);
+        
+        bukaLobby(currentRoomCode, true);
+      } catch (error) { Swal.fire('Error', error.message, 'error'); }
+    }
+
+    window.gabungRoom = async function() {
+      const nama = document.getElementById('input-nama').value.trim();
+      const kode = document.getElementById('input-kode').value.trim().toUpperCase();
+      
+      if (!nama || !kode) return Swal.fire('Oops', 'Isi nama dan kode room dengan lengkap!', 'warning');
+      currentRoomCode = kode; 
+
+      try {
+        const roomRef = doc(db, "rooms", currentRoomCode);
+        const roomSnap = await getDoc(roomRef);
+
+        if (roomSnap.exists()) {
+          myPlayerName = nama;
+          myPlayerId = "player_" + Math.random().toString(36).substr(2, 9);
+          const newPlayerRef = doc(db, "rooms", currentRoomCode, "players", myPlayerId);
+          await setDoc(newPlayerRef, { name: myPlayerName, role: "player", score: 0, lovedVotes: 0, honestVotes: 0, pickedCount: 0 });
+          
+          localStorage.setItem('myPlayerName', myPlayerName);
+          localStorage.setItem('myPlayerId', myPlayerId);
+          localStorage.setItem('currentRoomCode', currentRoomCode);
+          
+          bukaLobby(currentRoomCode, false);
+        } else {
+          Swal.fire('Oops', 'Ruangan tidak ditemukan. Cek lagi kodenya!', 'warning');
+        }
+      } catch (error) { Swal.fire('Error', error.message, 'error'); }
+    }
+
+    function bukaLobby(roomCode, isHost) {
+      document.getElementById('layar-beranda').style.display = 'none';
+      document.getElementById('layar-lobby').style.display = 'block';
+      document.getElementById('display-kode-room').innerText = roomCode;
+
+      const playersRef = collection(db, "rooms", roomCode, "players");
+      onSnapshot(playersRef, async (snapshot) => {
+        daftarNamaPemain = [];
+        const daftarPemainDiv = document.getElementById('daftar-pemain');
+        const papanSkorDiv = document.getElementById('papan-skor');
+        
+        daftarPemainDiv.innerHTML = '<h4 style="margin-top:0; color: var(--primary-color);">Pemain Hadir:</h4>';
+        papanSkorDiv.innerHTML = '<h4 style="margin-top:0; color: var(--primary-color);">Papan Skor</h4>';
+        
+        snapshot.forEach((doc) => {
+          const pData = doc.data();
+          daftarNamaPemain.push({ id: doc.id, ...pData });
+          const icon = pData.role === 'host' ? '👑' : '👤';
+          
+          daftarPemainDiv.innerHTML += `<div class="player-item"><span>${icon} ${pData.name}</span></div>`;
+          let badges = `<span class="score-badge">${pData.score} Pts</span>`;
+          papanSkorDiv.innerHTML += `<div class="player-item"><span>${pData.name}</span> ${badges}</div>`;
+        });
+
+        if (isHost) {
+          if (daftarNamaPemain.length >= 2) {
+             document.getElementById('area-tombol-host').innerHTML = `<button class="btn-primary" onclick="mulaiGame()">Mulai Game Sekarang</button>`;
+          } else {
+             document.getElementById('area-tombol-host').innerHTML = `<button class="btn-primary" disabled>Menunggu Minimal 2 Pemain...</button>`;
+          }
+        } else {
+          document.getElementById('area-tombol-host').innerHTML = `<p style="color: #fb7185; font-weight:bold;">Menunggu Host memulai...</p>`;
+        }
+
+        // CEK KONDISI SELISIH 30 POIN
+        if (isHostLokal && daftarNamaPemain.length >= 2) {
+          const sortedPlayers = [...daftarNamaPemain].sort((a, b) => b.score - a.score);
+          if (sortedPlayers[0].score > 0 && (sortedPlayers[0].score - sortedPlayers[1].score) >= 30) {
+            const roomRef = doc(db, "rooms", currentRoomCode);
+            const roomSnap = await getDoc(roomRef);
+            if (roomSnap.data().status !== "ended") updateDoc(roomRef, { status: "ended" });
+          }
+        }
+      });
+
+      const roomRef = doc(db, "rooms", roomCode);
+      onSnapshot(roomRef, (docSnap) => {
+        if (!docSnap.exists()) return;
+        const roomData = docSnap.data();
+        
+        if (roomData.status === "ended") {
+          tampilkanLayarAkhir(); return;
+        }
+
+        if (roomData.status === "playing") {
+          
+          // Memicu Pop-Up Aturan sebelum membuka layar permainan
+          if (!sudahLihatAturan) {
+            sudahLihatAturan = true;
+            tampilkanAturanMain().then(() => {
+              transisiKeLayarGame(roomData);
+            });
+          } else {
+            transisiKeLayarGame(roomData);
+          }
+        }
+      });
+    }
+
+    // Pemisahan Logika UI Game agar tidak berbenturan dengan Pop-Up
+    function transisiKeLayarGame(roomData) {
+      document.getElementById('layar-lobby').style.display = 'none';
+      document.getElementById('layar-game').style.display = 'block';
+      
+      if (isHostLokal) document.getElementById('area-host-kontrol').style.display = 'block';
+      else document.getElementById('area-host-kontrol').style.display = 'none';
+      
+      if (roomData.isVotingPhase) {
+        // ================= FASE VOTING =================
+        document.getElementById('area-normal-game').style.display = 'none';
+        document.getElementById('area-voting').style.display = 'block';
+        document.getElementById('tombol-aksi-game').innerHTML = ""; 
+        
+        document.getElementById('deskripsi-voting').innerText = roomData.votingType === "disayang" 
+          ? "Siapa teman yang paling bikin nyaman hari ini?" 
+          : "Siapa teman yang paling jujur dan terbuka?";
+
+        const areaTombolVote = document.getElementById('daftar-tombol-vote');
+        areaTombolVote.innerHTML = "";
+        
+        if(!sudahVoteRahasia) {
+          const iconVote = roomData.votingType === "disayang" ? "💖" : "🛡️";
+          daftarNamaPemain.forEach(p => {
+            if(p.id !== myPlayerId) {
+              // Tampilan Kotak Vote Baru
+              areaTombolVote.innerHTML += `
+                <button class="btn-vote" onclick="kirimVoteRahasia('${p.id}', '${roomData.votingType}')">
+                  <span class="icon">${iconVote}</span> 
+                  <span>${p.name}</span>
+                </button>
+              `;
+            }
+          });
+          document.getElementById('pesan-selesai-vote').style.display = 'none';
+        }
+
+        if (myPlayerId === roomData.turnOwnerId) {
+          document.getElementById('tombol-aksi-game').innerHTML = `<button class="btn-primary" style="padding: 20px; font-size: 18px;" onclick="tutupSesiVoting()">Tutup Sesi & Lanjut Main</button>`;
+        }
+
+      } else {
+        // ================= FASE GAME NORMAL =================
+        document.getElementById('area-normal-game').style.display = 'block';
+        document.getElementById('area-voting').style.display = 'none';
+        sudahVoteRahasia = false; 
+
+        // STATE 1: Spinner Belum Berputar
+        if (roomData.currentPlayer === "" || roomData.currentQuestion === "") {
+          document.getElementById('area-pertanyaan').style.display = 'none';
+          document.getElementById('area-penilaian').style.display = 'none';
+          document.getElementById('pesan-tunggu').style.display = 'none';
+          document.getElementById('area-spinner').classList.remove('spinning-dagdigdug');
+          document.getElementById('teks-spinner').innerText = "SIAP?";
+          sudahVoteTurnIni = false; 
+
+          if (myPlayerId === roomData.turnOwnerId) {
+            document.getElementById('tombol-aksi-game').innerHTML = `<button class="btn-primary" style="font-size: 18px; padding: 20px;" onclick="putarSpinner()">Putar Spinner Sekarang!</button>`;
+          } else {
+            document.getElementById('tombol-aksi-game').innerHTML = `<p style="color: #fb7185; font-weight:bold;">Menunggu putaran spinner...</p>`;
+          }
+        } 
+        // STATE 2: Spinner Selesai & Giliran Menjawab
+        else {
+          document.getElementById('teks-spinner').innerText = roomData.currentPlayer;
+          document.getElementById('area-spinner').classList.remove('spinning-dagdigdug');
+          document.getElementById('nama-terpilih').innerText = roomData.currentPlayer;
+          document.getElementById('teks-pertanyaan').innerText = roomData.currentQuestion;
+          document.getElementById('area-pertanyaan').style.display = 'block';
+
+          const totalPemain = daftarNamaPemain.length;
+          const totalYangHarusVote = totalPemain - 1; 
+          const jumlahVoteMasuk = roomData.votesCast || 0;
+
+          if (myPlayerId === roomData.currentPlayerId) {
+            document.getElementById('area-penilaian').style.display = 'none';
+            
+            if (jumlahVoteMasuk >= totalYangHarusVote && totalPemain > 1) {
+              document.getElementById('pesan-tunggu').style.display = 'none';
+              document.getElementById('tombol-aksi-game').innerHTML = `<button class="btn-primary" style="font-size: 18px; padding: 20px;" onclick="putarSpinner()">Semua telah menilai! Putar Selanjutnya</button>`;
+            } else {
+              document.getElementById('pesan-tunggu').style.display = 'block';
+              document.getElementById('pesan-tunggu').innerText = `Menunggu teman menilai... (${jumlahVoteMasuk}/${totalYangHarusVote})`;
+              document.getElementById('tombol-aksi-game').innerHTML = ""; 
+            }
+          } 
+          else {
+            if(!sudahVoteTurnIni) {
+              document.getElementById('area-penilaian').style.display = 'block';
+              document.getElementById('pesan-tunggu').style.display = 'none';
+            } else {
+              document.getElementById('area-penilaian').style.display = 'none';
+              document.getElementById('pesan-tunggu').style.display = 'block';
+              document.getElementById('pesan-tunggu').innerText = `Menunggu pemain lain menilai... (${jumlahVoteMasuk}/${totalYangHarusVote})`;
+            }
+            document.getElementById('tombol-aksi-game').innerHTML = "";
+          }
+        }
+      }
+    }
+
+    function tampilkanLayarAkhir() {
+      document.getElementById('layar-game').style.display = 'none';
+      document.getElementById('layar-akhir').style.display = 'block';
+      const areaPenghargaan = document.getElementById('area-penghargaan');
+      areaPenghargaan.innerHTML = "";
+
+      const pemenangSkor = [...daftarNamaPemain].sort((a, b) => b.score - a.score)[0];
+      if (pemenangSkor) {
+        areaPenghargaan.innerHTML += `
+          <div class="card" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color:white; border:none; text-align:center;">
+            <h4 style="margin:0; font-weight:normal; color: var(--accent-color);">Sang Empati Utama</h4>
+            <h2 style="margin: 10px 0; color: var(--gold-color);">🌟 ${pemenangSkor.name} 🌟</h2>
+            <p style="font-size: 13px; margin: 0; opacity: 0.9;">Telah menciptakan ruang aman bagi kita semua.</p>
+          </div>
+        `;
+      }
+    }
+
+    window.hentikanGamePaksa = async function() {
+      Swal.fire({
+        title: 'Hentikan Game?', text: 'Game akan langsung diakhiri dan masuk ke layar penghargaan.',
+        icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48', confirmButtonText: 'Ya, Selesaikan!'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const roomRef = doc(db, "rooms", currentRoomCode);
+          await updateDoc(roomRef, { status: "ended" });
+        }
+      });
+    }
+
+    window.mulaiGame = async function() {
+      const roomRef = doc(db, "rooms", currentRoomCode);
+      await updateDoc(roomRef, { status: "playing" });
+    }
+
+    window.putarSpinner = async function() {
+      const roomRef = doc(db, "rooms", currentRoomCode);
+      const roomSnap = await getDoc(roomRef);
+      const turnSekarang = roomSnap.data().turnIndex;
+      const lastVotingTurn = roomSnap.data().lastVotingTurn || 0;
+
+      // PERBAIKAN BUG LOOP: Cek apakah turn ini sudah divoting sebelumnya
+      if (turnSekarang > 0 && turnSekarang % 7 === 0 && !roomSnap.data().isVotingPhase && lastVotingTurn !== turnSekarang) {
+        const jenisVote = (turnSekarang % 14 === 7) ? "disayang" : "jujur";
+        await updateDoc(roomRef, { 
+          isVotingPhase: true, 
+          votingType: jenisVote, 
+          currentPlayer: "", 
+          currentQuestion: "",
+          lastVotingTurn: turnSekarang // Tandai bahwa turn ini sudah masuk fase voting
+        });
+        return; 
+      }
+
+      await updateDoc(roomRef, { currentPlayer: "", currentQuestion: "", votesCast: 0 });
+      
+      const spinnerDiv = document.getElementById('area-spinner');
+      spinnerDiv.classList.add('spinning-dagdigdug'); 
+
+      let putaran = 0;
+      const interval = setInterval(() => {
+        document.getElementById('teks-spinner').innerText = daftarNamaPemain[putaran % daftarNamaPemain.length].name;
+        putaran++;
+      }, 90);
+
+      setTimeout(async () => {
+        clearInterval(interval);
+        
+        const minPickedCount = Math.min(...daftarNamaPemain.map(p => p.pickedCount || 0));
+        const eligiblePlayers = daftarNamaPemain.filter(p => (p.pickedCount || 0) === minPickedCount);
+        const randomPlayerObj = eligiblePlayers[Math.floor(Math.random() * eligiblePlayers.length)];
+        
+        let randomQuestion = "Ceritakan hal paling berani yang pernah kamu lakukan?";
+        if (typeof questionsDB !== 'undefined' && questionsDB.length > 0) {
+          randomQuestion = questionsDB[Math.floor(Math.random() * questionsDB.length)].text;
+        }
+
+        const targetPlayerRef = doc(db, "rooms", currentRoomCode, "players", randomPlayerObj.id);
+        await updateDoc(targetPlayerRef, { pickedCount: increment(1) });
+
+        await updateDoc(roomRef, {
+          currentPlayer: randomPlayerObj.name,
+          currentPlayerId: randomPlayerObj.id,
+          currentQuestion: randomQuestion,
+          turnIndex: increment(1),
+          turnOwnerId: randomPlayerObj.id,
+          votesCast: 0
+        });
+      }, 3000); 
+    }
+
+    window.beriNilai = async function(angka) {
+      sudahVoteTurnIni = true;
+      document.getElementById('area-penilaian').style.display = 'none';
+      
+      const roomRef = doc(db, "rooms", currentRoomCode);
+      const roomSnap = await getDoc(roomRef);
+      if (roomSnap.exists()) {
+        const targetPlayerId = roomSnap.data().currentPlayerId;
+        const targetPlayerRef = doc(db, "rooms", currentRoomCode, "players", targetPlayerId);
+        
+        await updateDoc(targetPlayerRef, { score: increment(angka) });
+        await updateDoc(roomRef, { votesCast: increment(1) });
+      }
+    }
+
+    window.kirimVoteRahasia = async function(targetPlayerId, tipeVote) {
+      sudahVoteRahasia = true;
+      document.getElementById('daftar-tombol-vote').innerHTML = ""; 
+      document.getElementById('pesan-selesai-vote').style.display = 'block';
+
+      const targetPlayerRef = doc(db, "rooms", currentRoomCode, "players", targetPlayerId);
+      if (tipeVote === "disayang") await updateDoc(targetPlayerRef, { lovedVotes: increment(1) });
+      else await updateDoc(targetPlayerRef, { honestVotes: increment(1) });
+    }
+
+    window.tutupSesiVoting = async function() {
+      const roomRef = doc(db, "rooms", currentRoomCode);
+      await updateDoc(roomRef, { isVotingPhase: false });
+    }
+  </script>
+</body>
+</html>
