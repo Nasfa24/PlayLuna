@@ -54,17 +54,34 @@
         .btn-red { background: var(--red-suit); color: white; box-shadow: 0 4px 0 #881337; }
         .btn-blue { background: #00a8ff; color: white; box-shadow: 0 4px 0 #0097e6; }
 
-        /* MODAL KONFIRMASI */
+        /* MODAL KONFIRMASI & ALERT DIPERBAGUS */
         #custom-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 9000;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9000;
             display: flex; justify-content: center; align-items: center;
+            opacity: 1; transition: opacity 0.3s;
         }
         .custom-modal {
-            background: #2f3542; width: 85%; max-width: 350px; padding: 25px;
-            border-radius: 15px; border: 2px solid var(--gold); text-align: center;
+            background: linear-gradient(145deg, #2c1e16, #1e130c); /* Tema kayu gelap */
+            width: 85%; max-width: 350px; padding: 30px 25px;
+            border-radius: 20px; border: 2px solid var(--gold); 
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8), inset 0 0 15px rgba(251, 197, 49, 0.1);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        #modal-title {
+            margin-top: 0; color: var(--gold); font-size: 1.5rem; letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-bottom: 10px;
+        }
+        #modal-text {
+            font-size: 0.95rem; color: #ddd; line-height: 1.5; margin-bottom: 25px;
+        }
+        .modal-actions { display: flex; gap: 15px; justify-content: center; }
+        .modal-actions .btn { margin: 0; flex: 1; } /* Reset margin & bagi rata panjang tombol */
 
         /* PERINGATAN PORTRAIT */
         #rotate-warning {
@@ -74,8 +91,7 @@
         }
         @media screen and (orientation: portrait) {
             #rotate-warning { display: flex; }
-            #game-ui { display: none !important; }
-            .menu-container { display: none !important; }
+            #game-ui, .menu-container { display: none !important; }
         }
 
         #game-ui { display: flex; flex-direction: column; height: 100%; width: 100%; position: relative; }
@@ -98,8 +114,9 @@
         .btn-tutup {
             background: var(--red-suit); color: white; border: none; padding: 6px 15px;
             border-radius: 20px; font-weight: bold; font-family: 'Poppins'; font-size: 12px;
-            cursor: pointer;
+            cursor: pointer; transition: 0.2s;
         }
+        .btn-tutup:active { transform: scale(0.95); }
 
         /* TATA LETAK MEJA */
         .game-table {
@@ -195,11 +212,11 @@
 
     <div id="custom-modal-overlay" class="hidden">
         <div class="custom-modal">
-            <h3 id="modal-title" style="margin-top:0; color:var(--gold);">JUDUL</h3>
-            <p id="modal-text" style="font-size: 14px; color:#ddd;">Deskripsi</p>
+            <h3 id="modal-title">JUDUL</h3>
+            <p id="modal-text">Deskripsi</p>
             <div class="modal-actions">
-                <button id="modal-btn-yes" class="btn btn-gold" style="width:auto; padding:8px 20px;">YA</button>
-                <button id="modal-btn-no" class="btn btn-red" style="width:auto; padding:8px 20px;">BATAL</button>
+                <button id="modal-btn-yes" class="btn btn-gold">YA</button>
+                <button id="modal-btn-no" class="btn btn-red">BATAL</button>
             </div>
         </div>
     </div>
@@ -284,7 +301,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, update, get, runTransaction, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // CONFIG SUDAH DITAMBAHKAN DATABASE URL
         const firebaseConfig = {
             apiKey: "AIzaSyBSOOCaSfzAELvbtrEFOxdR8nYsKWlCnag",
             authDomain: "remi-suroboyoan.firebaseapp.com",
@@ -298,15 +314,31 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- SISTEM KONFIRMASI ---
+        // --- SISTEM KONFIRMASI & ALERT KUSTOM ---
         window.showConfirmModal = function(title, text, onConfirm) {
             const overlay = document.getElementById('custom-modal-overlay');
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-text').innerText = text;
             overlay.classList.remove('hidden');
             
+            document.getElementById('modal-btn-no').classList.remove('hidden');
+            document.getElementById('modal-btn-yes').innerText = "YA";
             document.getElementById('modal-btn-yes').onclick = () => { overlay.classList.add('hidden'); onConfirm(); };
             document.getElementById('modal-btn-no').onclick = () => { overlay.classList.add('hidden'); };
+        };
+
+        window.showAlertModal = function(title, text, onClose) {
+            const overlay = document.getElementById('custom-modal-overlay');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-text').innerText = text;
+            overlay.classList.remove('hidden');
+            
+            document.getElementById('modal-btn-no').classList.add('hidden'); // Hilangkan tombol batal
+            document.getElementById('modal-btn-yes').innerText = "OK";
+            document.getElementById('modal-btn-yes').onclick = () => { 
+                overlay.classList.add('hidden'); 
+                if(onClose) onClose(); 
+            };
         };
 
         // --- VARIABEL GLOBAL ---
@@ -346,7 +378,7 @@
         // --- ROOM MANAGEMENT ---
         window.createRoom = () => {
             myName = document.getElementById('input-nama').value.trim();
-            if (!myName) return alert("Isi nama dulu!");
+            if (!myName) return showAlertModal("PERHATIAN", "Silakan isi nama panggilanmu dulu!");
             localStorage.setItem("luna_global_name", myName);
             
             myPlayerId = "p_" + Date.now();
@@ -359,19 +391,19 @@
                 localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", roomId);
                 enterLobby(roomId, true);
             }).catch(error => {
-                alert("Gagal membuat room!\nError: " + error.message + "\n\nPastikan Realtime Database aktif & Rules diset true.");
+                showAlertModal("GAGAL", "Gagal membuat room!\n" + error.message);
             });
         };
 
         window.joinRoom = () => {
             myName = document.getElementById('input-nama').value.trim();
             const code = document.getElementById('input-kode').value.trim().toUpperCase();
-            if (!myName || !code) return alert("Lengkapi data!");
+            if (!myName || !code) return showAlertModal("PERHATIAN", "Lengkapi nama dan kode room!");
             
             get(ref(db, `remi_rooms/${code}`)).then(snap => {
                 if (snap.exists() && snap.val().status === "LOBBY") {
                     const roomData = snap.val();
-                    if(roomData.players.length >= 4) return alert("Room Penuh!");
+                    if(roomData.players.length >= 4) return showAlertModal("MAAF", "Room Penuh!");
                     
                     myPlayerId = "p_" + Date.now();
                     localStorage.setItem("luna_global_name", myName);
@@ -382,11 +414,9 @@
                     update(ref(db, `remi_rooms/${code}`), { players: updatedPlayers }).then(() => {
                         localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", code);
                         enterLobby(code, false);
-                    }).catch(error => {
-                        alert("Gagal masuk ke room!\nError: " + error.message);
-                    });
-                } else alert("Room tidak tersedia atau sudah mulai!");
-            }).catch(error => alert("Koneksi ke Database Gagal: " + error.message));
+                    }).catch(error => showAlertModal("GAGAL", "Gagal masuk room: " + error.message));
+                } else showAlertModal("GAGAL", "Room tidak tersedia atau permainan sudah dimulai!");
+            }).catch(error => showAlertModal("KONEKSI GAGAL", error.message));
         };
 
         function enterLobby(roomId, isHost) {
@@ -410,7 +440,9 @@
                 }
 
                 if (game.status === "PLAYING") startGameUI(game);
-                if (game.status === "ENDED") { alert("Game Selesai / Dibubarkan Host!"); resetLocalData(); }
+                if (game.status === "ENDED") { 
+                    showAlertModal("GAME BERAKHIR", "Permainan telah diselesaikan oleh Host.", () => { resetLocalData(); }); 
+                }
             });
         }
 
@@ -459,7 +491,7 @@
                     game.status = "PLAYING";
                 }
                 return game;
-            }).catch(error => alert("Gagal memulai game: " + error.message));
+            }).catch(error => showAlertModal("GAGAL", "Gagal memulai game: " + error.message));
         }
 
         // --- RENDERING IN-GAME ---
@@ -575,7 +607,7 @@
 
         window.drawFromDeck = () => {
             if (!isMyTurn || turnPhase !== 'DRAW') {
-                if (isMyTurn) alert("Kamu sudah ambil kartu! Sekarang pilih kartu untuk dibuang.");
+                if (isMyTurn) showAlertModal("PERHATIAN", "Kamu sudah ambil kartu! Sekarang pilih kartumu lalu buang.");
                 return;
             }
             
