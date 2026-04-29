@@ -278,6 +278,11 @@
     }
 
     window.onload = function() {
+      // 1. UPDATE: Otomatis mengisi nama pemain jika sudah tersimpan di localStorage
+      if (myPlayerName) {
+          document.getElementById('input-nama').value = myPlayerName;
+      }
+
       if (currentRoomCode && myPlayerId && myPlayerName) {
         const roomRef = doc(db, "rooms", currentRoomCode);
         getDoc(roomRef).then((docSnap) => {
@@ -322,7 +327,7 @@
         
         isHostLokal = true; 
         bukaLobby(currentRoomCode, true);
-      } catch (error) { Swal.fire('Error', error.message, 'error'); }
+      } catch (error) { Swal.fire('Error Database', 'Mohon cek aturan Firebase Rules kamu. Ubah menjadi allow read, write: if true;', 'error'); }
     }
 
     window.gabungRoom = async function() {
@@ -351,7 +356,7 @@
         } else {
           Swal.fire('Oops', 'Ruangan tidak ditemukan. Cek lagi kodenya!', 'warning');
         }
-      } catch (error) { Swal.fire('Error', error.message, 'error'); }
+      } catch (error) { Swal.fire('Error Database', 'Mohon cek aturan Firebase Rules kamu. Ubah menjadi allow read, write: if true;', 'error'); }
     }
 
     function bukaLobby(roomCode, isHost) {
@@ -558,6 +563,14 @@
     }
 
     window.putarSpinner = async function() {
+      // 2. UPDATE: Mencegah bug double-click dengan mematikan tombol saat ditekan
+      const btnContainer = document.getElementById('tombol-aksi-game');
+      if (btnContainer.querySelector('button')) {
+          const btn = btnContainer.querySelector('button');
+          btn.disabled = true;
+          btn.innerText = "Memutar...";
+      }
+
       const roomRef = doc(db, "rooms", currentRoomCode);
       const roomSnap = await getDoc(roomRef);
       const turnSekarang = roomSnap.data().turnIndex;
@@ -580,10 +593,11 @@
       spinnerDiv.classList.add('spinning-dagdigdug'); 
 
       let putaran = 0;
+      // 3. UPDATE: Memperlambat interval putaran spinner agar lebih enak dibaca mata (dari 90 jadi 120)
       const interval = setInterval(() => {
         document.getElementById('teks-spinner').innerText = daftarNamaPemain[putaran % daftarNamaPemain.length].name;
         putaran++;
-      }, 90);
+      }, 120);
 
       setTimeout(async () => {
         clearInterval(interval);
