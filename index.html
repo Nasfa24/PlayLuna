@@ -18,6 +18,7 @@
             --ww-accent: #ffd369; 
             --gw-accent: #00FF9D; 
             --rr-accent: #f43f5e; 
+            --rs-accent: #f39c12; /* Warna Oranye/Emas untuk Remi Suroboyoan */
             --text-main: #ffffff;
         }
 
@@ -37,7 +38,7 @@
         .header { text-align: center; margin-bottom: 30px; margin-top: 20px; }
         .logo { 
             font-size: 3rem; font-weight: 800; letter-spacing: 5px; margin: 0;
-            background: linear-gradient(to right, var(--gw-accent), var(--rr-accent), var(--ww-accent));
+            background: linear-gradient(to right, var(--gw-accent), var(--rs-accent), var(--ww-accent));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .subtitle { font-size: 0.9rem; letter-spacing: 2px; opacity: 0.7; }
@@ -78,20 +79,29 @@
         .tags { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 600; }
         .tag { padding: 4px 10px; border-radius: 5px; background: rgba(255,255,255,0.1); }
 
+        /* TEMA WEREWOLF */
         .theme-ww .card-banner { background: linear-gradient(45deg, #2c3e50, #000); }
         .theme-ww .card-title { color: var(--ww-accent); }
         .theme-ww .btn-play { background: var(--ww-accent); color: #000; }
         .game-card.theme-ww:hover { border-color: var(--ww-accent); box-shadow: 0 0 20px rgba(255, 211, 105, 0.15); }
 
+        /* TEMA GEOMETRY WAR */
         .theme-gw .card-banner { background: linear-gradient(45deg, #0f3460, #000); }
         .theme-gw .card-title { color: var(--gw-accent); }
         .theme-gw .btn-play { background: var(--gw-accent); color: #000; }
         .game-card.theme-gw:hover { border-color: var(--gw-accent); box-shadow: 0 0 20px rgba(0, 255, 157, 0.15); }
 
+        /* TEMA RUANG REFLEKSI */
         .theme-rr .card-banner { background: linear-gradient(45deg, #881337, #000); }
         .theme-rr .card-title { color: var(--rr-accent); }
         .theme-rr .btn-play { background: var(--rr-accent); color: #fff; }
         .game-card.theme-rr:hover { border-color: var(--rr-accent); box-shadow: 0 0 20px rgba(244, 63, 94, 0.15); }
+
+        /* TEMA REMI SUROBOYOAN (BARU) */
+        .theme-rs .card-banner { background: linear-gradient(45deg, #4a2311, #000); } /* Warna dasar kayu/coklat gelap */
+        .theme-rs .card-title { color: var(--rs-accent); }
+        .theme-rs .btn-play { background: var(--rs-accent); color: #000; }
+        .game-card.theme-rs:hover { border-color: var(--rs-accent); box-shadow: 0 0 20px rgba(243, 156, 18, 0.15); }
 
         .btn-play {
             width: 100%; padding: 12px; border: none; border-radius: 10px;
@@ -124,17 +134,18 @@
     </div>
 
     <div class="game-grid">
-        <div class="game-card theme-ww" onclick="launchGame('werewolf')">
+        
+        <div class="game-card theme-rs" onclick="launchGame('remi')">
             <div class="card-banner">
-                <div class="card-bg-glow" style="background: var(--ww-accent);"></div>
-                <span class="material-symbols-rounded card-icon" style="color: var(--ww-accent);">dark_mode</span>
+                <div class="card-bg-glow" style="background: var(--rs-accent);"></div>
+                <span class="material-symbols-rounded card-icon" style="color: var(--rs-accent);">style</span>
             </div>
             <div class="card-info">
-                <h2 class="card-title">Werewolf</h2>
-                <p class="card-desc">Cari pengkhianat di desa atau jadilah pemangsa. Permainan deduksi sosial.</p>
+                <h2 class="card-title">Remi Suroboyoan</h2>
+                <p class="card-desc">Adu mekanik susun kartu di meja warkop. Kumpulkan poin tertinggi atau jadi beban!</p>
                 <div class="tags">
-                    <span class="tag">👥 4-15 Orang</span>
-                    <span class="tag">🎭 Butuh Host</span>
+                    <span class="tag">🃏 1-4 Orang</span>
+                    <span class="tag">🧠 Strategi</span>
                 </div>
                 <button class="btn-play">MAIN SEKARANG</button>
             </div>
@@ -171,10 +182,27 @@
                 <button class="btn-play">MAIN SEKARANG</button>
             </div>
         </div>
+
+        <div class="game-card theme-ww" onclick="launchGame('werewolf')">
+            <div class="card-banner">
+                <div class="card-bg-glow" style="background: var(--ww-accent);"></div>
+                <span class="material-symbols-rounded card-icon" style="color: var(--ww-accent);">dark_mode</span>
+            </div>
+            <div class="card-info">
+                <h2 class="card-title">Werewolf</h2>
+                <p class="card-desc">Cari pengkhianat di desa atau jadilah pemangsa. Permainan deduksi sosial.</p>
+                <div class="tags">
+                    <span class="tag">👥 4-15 Orang</span>
+                    <span class="tag">🎭 Butuh Host</span>
+                </div>
+                <button class="btn-play">MAIN SEKARANG</button>
+            </div>
+        </div>
+
     </div>
 
     <div class="footer">
-        LUNA HUB v3.1 • Dibuat oleh <a href="https://www.instagram.com/mas_uuth/" target="_blank">Mas Uuth</a>
+        LUNA HUB v3.2 • Dibuat oleh <a href="https://www.instagram.com/mas_uuth/" target="_blank">Mas Uuth</a>
     </div>
 
     <script>
@@ -206,6 +234,7 @@
                 if(game === 'werewolf') window.location.href = "werewolf.html"; 
                 if(game === 'geometry') window.location.href = "ulartangga.html"; 
                 if(game === 'refleksi') window.location.href = "ngobrolyuk.html"; 
+                if(game === 'remi') window.location.href = "remi_suroboyoan.html"; // <-- PENGATURAN ROUTING BARU UNTUK REMI
             }, 100);
         }
 
