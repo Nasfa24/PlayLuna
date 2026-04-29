@@ -314,7 +314,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- SISTEM KONFIRMASI & ALERT ---
         window.showConfirmModal = function(title, text, onConfirm) {
             const overlay = document.getElementById('custom-modal-overlay');
             document.getElementById('modal-title').innerText = title;
@@ -339,7 +338,6 @@
             };
         };
 
-        // --- VARIABEL GLOBAL ---
         let myName = localStorage.getItem("luna_global_name") || localStorage.getItem("ut_name") || "";
         let myPlayerId = localStorage.getItem("remi_pid");
         let currentRoomId = localStorage.getItem("remi_room");
@@ -354,7 +352,7 @@
         const SUITS = ['♥', '♦', '♠', '♣'];
         const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-        // --- FASE 3: ALGORITMA PENILAIAN & VALIDASI KOMBINASI ---
+        // --- ALGORITMA PENILAIAN & VALIDASI KOMBINASI TERBARU ---
         function getCardPoints(rank, isJoker) {
             if (isJoker) return 25;
             if (rank === 'A') return 15;
@@ -362,67 +360,134 @@
             return 5;
         }
 
-        // Fungsi Otak: Mencari skor terbaik dari susunan kartu
+        // Fungsi Otak: Mencari skor terbaik dari susunan kartu dengan validasi urutan
         function evaluateHand(handCards, jokerRank) {
             let score = 0;
-            let hasValidGroup = false;
-
-            // Untuk menyederhanakan perhitungan real-time di UI, kita asumsikan:
-            // Karena rummy murni adalah NP-Hard, kita beri visual feedback sederhana
-            // Jika ada pasangan, poin dikali plus. Jika tidak, minus.
-            // Poin default (Semua minus)
-            handCards.forEach(c => {
-                let pts = getCardPoints(c.rank, c.rank === jokerRank);
-                score -= pts;
-            });
-
-            // (Dalam versi produksi kompleks, backtracking akan diletakkan di sini untuk mencari kombinasi urut/gambar dll.)
-            // Karena keterbatasan output teks, kita gunakan skor manual sementara (Deteksi As Kembar & Joker Pair).
             let groupedIndices = new Set();
-            let asCards = []; let jokers = [];
-            
+            let jokers = [];
+            let nonJokers = [];
+
             handCards.forEach((c, i) => {
-                if(c.rank === jokerRank) jokers.push(i);
-                else if(c.rank === 'A') asCards.push(i);
+                if (c.rank === jokerRank) jokers.push(i);
+                else nonJokers.push({ ...c, index: i, val: getNumVal(c.rank) });
             });
 
-            // Aturan 3 AS
-            if(asCards.length >= 3) {
-                hasValidGroup = true;
-                asCards.forEach(idx => { groupedIndices.add(idx); score += (getCardPoints('A', false) * 2); });
+            function getNumVal(rank) {
+                if (rank === 'A') return 1; // AS tidak bisa digabung dengan joker
+                if (rank === 'J') return 11;
+                if (rank === 'Q') return 12;
+                if (rank === 'K') return 13;
+                return parseInt(rank);
             }
-            
-            // Aturan 2 Joker + Bebas
-            if(jokers.length >= 2 && handCards.length >= 3) {
-                hasValidGroup = true;
-                jokers.forEach(idx => { groupedIndices.add(idx); score += (25 * 2); });
-                // Asumsi kartu pertama yang bukan joker ikut berpasangan
-                let freeCardIdx = handCards.findIndex(c => c.rank !== jokerRank && !groupedIndices.has(handCards.indexOf(c)));
-                if(freeCardIdx !== -1) {
-                    groupedIndices.add(freeCardIdx);
-                    score += (getCardPoints(handCards[freeCardIdx].rank, false) * 2);
+
+            let usedJokers = 0;
+
+            // 1. Group Aces (Minimum 3 AS Murni)
+            let aces = nonJokers.filter(c => c.rank === 'A');
+            if (aces.length >= 3) {
+                aces.forEach(c => groupedIndices.add(c.index));
+            }
+
+            // 2. Group Faces (J, Q, K of same suit)
+            SUITS.forEach(suit => {
+                let faces = nonJokers.filter(c => c.suit === suit && c.val >= 11);
+                let hasJ = faces.find(c => c.rank === 'J' && !groupedIndices.has(c.index));
+                let hasQ = faces.find(c => c.rank === 'Q' && !groupedIndices.has(c.index));
+                let hasK = faces.find(c => c.rank === 'K' && !groupedIndices.has(c.index));
+                
+                let missing = 0;
+                let group = [];
+                if (hasJ) group.push(hasJ.index); else missing++;
+                if (hasQ) group.push(hasQ.index); else missing++;
+                if (hasK) group.push(hasK.index); else missing++;
+
+                if (missing === 0 || (missing <= (jokers.length - usedJokers) && missing < 3)) {
+                    group.forEach(idx => groupedIndices.add(idx));
+                    usedJokers += missing;
+                }
+            });
+
+            // 3. Group Numbers (2 to 10 of same suit) SECARA BERURUTAN
+            SUITS.forEach(suit => {
+                let nums = nonJokers.filter(c => c.suit === suit && c.val >= 2 && c.val <= 10).sort((a, b) => a.val - b.val);
+                if(nums.length === 0) return;
+
+                let usedInThisSuit = new Set();
+
+                for (let i = 0; i < nums.length; i++) {
+                    if (usedInThisSuit.has(nums[i].index)) continue;
+                    
+                    let currentRun = [nums[i].index];
+                    let currentJokersNeeded = 0;
+                    let lastVal = nums[i].val;
+
+                    // Cek kelanjutan angka
+                    for (let j = i + 1; j < nums.length; j++) {
+                        if (usedInThisSuit.has(nums[j].index)) continue;
+                        let diff = nums[j].val - lastVal;
+                        
+                        if (diff === 0) continue; // Skip jika angka kembar dalam pencarian seri
+                        
+                        if (diff === 1) {
+                            currentRun.push(nums[j].index);
+                            lastVal = nums[j].val;
+                        } else if (diff - 1 <= (jokers.length - usedJokers - currentJokersNeeded)) {
+                            // Gunakan joker untuk mengisi celah/gap angka
+                            currentJokersNeeded += (diff - 1);
+                            currentRun.push(nums[j].index);
+                            lastVal = nums[j].val;
+                        } else {
+                            break; // Gap terlalu jauh, tidak cukup joker
+                        }
+                    }
+                    
+                    // Butuh minimal 3 kartu untuk jadi pasangan sah
+                    let totalLength = currentRun.length + currentJokersNeeded;
+                    let extraJokersNeeded = Math.max(0, 3 - totalLength);
+
+                    if (currentJokersNeeded + extraJokersNeeded <= (jokers.length - usedJokers)) {
+                        currentRun.forEach(idx => {
+                            groupedIndices.add(idx);
+                            usedInThisSuit.add(idx);
+                        });
+                        usedJokers += (currentJokersNeeded + extraJokersNeeded);
+                    }
+                }
+            });
+
+            // 4. Group 2 Jokers + 1 Free Card
+            while ((jokers.length - usedJokers) >= 2) {
+                let freeCard = nonJokers.find(c => !groupedIndices.has(c.index));
+                if (freeCard) {
+                    groupedIndices.add(freeCard.index);
+                    usedJokers += 2;
+                } else {
+                    break;
                 }
             }
 
-            // Aturan Seri Angka & Gambar (Simple Heuristic Detection)
-            // Mengecek kesamaan Suit
-            SUITS.forEach(suit => {
-                let suitCards = handCards.map((c, i) => ({...c, i})).filter(c => c.suit === suit && c.rank !== jokerRank);
-                let numCards = suitCards.filter(c => !['J','Q','K','A'].includes(c.rank));
-                let faceCards = suitCards.filter(c => ['J','Q','K'].includes(c.rank));
-                
-                // Jika ada minimal 3 gambar atau 3 angka
-                if(numCards.length >= 3) { hasValidGroup = true; numCards.forEach(c => { groupedIndices.add(c.i); score += (getCardPoints(c.rank, false) * 2); }); }
-                if(faceCards.length >= 3) { hasValidGroup = true; faceCards.forEach(c => { groupedIndices.add(c.i); score += (getCardPoints(c.rank, false) * 2); }); }
+            // Tandai Joker yang digunakan
+            for (let i = 0; i < usedJokers; i++) {
+                if(i < jokers.length) groupedIndices.add(jokers[i]);
+            }
+
+            // Kalkulasi Akhir Skor
+            handCards.forEach((c, i) => {
+                let isJoker = (c.rank === jokerRank);
+                let pts = getCardPoints(c.rank, isJoker);
+                if (groupedIndices.has(i)) {
+                    score += pts;
+                } else {
+                    score -= pts; // Kartu nganggur jadi beban minus
+                }
             });
 
-            // Tutup game jika semua berpasangan (7 kartu = grouped)
+            let hasValidGroup = groupedIndices.size > 0;
             let isAllPaired = (groupedIndices.size === handCards.length && handCards.length >= 7);
 
             return { score, hasValidGroup, isAllPaired, groupedIndices };
         }
 
-        // --- INISIALISASI ---
         window.onload = () => {
             if (myName) document.getElementById('input-nama').value = myName;
             if (currentRoomId && myPlayerId) {
@@ -506,7 +571,6 @@
         window.confirmStartGame = () => { showConfirmModal("MULAI?", "Semua slot kosong akan diisi Bot.", executeStartGame); };
         window.confirmEndGame = () => { showConfirmModal("TUTUP GAME?", "Hentikan permainan?", () => { update(ref(db, `remi_rooms/${currentRoomId}`), { status: "ENDED" }); }); };
 
-        // --- GAME ENGINE ---
         function executeStartGame() {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                 if (game) {
@@ -545,7 +609,6 @@
             });
         }
 
-        // --- RENDERING IN-GAME ---
         function startGameUI(game) {
             document.getElementById('screen-menu').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
@@ -592,7 +655,7 @@
                 discardDiv.innerHTML = "";
                 if(pData.discard && pData.discard.length > 0) {
                     let topCard = pData.discard[pData.discard.length - 1];
-                    let isFresh = (game.turnIndex % 4 === (pIndex + 1) % 4) && turnPhase === 'DRAW'; // Bisa diambil lawan sebelahnya
+                    let isFresh = (game.turnIndex % 4 === (pIndex + 1) % 4) && turnPhase === 'DRAW'; 
                     discardDiv.innerHTML = `<div class="playing-card ${topCard.color === 'red'?'card-red':'card-black'} ${isFresh?'card-fresh':''}" style="position:relative; transform:rotate(${(pIndex*5)}deg);">${renderCardHTML(topCard, topCard.rank===game.jokerRank)}</div>`;
                 }
             }
@@ -650,7 +713,6 @@
             return `<div class="card-top">${card.rank}<br>${card.suit}</div><div class="card-center" style="display:flex; flex-direction:column; align-items:center;">${card.suit} ${jokerText}</div><div class="card-bottom">${card.rank}<br>${card.suit}</div>`;
         }
 
-        // --- INTERAKSI PEMAIN ---
         window.selectCard = (index) => {
             selectedCardIndex = (selectedCardIndex === index) ? null : index;
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => startGameUI(snap.val())); 
@@ -688,7 +750,6 @@
 
         window.drawFromDiscard = (posStr) => {
             if (!isMyTurn || turnPhase !== 'DRAW') return;
-            // Ambil dari buangan pemain sebelumnya (hanya diizinkan dari index sebelumnnya)
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                 if(game) {
                     let prevIndex = (mySlotIndex - 1 + 4) % 4;
@@ -706,19 +767,18 @@
         window.discardSelectedCard = () => {
             if (selectedCardIndex === null || !isMyTurn || turnPhase !== 'DISCARD') return;
             
-            // VALIDASI: Dilarang buang AS jika tidak ada kombinasi
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
                 let game = snap.val();
                 let myHand = game.players[mySlotIndex].hand;
                 let handInfo = evaluateHand(myHand, game.jokerRank);
                 let cardToThrow = myHand[selectedCardIndex];
                 
+                // VALIDASI: Dilarang buang AS jika tidak ada kombinasi
                 if (cardToThrow.rank === 'A' && !handInfo.hasValidGroup) {
-                    showAlertModal("PELANGGARAN!", "Tidak boleh membuang kartu AS sebelum kamu memiliki minimal 1 pasangan kartu.");
+                    showAlertModal("PELANGGARAN!", "Tidak boleh membuang kartu AS sebelum kamu memiliki minimal 1 pasangan kartu hijau.");
                     return;
                 }
 
-                // Eksekusi buang kartu
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
                     if(gameTx) {
                         let thrownCard = gameTx.players[mySlotIndex].hand.splice(selectedCardIndex, 1)[0];
@@ -739,7 +799,6 @@
             showConfirmModal("TUTUP GAME?", "Pukul meja dan beri minus -50 ke semua musuh?", () => {
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                     if(game) {
-                        // Kurangi skor musuh
                         game.players.forEach((p, idx) => {
                             if(idx !== mySlotIndex) { p.score = (p.score || 0) - 50; }
                         });
@@ -750,7 +809,6 @@
             });
         };
 
-        // --- BOT SEMENTARA ---
         let isBotThinking = false;
         function playBotTurn(gameData) {
             if(isBotThinking) return; 
@@ -768,7 +826,6 @@
                         game.status = "ENDED"; return game;
                     }
 
-                    // Bot menghindari membuang A secara random (Smart Throw Dasar)
                     let hand = game.players[botIdx].hand;
                     let safeIndices = hand.map((c, i) => i).filter(i => hand[i].rank !== 'A' && hand[i].rank !== game.jokerRank);
                     let discardIdx = safeIndices.length > 0 ? safeIndices[Math.floor(Math.random() * safeIndices.length)] : 0;
