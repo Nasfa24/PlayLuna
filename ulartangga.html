@@ -88,6 +88,8 @@
         .modal-text { font-size: 0.9rem; color: #ccc; margin-bottom: 20px; line-height: 1.4; }
         .modal-actions { display: flex; gap: 10px; justify-content: center; }
         
+        #vote-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 6000; display: flex; justify-content: center; align-items: center; }
+
         #splash-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 4500; pointer-events: none; }
         .splash-content { text-align: center; animation: splashAnim 2s forwards; }
         .splash-icon { font-size: 100px; filter: drop-shadow(0 0 20px white); }
@@ -107,6 +109,17 @@
     <div id="toast-container"></div>
     <div id="splash-overlay" class="hidden"></div>
     <div id="custom-modal-overlay" class="hidden"></div>
+    
+    <div id="vote-modal-overlay" class="hidden">
+        <div class="custom-modal">
+            <div class="modal-title" style="color: var(--gold);">⚠️ VOTING HOST</div>
+            <div class="modal-text" style="font-size: 14px;">Host ingin menyudahi permainan ini. Apakah kamu setuju?<br><br><span id="vote-status-text" style="font-weight:bold; color:var(--primary);">Suara Terkumpul: 0 / 0</span></div>
+            <div class="modal-actions" id="vote-action-buttons">
+                <button class="btn-green" onclick="castEndGameVote(true)" style="width:auto; padding:10px 20px;">✅ SETUJU</button>
+                <button class="btn-red" onclick="castEndGameVote(false)" style="width:auto; padding:10px 20px;">❌ TOLAK</button>
+            </div>
+        </div>
+    </div>
 
     <div id="main-container" class="container">
         
@@ -147,7 +160,7 @@
                     <option value="5">🏆 Turnamen Sesi (Best of 5)</option>
                     <option value="7">🏆 Turnamen Sesi (Best of 7)</option>
                 </select>
-                <button class="btn-green" onclick="startGame()">MULAI PERTEMPURAN</button>
+                <button class="btn-green" onclick="showConfirmModal('MULAI GAME?', 'Semua pemain sudah siap?', startGame)">MULAI PERTEMPURAN</button>
             </div>
             
             <p id="waiting-msg" style="color:#a4b0be; font-size:12px;">Menunggu Host...</p>
@@ -180,8 +193,8 @@
                 </div>
                 
                 <div id="host-end-btn" class="hidden" style="margin-top:5px;">
-                    <button class="btn-gold" onclick="forceNextTurn()" style="font-size:10px; padding:8px; margin-bottom:5px;">⏩ SKIP GILIRAN (BUG FIX)</button>
-                    <button class="btn-red" onclick="forceEndGame()" style="font-size:10px; padding:8px;">⚠️ SELESAIKAN GAME</button>
+                    <button class="btn-gold" onclick="showConfirmModal('SKIP GILIRAN?', 'Yakin memaksa lewat giliran pemain ini?', forceNextTurn)" style="font-size:10px; padding:8px; margin-bottom:5px;">⏩ SKIP GILIRAN (BUG FIX)</button>
+                    <button class="btn-red" onclick="showConfirmModal('AKHIRI GAME?', 'Mulai voting untuk menyudahi permainan?', initiateEndGameVote)" style="font-size:10px; padding:8px;">⚠️ SELESAIKAN GAME</button>
                 </div>
                 
                 <div id="game-log" style="height:60px; overflow-y:auto; background:rgba(0,0,0,0.3); font-size:12px; text-align:left; padding:5px; margin:5px 0; border:1px solid #57606f; border-radius:5px;">Log permainan...</div>
@@ -213,8 +226,8 @@
             </div>
 
             <div id="round-host-controls" class="hidden" style="margin-top:25px;">
-                <button id="btn-next-round" class="btn-green" onclick="nextRound()">MULAI RONDE SELANJUTNYA</button>
-                <button id="btn-finish-tourney" class="btn-gold hidden" onclick="finishTournament()">🏆 SELESAIKAN TURNAMEN</button>
+                <button id="btn-next-round" class="btn-green" onclick="showConfirmModal('RONDE BERIKUTNYA?', 'Lanjut ke ronde selanjutnya?', nextRound)">MULAI RONDE SELANJUTNYA</button>
+                <button id="btn-finish-tourney" class="btn-gold hidden" onclick="showConfirmModal('SELESAIKAN TURNAMEN?', 'Tampilkan Juara Umum?', finishTournament)">🏆 SELESAIKAN TURNAMEN</button>
             </div>
             <p id="round-waiting-msg" style="color:#a4b0be; font-size:12px; margin-top:20px;">Menunggu Host melanjutkan...</p>
         </div>
@@ -243,7 +256,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, update, get, runTransaction, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-        // Pastikan config Firebase ini sesuai dengan milik Mas Uuth
         const firebaseConfig = {
             apiKey: "AIzaSyBR01mYbrPNVKk5JqMWeNTyr2yDhiXo4Rg",
             authDomain: "ular-tangga-tempur.firebaseapp.com",
@@ -355,9 +367,10 @@
         window.leaveLobby = leaveLobby; 
         window.startGame = startGame; window.handleRollAnim = handleRollAnim; window.giveUp = giveUp;
         window.clickCard = clickCard; window.closeModal = closeModal; window.confirmTarget = confirmTarget;
-        window.resetLocalData = resetLocalData; window.forceEndGame = forceEndGame;
+        window.resetLocalData = resetLocalData; 
         window.nextRound = nextRound; window.finishTournament = finishTournament;
         window.showCardDictionary = showCardDictionary; window.forceNextTurn = forceNextTurn;
+        window.initiateEndGameVote = initiateEndGameVote; window.castEndGameVote = castEndGameVote;
 
         (function checkSession() {
             const savedPid = localStorage.getItem("ut_pid");
@@ -409,7 +422,6 @@
                     const currentPlayers = Object.keys(snap.val().players || {}).length;
                     if(currentPlayers >= 12) return showToast("Room Penuh! Maksimal 12 Pemain.", true); 
                     
-                    // Cari avatar yang belum dipakai
                     const usedAvatars = Object.values(snap.val().players || {}).map(p => p.avatar);
                     const availableAvatars = AVATARS.filter(a => !usedAvatars.includes(a));
                     const selectedAvatar = availableAvatars.length > 0 ? availableAvatars[0] : AVATARS[Math.floor(Math.random()*AVATARS.length)];
@@ -431,7 +443,7 @@
             get(ref(db, `games/${code}`)).then(snap => {
                 if(snap.exists()) {
                     isSpectator = true;
-                    myPlayerId = "spec_" + Date.now(); // ID dummy, tidak di-push ke database
+                    myPlayerId = "spec_" + Date.now(); 
                     enterLobby(code, false);
                 } else showToast("Room tidak tersedia!", true);
             });
@@ -548,13 +560,54 @@
         }
 
         function finishTournament() {
-            showConfirmModal("AKHIRI TURNAMEN?", "Juara umum akan dinobatkan.", () => {
-                update(ref(db, `games/${currentRoomId}`), { status: "FINISHED" });
+            update(ref(db, `games/${currentRoomId}`), { status: "FINISHED" });
+        }
+
+        // --- LOGIKA VOTING AKHIR GAME ---
+        function initiateEndGameVote() {
+            runTransaction(ref(db, `games/${currentRoomId}`), (game) => {
+                if(game) {
+                    let activeCount = Object.values(game.players).filter(p => !p.isSurrendered && p.position >= 1).length;
+                    game.voteEnd = {
+                        active: true,
+                        required: Math.ceil(activeCount / 2),
+                        votes: {}
+                    };
+                    game.voteEnd.votes[myPlayerId] = true;
+                    if(!game.logs) game.logs = [];
+                    game.logs.push(`⚠️ Host memulai Voting untuk mengakhiri game!`);
+                }
+                return game;
             });
         }
 
-        function forceEndGame() { 
-            update(ref(db, `games/${currentRoomId}`), { status: "FINISHED", winnerName: "HOST_FORCE_END" }); 
+        function castEndGameVote(isYes) {
+            document.getElementById('vote-action-buttons').classList.add('hidden'); 
+            runTransaction(ref(db, `games/${currentRoomId}`), (game) => {
+                if(game && game.voteEnd && game.voteEnd.active) {
+                    game.voteEnd.votes[myPlayerId] = isYes;
+                    
+                    let yesCount = 0; let noCount = 0;
+                    let activeCount = Object.values(game.players).filter(p => !p.isSurrendered && p.position >= 1).length;
+                    let required = Math.ceil(activeCount / 2);
+
+                    for(let v in game.voteEnd.votes) {
+                        if(game.voteEnd.votes[v]) yesCount++;
+                        else noCount++;
+                    }
+
+                    if(yesCount >= required) {
+                        game.status = "FINISHED";
+                        game.winnerName = "VOTING_SELESAI";
+                        game.voteEnd.active = false;
+                        if(!game.logs) game.logs = []; game.logs.push(`✅ Voting disetujui. Game Berakhir.`);
+                    } else if (noCount > (activeCount - required)) {
+                        game.voteEnd.active = false;
+                        if(!game.logs) game.logs = []; game.logs.push(`❌ Voting ditolak. Game dilanjutkan.`);
+                    }
+                }
+                return game;
+            });
         }
 
         function forceNextTurn() {
@@ -604,6 +657,25 @@
                 const game = snap.val();
                 if(!game || !game.order) return;
                 
+                // LOGIKA UI VOTING
+                const voteOverlay = document.getElementById('vote-modal-overlay');
+                if(game.voteEnd && game.voteEnd.active) {
+                    voteOverlay.classList.remove('hidden');
+                    
+                    let yesCount = 0;
+                    for(let v in game.voteEnd.votes) if(game.voteEnd.votes[v]) yesCount++;
+                    
+                    document.getElementById('vote-status-text').innerText = `Setuju: ${yesCount} / ${game.voteEnd.required} (Dibutuhkan)`;
+                    
+                    if(game.voteEnd.votes[myPlayerId] !== undefined || isSpectator || game.players[myPlayerId]?.isSurrendered) {
+                        document.getElementById('vote-action-buttons').classList.add('hidden');
+                    } else {
+                        document.getElementById('vote-action-buttons').classList.remove('hidden');
+                    }
+                } else {
+                    voteOverlay.classList.add('hidden');
+                }
+
                 if(game.status === "FINISHED") { 
                     document.getElementById('screen-game').classList.add('hidden');
                     document.getElementById('screen-round-ended').classList.add('hidden');
@@ -613,10 +685,24 @@
                     const nameEl = document.getElementById('winner-name-text');
                     const finalLb = document.getElementById('final-leaderboard');
 
-                    if(game.winnerName === "HOST_FORCE_END") {
+                    if(game.winnerName === "HOST_FORCE_END" || game.winnerName === "VOTING_SELESAI") {
                         titleEl.innerText = "TURNAMEN SELESAI"; titleEl.style.color = "#ff4757"; 
-                        nameEl.innerText = "DIBATALKAN HOST"; nameEl.style.fontSize = "1.5rem";
-                        finalLb.classList.add('hidden');
+                        nameEl.innerText = game.winnerName === "VOTING_SELESAI" ? "VOTING PEMAIN" : "DIBATALKAN HOST"; 
+                        nameEl.style.fontSize = "1.5rem";
+                        
+                        let scores = Object.values(game.tournamentScores || {});
+                        if(scores.length > 0) {
+                            scores.sort((a,b) => b.score - a.score);
+                            let html = "";
+                            scores.forEach((s, i) => {
+                                let rank = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `<b>${i+1}.</b>`;
+                                html += `<div class="lb-row"><span style="color:white;">${rank} ${s.name}</span><span style="color:var(--gold); font-weight:bold;">${s.score} LP</span></div>`;
+                            });
+                            finalLb.innerHTML = html;
+                            finalLb.classList.remove('hidden');
+                        } else {
+                            finalLb.classList.add('hidden');
+                        }
                     } else {
                         let scores = Object.values(game.tournamentScores || {});
                         scores.sort((a,b) => b.score - a.score);
@@ -715,7 +801,6 @@
 
                 if(turnTimerInterval) clearInterval(turnTimerInterval);
                 turnTimerInterval = setInterval(() => {
-                    // Mencegah game stuck dengan membiarkan pemain lain trigger auto-roll jika Host DC
                     const timeElapsed = Math.floor((Date.now() - (game.lastTurnTime || Date.now()))/1000);
                     const timeLeft = Math.max(0, 15 - timeElapsed);
                     
@@ -726,7 +811,6 @@
                         if (amIHost) {
                             clearInterval(turnTimerInterval); executeRoll(true); 
                         } else if (timeElapsed >= 18) {
-                            // Jika sudah lewat 18 detik (15s waktu normal + 3s buffer) dan Host tidak merespon, pemain ini akan paksa roll
                             clearInterval(turnTimerInterval); executeRoll(true);
                         }
                     }
@@ -862,7 +946,6 @@
                 const pid = game.order[(game.turnIndex || 0) % Math.max(1, game.order.length)];
                 const p = game.players[pid];
                 
-                // Mencegah error jika data pemain hilang
                 if(!p) { game.turnIndex++; game.lastTurnTime = Date.now(); return game; }
                 if(!isAuto && pid !== myPlayerId) return;
 
