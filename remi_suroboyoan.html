@@ -156,7 +156,7 @@
         }
         .mini-card.c-red { color: var(--red-suit); }
         .mini-card.c-black { color: var(--black-suit); }
-        .mini-card:not(:first-child) { margin-left: -12px; } /* Overlap mini cards */
+        .mini-card:not(:first-child) { margin-left: -12px; }
 
         /* LAPAK BUANGAN */
         .discard-pile {
@@ -294,7 +294,8 @@
             <div id="slot-top" class="player-area player-top">
                 <div class="avatar-container">
                     <div class="avatar" id="ava-top">🤖</div><div class="player-name" id="name-top">Bot 1</div><div class="card-count" id="count-top">0 Kartu</div>
-                    <div class="melds-area" id="melds-top"></div> </div>
+                    <div class="melds-area" id="melds-top"></div>
+                </div>
                 <div class="discard-pile" id="discard-top" onclick="drawFromDiscard('top')"></div>
             </div>
 
@@ -412,8 +413,12 @@
                 return true;
             }
 
-            // 2. 2 Jokers + 1 Bebas
-            if (jokers.length >= 2 && cards.length === 3) return true;
+            // 2. 2 Jokers + 1 Bebas (HANYA KARTU ANGKA 2-10)
+            if (jokers.length >= 2 && cards.length === 3) {
+                if (normals.length === 1 && !['J','Q','K','A'].includes(normals[0].rank)) return true;
+                if (normals.length === 0) return true; // All Jokers
+                return false;
+            }
 
             if (normals.length === 0) return true; // All Jokers
 
@@ -427,13 +432,16 @@
 
             if (!isFaces && !isNumbers) return false;
 
+            // KARTU GAMBAR: Dilarang Keras Pakai Joker
             if (isFaces) {
+                if (jokers.length > 0) return false; 
                 let req = ['J','Q','K'];
                 let present = normals.map(c => c.rank);
                 let missing = req.filter(r => !present.includes(r)).length;
-                return missing <= jokers.length;
+                return missing === 0;
             }
 
+            // KARTU ANGKA BERURUTAN: Boleh pakai Joker
             if (isNumbers) {
                 let vals = normals.map(c => parseInt(c.rank)).sort((a,b)=>a-b);
                 let needed = 0;
@@ -480,7 +488,7 @@
             let aces = nonJokers.filter(c => c.rank === 'A');
             if (aces.length >= 3) { aces.forEach(c => groupedIndices.add(c.index)); }
 
-            // 2. Group Faces
+            // 2. Group Faces (J, Q, K of same suit) - TANPA JOKER
             SUITS.forEach(suit => {
                 let faces = nonJokers.filter(c => c.suit === suit && c.val >= 11);
                 let hasJ = faces.find(c => c.rank === 'J' && !groupedIndices.has(c.index));
@@ -492,13 +500,12 @@
                 if (hasQ) group.push(hasQ.index); else missing++;
                 if (hasK) group.push(hasK.index); else missing++;
 
-                if (missing === 0 || (missing <= (jokers.length - usedJokers) && missing < 3)) {
+                if (missing === 0) {
                     group.forEach(idx => groupedIndices.add(idx));
-                    usedJokers += missing;
                 }
             });
 
-            // 3. Group Numbers Sequence
+            // 3. Group Numbers Sequence (Boleh Joker)
             SUITS.forEach(suit => {
                 let nums = nonJokers.filter(c => c.suit === suit && c.val >= 2 && c.val <= 10).sort((a, b) => a.val - b.val);
                 if(nums.length === 0) return;
@@ -540,9 +547,9 @@
                 }
             });
 
-            // 4. Group 2 Jokers + 1 Free Card
+            // 4. Group 2 Jokers + 1 Free Card (HANYA KARTU ANGKA)
             while ((jokers.length - usedJokers) >= 2) {
-                let freeCard = nonJokers.find(c => !groupedIndices.has(c.index));
+                let freeCard = nonJokers.find(c => !groupedIndices.has(c.index) && c.val >= 2 && c.val <= 10);
                 if (freeCard) {
                     groupedIndices.add(freeCard.index);
                     usedJokers += 2;
@@ -925,7 +932,6 @@
 
             if(selectedCardIndices.length > 0 && isMyTurn) { 
                 actionBtns.classList.add('active'); 
-                // Jika pilih lebih dari 1, tombol geser & buang mati
                 if(selectedCardIndices.length > 1) {
                     btnGeserL.style.display = 'none'; btnGeserR.style.display = 'none'; btnBuang.style.display = 'none';
                 } else {
