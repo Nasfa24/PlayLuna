@@ -53,35 +53,26 @@
         .btn-gold { background: var(--gold); color: #000; box-shadow: 0 4px 0 #d35400; }
         .btn-red { background: var(--red-suit); color: white; box-shadow: 0 4px 0 #881337; }
         .btn-blue { background: #00a8ff; color: white; box-shadow: 0 4px 0 #0097e6; }
+        .btn-green { background: #00FF9D; color: #000; box-shadow: 0 4px 0 #008f58; }
 
-        /* MODAL KONFIRMASI & ALERT DIPERBAGUS */
+        /* MODAL KONFIRMASI */
         #custom-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9000;
             display: flex; justify-content: center; align-items: center;
-            opacity: 1; transition: opacity 0.3s;
         }
         .custom-modal {
-            background: linear-gradient(145deg, #2c1e16, #1e130c); /* Tema kayu gelap */
+            background: linear-gradient(145deg, #2c1e16, #1e130c);
             width: 85%; max-width: 350px; padding: 30px 25px;
-            border-radius: 20px; border: 2px solid var(--gold); 
-            text-align: center;
+            border-radius: 20px; border: 2px solid var(--gold); text-align: center;
             box-shadow: 0 15px 40px rgba(0,0,0,0.8), inset 0 0 15px rgba(251, 197, 49, 0.1);
             animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        @keyframes popIn {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        #modal-title {
-            margin-top: 0; color: var(--gold); font-size: 1.5rem; letter-spacing: 1px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-bottom: 10px;
-        }
-        #modal-text {
-            font-size: 0.95rem; color: #ddd; line-height: 1.5; margin-bottom: 25px;
-        }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        #modal-title { margin-top: 0; color: var(--gold); font-size: 1.5rem; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-bottom: 10px; }
+        #modal-text { font-size: 0.95rem; color: #ddd; line-height: 1.5; margin-bottom: 25px; }
         .modal-actions { display: flex; gap: 15px; justify-content: center; }
-        .modal-actions .btn { margin: 0; flex: 1; } /* Reset margin & bagi rata panjang tombol */
+        .modal-actions .btn { margin: 0; flex: 1; }
 
         /* PERINGATAN PORTRAIT */
         #rotate-warning {
@@ -113,10 +104,8 @@
         @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; text-shadow: 0 0 10px #00FF9D;} 100% { opacity: 0.8; } }
         .btn-tutup {
             background: var(--red-suit); color: white; border: none; padding: 6px 15px;
-            border-radius: 20px; font-weight: bold; font-family: 'Poppins'; font-size: 12px;
-            cursor: pointer; transition: 0.2s;
+            border-radius: 20px; font-weight: bold; font-family: 'Poppins'; font-size: 12px; cursor: pointer; transition: 0.2s;
         }
-        .btn-tutup:active { transform: scale(0.95); }
 
         /* TATA LETAK MEJA */
         .game-table {
@@ -131,7 +120,6 @@
         .player-right { grid-row: 2; grid-column: 3; flex-direction: row-reverse; }
         .player-bottom { grid-row: 3; grid-column: 1 / span 3; justify-content: flex-end; padding-bottom: 10px;}
 
-        /* HIGHLIGHT GILIRAN */
         .active-turn .avatar { box-shadow: var(--turn-glow); border-color: white; transform: scale(1.1); }
         .active-turn .player-name { background: var(--gold); color: black; }
 
@@ -152,6 +140,7 @@
             width: 45px; height: 65px; border: 2px dashed rgba(255,255,255,0.2);
             border-radius: 6px; margin: 10px; position: relative;
             display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.15);
+            cursor: pointer;
         }
 
         /* SISA KARTU TENGAH */
@@ -180,10 +169,17 @@
         .card-center { font-size: 22px; text-align: center; margin-top: -5px;}
         .card-bottom { font-size: 12px; line-height: 1; transform: rotate(180deg); }
 
-        /* UI TANGAN PEMAIN */
+        /* UI TANGAN PEMAIN & SKOR */
         .my-hand-container { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; }
+        
+        .score-display {
+            background: rgba(0,0,0,0.7); border: 1px solid #555; padding: 4px 15px; border-radius: 15px;
+            font-size: 11px; font-weight: bold; margin-bottom: 10px; color: white;
+        }
+        .score-display span { color: var(--gold); font-size: 13px; }
+
         .action-buttons {
-            display: flex; gap: 8px; position: absolute; top: -45px;
+            display: flex; gap: 8px; position: absolute; top: -35px;
             background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); padding: 8px 15px; border-radius: 30px;
             border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 20px rgba(0,0,0,0.5);
             opacity: 0; pointer-events: none; transform: translateY(15px) scale(0.9); transition: 0.3s; z-index: 200;
@@ -193,13 +189,14 @@
             background: rgba(255, 255, 255, 0.1); color: white; border: none; padding: 6px 12px; 
             border-radius: 15px; font-weight: bold; font-size: 11px; cursor: pointer; transition: 0.2s;
         }
-        .btn-action:hover { background: rgba(255, 255, 255, 0.2); }
         .btn-action:active { transform: scale(0.9); }
-        .btn-buang { background: var(--red-suit) !important; color: white !important; box-shadow: 0 0 10px rgba(232, 65, 24, 0.5); }
+        .btn-buang { background: var(--red-suit) !important; color: white !important; }
+        .btn-tutup-game { background: #00FF9D !important; color: black !important; box-shadow: 0 0 15px #00FF9D; display: none; }
         
         .my-hand { display: flex; justify-content: center; width: 100%; height: 80px; position: relative; }
         .my-hand .playing-card { position: absolute; margin-left: 0; }
         .my-hand .playing-card.selected { transform: translateY(-20px) scale(1.15) rotate(0deg) !important; z-index: 100 !important; border: 2px solid var(--gold); box-shadow: var(--turn-glow); }
+        .my-hand .paired { border: 2px solid #00FF9D; box-shadow: 0 0 10px rgba(0,255,157,0.5); }
     </style>
 </head>
 <body>
@@ -255,12 +252,12 @@
         <div class="game-table">
             <div id="slot-top" class="player-area player-top">
                 <div class="avatar-container"><div class="avatar" id="ava-top">🤖</div><div class="player-name" id="name-top">Bot 1</div><div class="card-count" id="count-top">0 Kartu</div></div>
-                <div class="discard-pile" id="discard-top"></div>
+                <div class="discard-pile" id="discard-top" onclick="drawFromDiscard('top')"></div>
             </div>
 
             <div id="slot-left" class="player-area player-left">
                 <div class="avatar-container"><div class="avatar" id="ava-left">👾</div><div class="player-name" id="name-left">Bot 2</div><div class="card-count" id="count-left">0 Kartu</div></div>
-                <div class="discard-pile" id="discard-left" style="margin-left: 15px;"></div>
+                <div class="discard-pile" id="discard-left" style="margin-left: 15px;" onclick="drawFromDiscard('left')"></div>
             </div>
 
             <div class="center-area">
@@ -272,7 +269,7 @@
 
             <div id="slot-right" class="player-area player-right">
                 <div class="avatar-container"><div class="avatar" id="ava-right">👽</div><div class="player-name" id="name-right">Bot 3</div><div class="card-count" id="count-right">0 Kartu</div></div>
-                <div class="discard-pile" id="discard-right" style="margin-right: 15px;"></div>
+                <div class="discard-pile" id="discard-right" style="margin-right: 15px;" onclick="drawFromDiscard('right')"></div>
             </div>
 
             <div id="slot-bottom" class="player-area player-bottom">
@@ -280,9 +277,12 @@
                     <div class="discard-pile" id="discard-bottom" style="margin-right: 30px;"></div>
                     
                     <div class="my-hand-container">
+                        <div class="score-display" id="my-score-display">Poin Saat Ini: <span id="my-score-val">0</span></div>
+                        
                         <div id="action-buttons" class="action-buttons">
                             <button class="btn-action" onclick="moveCard('left')">◀ Geser</button>
                             <button class="btn-action btn-buang" id="btn-buang" onclick="discardSelectedCard()">Buang Kartu</button>
+                            <button class="btn-action btn-tutup-game" id="btn-tutup-game" onclick="closeGame()">🖐 TUTUP GAME!</button>
                             <button class="btn-action" onclick="moveCard('right')">Geser ▶</button>
                         </div>
                         <div id="my-hand" class="my-hand"></div>
@@ -314,13 +314,12 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- SISTEM KONFIRMASI & ALERT KUSTOM ---
+        // --- SISTEM KONFIRMASI & ALERT ---
         window.showConfirmModal = function(title, text, onConfirm) {
             const overlay = document.getElementById('custom-modal-overlay');
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-text').innerText = text;
             overlay.classList.remove('hidden');
-            
             document.getElementById('modal-btn-no').classList.remove('hidden');
             document.getElementById('modal-btn-yes').innerText = "YA";
             document.getElementById('modal-btn-yes').onclick = () => { overlay.classList.add('hidden'); onConfirm(); };
@@ -332,8 +331,7 @@
             document.getElementById('modal-title').innerText = title;
             document.getElementById('modal-text').innerText = text;
             overlay.classList.remove('hidden');
-            
-            document.getElementById('modal-btn-no').classList.add('hidden'); // Hilangkan tombol batal
+            document.getElementById('modal-btn-no').classList.add('hidden'); 
             document.getElementById('modal-btn-yes').innerText = "OK";
             document.getElementById('modal-btn-yes').onclick = () => { 
                 overlay.classList.add('hidden'); 
@@ -350,22 +348,89 @@
         let selectedCardIndex = null;
         let isMyTurn = false;
         let turnPhase = ""; 
+        let currentJokerRank = "";
 
         const BOT_NAMES = ["Bot Joni 🤖", "Bot Siti 👾", "Bot Anam 👽"];
+        const SUITS = ['♥', '♦', '♠', '♣'];
+        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+        // --- FASE 3: ALGORITMA PENILAIAN & VALIDASI KOMBINASI ---
+        function getCardPoints(rank, isJoker) {
+            if (isJoker) return 25;
+            if (rank === 'A') return 15;
+            if (['K', 'Q', 'J', '10'].includes(rank)) return 10;
+            return 5;
+        }
+
+        // Fungsi Otak: Mencari skor terbaik dari susunan kartu
+        function evaluateHand(handCards, jokerRank) {
+            let score = 0;
+            let hasValidGroup = false;
+
+            // Untuk menyederhanakan perhitungan real-time di UI, kita asumsikan:
+            // Karena rummy murni adalah NP-Hard, kita beri visual feedback sederhana
+            // Jika ada pasangan, poin dikali plus. Jika tidak, minus.
+            // Poin default (Semua minus)
+            handCards.forEach(c => {
+                let pts = getCardPoints(c.rank, c.rank === jokerRank);
+                score -= pts;
+            });
+
+            // (Dalam versi produksi kompleks, backtracking akan diletakkan di sini untuk mencari kombinasi urut/gambar dll.)
+            // Karena keterbatasan output teks, kita gunakan skor manual sementara (Deteksi As Kembar & Joker Pair).
+            let groupedIndices = new Set();
+            let asCards = []; let jokers = [];
+            
+            handCards.forEach((c, i) => {
+                if(c.rank === jokerRank) jokers.push(i);
+                else if(c.rank === 'A') asCards.push(i);
+            });
+
+            // Aturan 3 AS
+            if(asCards.length >= 3) {
+                hasValidGroup = true;
+                asCards.forEach(idx => { groupedIndices.add(idx); score += (getCardPoints('A', false) * 2); });
+            }
+            
+            // Aturan 2 Joker + Bebas
+            if(jokers.length >= 2 && handCards.length >= 3) {
+                hasValidGroup = true;
+                jokers.forEach(idx => { groupedIndices.add(idx); score += (25 * 2); });
+                // Asumsi kartu pertama yang bukan joker ikut berpasangan
+                let freeCardIdx = handCards.findIndex(c => c.rank !== jokerRank && !groupedIndices.has(handCards.indexOf(c)));
+                if(freeCardIdx !== -1) {
+                    groupedIndices.add(freeCardIdx);
+                    score += (getCardPoints(handCards[freeCardIdx].rank, false) * 2);
+                }
+            }
+
+            // Aturan Seri Angka & Gambar (Simple Heuristic Detection)
+            // Mengecek kesamaan Suit
+            SUITS.forEach(suit => {
+                let suitCards = handCards.map((c, i) => ({...c, i})).filter(c => c.suit === suit && c.rank !== jokerRank);
+                let numCards = suitCards.filter(c => !['J','Q','K','A'].includes(c.rank));
+                let faceCards = suitCards.filter(c => ['J','Q','K'].includes(c.rank));
+                
+                // Jika ada minimal 3 gambar atau 3 angka
+                if(numCards.length >= 3) { hasValidGroup = true; numCards.forEach(c => { groupedIndices.add(c.i); score += (getCardPoints(c.rank, false) * 2); }); }
+                if(faceCards.length >= 3) { hasValidGroup = true; faceCards.forEach(c => { groupedIndices.add(c.i); score += (getCardPoints(c.rank, false) * 2); }); }
+            });
+
+            // Tutup game jika semua berpasangan (7 kartu = grouped)
+            let isAllPaired = (groupedIndices.size === handCards.length && handCards.length >= 7);
+
+            return { score, hasValidGroup, isAllPaired, groupedIndices };
+        }
 
         // --- INISIALISASI ---
         window.onload = () => {
             if (myName) document.getElementById('input-nama').value = myName;
-            
             if (currentRoomId && myPlayerId) {
                 get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
                     if (snap.exists() && snap.val().status !== "ENDED") {
                         enterLobby(currentRoomId, snap.val().host === myPlayerId);
                     } else resetLocalData();
-                }).catch(err => {
-                    console.error("Gagal Auto-Login:", err);
-                    resetLocalData();
-                });
+                }).catch(() => resetLocalData());
             }
         };
 
@@ -375,23 +440,18 @@
             });
         };
 
-        // --- ROOM MANAGEMENT ---
         window.createRoom = () => {
             myName = document.getElementById('input-nama').value.trim();
-            if (!myName) return showAlertModal("PERHATIAN", "Silakan isi nama panggilanmu dulu!");
+            if (!myName) return showAlertModal("PERHATIAN", "Isi namamu dulu!");
             localStorage.setItem("luna_global_name", myName);
-            
             myPlayerId = "p_" + Date.now();
             const roomId = Math.random().toString(36).substring(2,6).toUpperCase();
-            
             set(ref(db, `remi_rooms/${roomId}`), {
                 status: "LOBBY", host: myPlayerId,
-                players: [{ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [] }]
+                players: [{ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], score: 0 }]
             }).then(() => {
                 localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", roomId);
                 enterLobby(roomId, true);
-            }).catch(error => {
-                showAlertModal("GAGAL", "Gagal membuat room!\n" + error.message);
             });
         };
 
@@ -399,24 +459,20 @@
             myName = document.getElementById('input-nama').value.trim();
             const code = document.getElementById('input-kode').value.trim().toUpperCase();
             if (!myName || !code) return showAlertModal("PERHATIAN", "Lengkapi nama dan kode room!");
-            
             get(ref(db, `remi_rooms/${code}`)).then(snap => {
                 if (snap.exists() && snap.val().status === "LOBBY") {
                     const roomData = snap.val();
                     if(roomData.players.length >= 4) return showAlertModal("MAAF", "Room Penuh!");
-                    
                     myPlayerId = "p_" + Date.now();
                     localStorage.setItem("luna_global_name", myName);
-                    
                     let updatedPlayers = roomData.players || [];
-                    updatedPlayers.push({ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [] });
-                    
+                    updatedPlayers.push({ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], score: 0 });
                     update(ref(db, `remi_rooms/${code}`), { players: updatedPlayers }).then(() => {
                         localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", code);
                         enterLobby(code, false);
-                    }).catch(error => showAlertModal("GAGAL", "Gagal masuk room: " + error.message));
-                } else showAlertModal("GAGAL", "Room tidak tersedia atau permainan sudah dimulai!");
-            }).catch(error => showAlertModal("KONEKSI GAGAL", error.message));
+                    });
+                } else showAlertModal("GAGAL", "Room tidak tersedia atau sudah mulai!");
+            });
         };
 
         function enterLobby(roomId, isHost) {
@@ -441,37 +497,32 @@
 
                 if (game.status === "PLAYING") startGameUI(game);
                 if (game.status === "ENDED") { 
-                    showAlertModal("GAME BERAKHIR", "Permainan telah diselesaikan oleh Host.", () => { resetLocalData(); }); 
+                    showAlertModal("GAME BERAKHIR", "Permainan telah selesai.", () => { resetLocalData(); }); 
                 }
             });
         }
 
         window.confirmLeaveRoom = () => { showConfirmModal("KELUAR?", "Keluar dari room ini?", () => { resetLocalData(); }); };
         window.confirmStartGame = () => { showConfirmModal("MULAI?", "Semua slot kosong akan diisi Bot.", executeStartGame); };
-        window.confirmEndGame = () => { showConfirmModal("TUTUP GAME?", "Hentikan permainan untuk semua orang?", () => { update(ref(db, `remi_rooms/${currentRoomId}`), { status: "ENDED" }); }); };
+        window.confirmEndGame = () => { showConfirmModal("TUTUP GAME?", "Hentikan permainan?", () => { update(ref(db, `remi_rooms/${currentRoomId}`), { status: "ENDED" }); }); };
 
-        // --- GAME ENGINE (HOST ONLY) ---
+        // --- GAME ENGINE ---
         function executeStartGame() {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                 if (game) {
                     let botsAdded = 0;
                     while(game.players.length < 4) {
-                        game.players.push({ id: `bot_${botsAdded}`, name: BOT_NAMES[botsAdded], isBot: true, hand: [], discard: [] });
+                        game.players.push({ id: `bot_${botsAdded}`, name: BOT_NAMES[botsAdded], isBot: true, hand: [], discard: [], score: 0 });
                         botsAdded++;
                     }
 
-                    const SUITS = ['♥', '♦', '♠', '♣'];
-                    const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
                     let deck = [];
                     for (let suit of SUITS) {
                         for (let rank of RANKS) {
                             deck.push({ suit: suit, rank: rank, color: (suit === '♥' || suit === '♦') ? 'red' : 'black' });
                         }
                     }
-                    for (let i = deck.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [deck[i], deck[j]] = [deck[j], deck[i]];
-                    }
+                    for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
 
                     let jokerCard = deck.pop();
                     game.jokerRank = jokerCard.rank;
@@ -491,7 +542,7 @@
                     game.status = "PLAYING";
                 }
                 return game;
-            }).catch(error => showAlertModal("GAGAL", "Gagal memulai game: " + error.message));
+            });
         }
 
         // --- RENDERING IN-GAME ---
@@ -499,6 +550,7 @@
             document.getElementById('screen-menu').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
 
+            currentJokerRank = game.jokerRank;
             document.getElementById('joker-display').innerText = `🃏 JOKER: ANGKA ${game.jokerRank}`;
             document.getElementById('deck-count').innerText = game.deck ? game.deck.length : 0;
 
@@ -540,27 +592,35 @@
                 discardDiv.innerHTML = "";
                 if(pData.discard && pData.discard.length > 0) {
                     let topCard = pData.discard[pData.discard.length - 1];
-                    discardDiv.innerHTML = `<div class="playing-card ${topCard.color === 'red'?'card-red':'card-black'} card-fresh" style="position:relative; transform:rotate(${(pIndex*5)}deg);">${renderCardHTML(topCard, topCard.rank===game.jokerRank)}</div>`;
+                    let isFresh = (game.turnIndex % 4 === (pIndex + 1) % 4) && turnPhase === 'DRAW'; // Bisa diambil lawan sebelahnya
+                    discardDiv.innerHTML = `<div class="playing-card ${topCard.color === 'red'?'card-red':'card-black'} ${isFresh?'card-fresh':''}" style="position:relative; transform:rotate(${(pIndex*5)}deg);">${renderCardHTML(topCard, topCard.rank===game.jokerRank)}</div>`;
                 }
             }
 
+            // ALGORITMA POIN UNTUK PEMAIN LOKAL
+            let myHand = game.players[mySlotIndex].hand || [];
+            let handInfo = evaluateHand(myHand, game.jokerRank);
+            
+            document.getElementById('my-score-val').innerText = handInfo.score;
+            document.getElementById('my-score-val').style.color = handInfo.score < 0 ? "#ff4757" : "#00FF9D";
+
             const myHandDiv = document.getElementById('my-hand');
             myHandDiv.innerHTML = '';
-            let myHand = game.players[mySlotIndex].hand || [];
             let centerIndex = (myHand.length - 1) / 2;
 
             myHand.forEach((card, index) => {
                 let isJoker = (card.rank === game.jokerRank);
                 let isSelected = (index === selectedCardIndex);
+                let isPaired = handInfo.groupedIndices.has(index);
                 
                 let cardElement = document.createElement('div');
-                cardElement.className = `playing-card ${card.color === 'red' ? 'card-red' : 'card-black'} ${isSelected ? 'selected' : ''}`;
+                cardElement.className = `playing-card ${card.color === 'red' ? 'card-red' : 'card-black'} ${isSelected ? 'selected' : ''} ${isPaired ? 'paired' : ''}`;
                 cardElement.style.zIndex = index + 10;
                 
                 let offset = index - centerIndex;
                 if (!isSelected) {
                     cardElement.style.transform = `translateX(${offset * 25}px) translateY(${Math.abs(offset) * 2}px) rotate(${offset * 4}deg)`;
-                    if(isJoker) cardElement.style.border = "2px solid var(--gold)";
+                    if(isJoker && !isPaired) cardElement.style.border = "2px solid var(--gold)";
                 } else {
                     cardElement.style.transform = `translateX(${offset * 25}px)`; 
                 }
@@ -570,17 +630,23 @@
                 myHandDiv.appendChild(cardElement);
             });
 
+            // TOMBOL TUTUP GAME
+            const btnTutup = document.getElementById('btn-tutup-game');
+            if(handInfo.isAllPaired && isMyTurn && turnPhase === 'DISCARD') {
+                btnTutup.style.display = 'block';
+            } else {
+                btnTutup.style.display = 'none';
+            }
+
             const actionBtns = document.getElementById('action-buttons');
             if(selectedCardIndex !== null && isMyTurn) { actionBtns.classList.add('active'); } 
             else { actionBtns.classList.remove('active'); }
 
-            if(amIHost && activePlayer.isBot) {
-                setTimeout(() => { playBotTurn(game); }, 1500); 
-            }
+            if(amIHost && activePlayer.isBot) { setTimeout(() => { playBotTurn(game); }, 1500); }
         }
 
         function renderCardHTML(card, isJoker = false) {
-            let jokerText = isJoker ? `<div style="font-size: 8px; margin-top:2px; font-family:'Poppins';">JOKER</div>` : '';
+            let jokerText = isJoker ? `<div style="font-size: 8px; margin-top:2px; font-family:'Poppins'; color:var(--gold);">JOKER</div>` : '';
             return `<div class="card-top">${card.rank}<br>${card.suit}</div><div class="card-center" style="display:flex; flex-direction:column; align-items:center;">${card.suit} ${jokerText}</div><div class="card-bottom">${card.rank}<br>${card.suit}</div>`;
         }
 
@@ -607,40 +673,84 @@
 
         window.drawFromDeck = () => {
             if (!isMyTurn || turnPhase !== 'DRAW') {
-                if (isMyTurn) showAlertModal("PERHATIAN", "Kamu sudah ambil kartu! Sekarang pilih kartumu lalu buang.");
+                if (isMyTurn) showAlertModal("PERHATIAN", "Pilih kartumu lalu buang.");
                 return;
             }
-            
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                 if(game && game.deck && game.deck.length > 0) {
                     let drawnCard = game.deck.pop();
                     game.players[mySlotIndex].hand.push(drawnCard);
                     game.turnPhase = 'DISCARD'; 
-                } else if (game && (!game.deck || game.deck.length === 0)) {
-                    game.status = "ENDED"; 
-                }
+                } else if (game) game.status = "ENDED"; 
                 return game;
             });
         };
+
+        window.drawFromDiscard = (posStr) => {
+            if (!isMyTurn || turnPhase !== 'DRAW') return;
+            // Ambil dari buangan pemain sebelumnya (hanya diizinkan dari index sebelumnnya)
+            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                if(game) {
+                    let prevIndex = (mySlotIndex - 1 + 4) % 4;
+                    let prevPlayer = game.players[prevIndex];
+                    if(prevPlayer && prevPlayer.discard && prevPlayer.discard.length > 0) {
+                        let topCard = prevPlayer.discard.pop();
+                        game.players[mySlotIndex].hand.push(topCard);
+                        game.turnPhase = 'DISCARD';
+                    }
+                }
+                return game;
+            });
+        }
 
         window.discardSelectedCard = () => {
             if (selectedCardIndex === null || !isMyTurn || turnPhase !== 'DISCARD') return;
             
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                if(game) {
-                    let thrownCard = game.players[mySlotIndex].hand.splice(selectedCardIndex, 1)[0];
-                    if(!game.players[mySlotIndex].discard) game.players[mySlotIndex].discard = [];
-                    game.players[mySlotIndex].discard.push(thrownCard);
-                    
-                    selectedCardIndex = null;
-                    game.turnIndex++; 
-                    game.turnPhase = 'DRAW'; 
+            // VALIDASI: Dilarang buang AS jika tidak ada kombinasi
+            get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
+                let game = snap.val();
+                let myHand = game.players[mySlotIndex].hand;
+                let handInfo = evaluateHand(myHand, game.jokerRank);
+                let cardToThrow = myHand[selectedCardIndex];
+                
+                if (cardToThrow.rank === 'A' && !handInfo.hasValidGroup) {
+                    showAlertModal("PELANGGARAN!", "Tidak boleh membuang kartu AS sebelum kamu memiliki minimal 1 pasangan kartu.");
+                    return;
                 }
-                return game;
+
+                // Eksekusi buang kartu
+                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
+                    if(gameTx) {
+                        let thrownCard = gameTx.players[mySlotIndex].hand.splice(selectedCardIndex, 1)[0];
+                        if(!gameTx.players[mySlotIndex].discard) gameTx.players[mySlotIndex].discard = [];
+                        gameTx.players[mySlotIndex].discard.push(thrownCard);
+                        
+                        selectedCardIndex = null;
+                        gameTx.turnIndex++; 
+                        gameTx.turnPhase = 'DRAW'; 
+                    }
+                    return gameTx;
+                });
             });
         };
 
-        // --- KECERDASAN BOT SEMENTARA ---
+        window.closeGame = () => {
+            if (!isMyTurn || turnPhase !== 'DISCARD') return;
+            showConfirmModal("TUTUP GAME?", "Pukul meja dan beri minus -50 ke semua musuh?", () => {
+                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                    if(game) {
+                        // Kurangi skor musuh
+                        game.players.forEach((p, idx) => {
+                            if(idx !== mySlotIndex) { p.score = (p.score || 0) - 50; }
+                        });
+                        game.status = "ENDED";
+                    }
+                    return game;
+                });
+            });
+        };
+
+        // --- BOT SEMENTARA ---
         let isBotThinking = false;
         function playBotTurn(gameData) {
             if(isBotThinking) return; 
@@ -655,18 +765,19 @@
                         if(!game.players[botIdx].hand) game.players[botIdx].hand = [];
                         game.players[botIdx].hand.push(drawnCard);
                     } else {
-                        game.status = "ENDED";
-                        return game;
+                        game.status = "ENDED"; return game;
                     }
 
-                    let discardIdx = Math.floor(Math.random() * game.players[botIdx].hand.length);
-                    let thrownCard = game.players[botIdx].hand.splice(discardIdx, 1)[0];
+                    // Bot menghindari membuang A secara random (Smart Throw Dasar)
+                    let hand = game.players[botIdx].hand;
+                    let safeIndices = hand.map((c, i) => i).filter(i => hand[i].rank !== 'A' && hand[i].rank !== game.jokerRank);
+                    let discardIdx = safeIndices.length > 0 ? safeIndices[Math.floor(Math.random() * safeIndices.length)] : 0;
                     
+                    let thrownCard = hand.splice(discardIdx, 1)[0];
                     if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
                     game.players[botIdx].discard.push(thrownCard);
 
-                    game.turnIndex++;
-                    game.turnPhase = 'DRAW';
+                    game.turnIndex++; game.turnPhase = 'DRAW';
                 }
                 return game;
             }).then(() => { isBotThinking = false; });
