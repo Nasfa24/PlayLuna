@@ -15,18 +15,19 @@
             --blue: #3b82f6;
             
             /* 4-Color Deck System */
-            --suit-heart: #ef4444;    /* Merah Hati */
-            --suit-diamond: #3b82f6;  /* Biru Wajik */
-            --suit-spade: #111827;    /* Hitam Sekop */
-            --suit-club: #059669;     /* Hijau Keriting */
+            --suit-heart: #ef4444;    /* Merah */
+            --suit-diamond: #3b82f6;  /* Biru */
+            --suit-spade: #111827;    /* Hitam */
+            --suit-club: #059669;     /* Hijau */
         }
 
         body {
-            margin: 0; padding: 0; background: radial-gradient(circle at center, var(--bg-light) 0%, var(--bg-dark) 100%);
+            margin: 0; padding: 0; 
+            /* BUG FIX: Hanya menggunakan radial-gradient tanpa efek kotak-kotak yang menyebabkan layar putih */
+            background: radial-gradient(circle at center, var(--bg-light) 0%, var(--bg-dark) 100%);
             font-family: 'Poppins', sans-serif; color: white; height: 100vh; width: 100vw;
             display: flex; flex-direction: column; overflow: hidden;
-            background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.1) 75%, rgba(0,0,0,0.1));
-            background-size: 20px 20px; user-select: none; -webkit-user-select: none; touch-action: manipulation;
+            user-select: none; -webkit-user-select: none; touch-action: manipulation;
         }
 
         .hidden { display: none !important; }
@@ -113,12 +114,7 @@
         .player-top { grid-row: 1; grid-column: 2; margin-top: 10px; }
         .player-left { grid-row: 2; grid-column: 1; }
         .player-right { grid-row: 2; grid-column: 3; }
-        
-        /* Player Bawah (Kita) mengambil sisa ruang bawah */
-        .player-bottom { 
-            grid-row: 3; grid-column: 1 / span 3; 
-            width: 100%; align-self: end; padding-bottom: 20px;
-        }
+        .player-bottom { grid-row: 3; grid-column: 1 / span 3; width: 100%; align-self: end; padding-bottom: 20px; }
 
         .avatar-container { display: flex; flex-direction: column; align-items: center; transition: 0.3s; z-index: 6;}
         .avatar {
@@ -144,7 +140,6 @@
             border: 1px solid #cbd5e1; font-weight: 800; line-height: 1; font-family: 'Rye', serif; box-shadow: 0 2px 5px rgba(0,0,0,0.4);
         }
         
-        /* Sistem Warna Kembang */
         .c-heart { color: var(--suit-heart); }
         .c-diamond { color: var(--suit-diamond); }
         .c-club { color: var(--suit-club); }
@@ -180,12 +175,11 @@
             transform-origin: bottom center; cursor: pointer; border: 1px solid #94a3b8; color: var(--black-suit);
         }
         .card-top { font-size: 14px; line-height: 1; font-weight: 900; text-align: left; }
-        .card-center { font-size: 38px; text-align: center; margin-top: -6px; } /* Simbol Jumbo */
+        .card-center { font-size: 38px; text-align: center; margin-top: -6px; }
         .card-bottom { font-size: 14px; line-height: 1; font-weight: 900; text-align: left; transform: rotate(180deg); }
         
         .card-fresh { box-shadow: var(--green-glow); border: 3px solid var(--neon-green); z-index: 10; } 
         
-        /* Tema Kartu Kasta (Visual Kontras) */
         .playing-card.face-card { background: linear-gradient(135deg, #ffffff 0%, #fde047 100%); border: 2px solid #f59e0b; }
         .playing-card.joker-card { background: linear-gradient(135deg, #ffffff 0%, #a7f3d0 100%); border: 3px solid var(--neon-green); }
 
@@ -216,7 +210,6 @@
         .my-hand { display: flex; justify-content: center; width: 100%; height: 95px; position: relative; }
         .my-hand .playing-card { position: absolute; margin-left: 0; }
         
-        /* Merapatkan Kartu Tangan Tapi Jelas Terlihat */
         .my-hand .playing-card.selected { transform: translateY(-30px) scale(1.1) rotate(0deg) !important; z-index: 100 !important; border: 3px solid var(--gold) !important; box-shadow: var(--gold-glow); }
         .my-hand .paired { border: 3px solid var(--neon-green); box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.4); }
 
@@ -299,8 +292,7 @@
             </div>
 
             <div id="slot-bottom" class="player-area player-bottom">
-                
-                <div style="display:flex; justify-content:space-between; width:100%; padding:0 20px; box-sizing:border-box; align-items:flex-end;">
+                <div style="display:flex; justify-content:space-between; width:100%; padding:0 20px; box-sizing:border-box; align-items:flex-end; margin-bottom:15px;">
                     <div class="discard-pile" id="discard-bottom" style="margin:0;"></div>
                     <div class="avatar-container">
                         <div class="melds-area" id="melds-bottom" style="margin-bottom:8px;"></div>
@@ -324,7 +316,6 @@
                     </div>
                     <div id="my-hand" class="my-hand"></div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -850,7 +841,7 @@
                             groupDiv.className = 'meld-group';
                             group.forEach((c) => {
                                 let fClass = ['J','Q','K'].includes(c.rank) ? 'face-card' : '';
-                                groupDiv.innerHTML += `<div class="mini-card ${getSuitClass(c.suit)} ${fClass}">${c.rank}<br><span style="font-size:11px;">${c.suit}</span></div>`;
+                                groupDiv.innerHTML += `<div class="mini-card ${getSuitClass(c.suit)} ${fClass}">${c.rank}<br><span style="font-size:10px;">${c.suit}</span></div>`;
                             });
                             meldsDiv.appendChild(groupDiv);
                         });
@@ -883,11 +874,10 @@
                 
                 let offset = index - centerIndex;
                 if (!isSelected) {
-                    // Margin kipas
-                    cardElement.style.transform = `translateX(${offset * 18}px) translateY(${Math.abs(offset) * 2}px) rotate(${offset * 3}deg)`;
+                    cardElement.style.transform = `translateX(${offset * 20}px) translateY(${Math.abs(offset) * 2}px) rotate(${offset * 3}deg)`;
                     if(isJoker && !isPaired) cardElement.style.border = "2px solid var(--gold)";
                 } else {
-                    cardElement.style.transform = `translateX(${offset * 18}px)`; 
+                    cardElement.style.transform = `translateX(${offset * 20}px)`; 
                 }
                 
                 cardElement.innerHTML = renderCardHTML(card, isJoker);
@@ -910,7 +900,6 @@
                 if(selectedCardIndices.length > 1) {
                     btnGeserL.style.display = 'none'; btnGeserR.style.display = 'none'; btnBuang.style.display = 'none';
                     
-                    // Cek jika yang diseleksi bisa diturunkan
                     let selectedCardsForMeld = selectedCardIndices.map(i => myHand[i]);
                     btnTurun.style.display = (isValidSingleGroup(selectedCardsForMeld, game.jokerRank) && turnPhase === 'DISCARD') ? 'block' : 'none';
                 } else {
@@ -951,9 +940,8 @@
             });
         };
 
-        // Fungsi Turun Manual
         window.meldSelectedCards = () => {
-            if (selectedCardIndices.length < 3 || !isMyTurn || turnPhase !== 'DISCARD') return;
+            if (selectedCardIndices.length < 3 || !isMyTurn) return;
 
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
                 let game = snap.val();
@@ -999,7 +987,6 @@
             });
         };
 
-        // GLOBAL NEMBAK LOGIC
         window.drawFromDiscard = (posStr) => {
             if (!isMyTurn || turnPhase !== 'DRAW') return;
             
@@ -1072,7 +1059,7 @@
                 let cardToThrow = myHand[sIndex];
                 
                 if (cardToThrow.rank === 'A' && (!myMelds || myMelds.length === 0)) {
-                    showAlertModal("PELANGGARAN!", "Kartu AS tidak bisa dibuang! Kamu harus <b>'TURUN'</b> kombinasi kartu terlebih dahulu ke meja dengan memilih 3 kartu sah lalu tekan tombol TURUN.");
+                    showAlertModal("PELANGGARAN!", "Kartu AS tidak bisa dibuang! Kamu harus <b>'TURUN'</b> kombinasi kartu terlebih dahulu ke meja dengan memilih minimal 3 kartu sah lalu tekan tombol TURUN.");
                     return;
                 }
 
