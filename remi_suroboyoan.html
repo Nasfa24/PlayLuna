@@ -1,4 +1,286 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Remi Suroboyoan | LUNA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Rye&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --wood-dark: #1e130c;
+            --wood-light: #3a2618;
+            --gold: #fbc531;
+            --red-suit: #e84118;
+            --black-suit: #2f3640;
+            --fresh-glow: 0 0 20px #00FF9D;
+            --turn-glow: 0 0 20px #fbc531;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background: radial-gradient(circle, var(--wood-light) 0%, var(--wood-dark) 100%);
+            font-family: 'Poppins', sans-serif;
+            color: white;
+            height: 100vh; width: 100vw;
+            display: flex; flex-direction: column; overflow: hidden;
+            background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.1) 75%, rgba(0,0,0,0.1)), repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 25%, background-color 25%, background-color 75%, rgba(0,0,0,0.1) 75%, rgba(0,0,0,0.1));
+            background-size: 20px 20px;
+            user-select: none; -webkit-user-select: none;
+        }
+
+        .hidden { display: none !important; }
+
+        /* UI MENU & LOBBY */
+        .menu-container {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100%; width: 100%; z-index: 50; position: absolute; top:0; left:0;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+        }
+        .panel {
+            background: #1e272e; padding: 30px; border-radius: 15px; border: 2px solid var(--gold);
+            text-align: center; width: 80%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        input {
+            width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #555;
+            background: #111; color: white; text-align: center; font-family: 'Poppins'; font-weight: bold; box-sizing: border-box;
+        }
+        .btn {
+            width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 8px;
+            font-weight: bold; font-family: 'Poppins'; cursor: pointer; transition: 0.2s; text-transform: uppercase;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-gold { background: var(--gold); color: #000; box-shadow: 0 4px 0 #d35400; }
+        .btn-red { background: var(--red-suit); color: white; box-shadow: 0 4px 0 #881337; }
+        .btn-blue { background: #00a8ff; color: white; box-shadow: 0 4px 0 #0097e6; }
+
+        /* MODAL KONFIRMASI */
+        #custom-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 9000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .custom-modal {
+            background: #2f3542; width: 85%; max-width: 350px; padding: 25px;
+            border-radius: 15px; border: 2px solid var(--gold); text-align: center;
+        }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+
+        /* PERINGATAN PORTRAIT */
+        #rotate-warning {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--wood-dark); z-index: 9999; color: white;
+            flex-direction: column; align-items: center; justify-content: center; text-align: center;
+        }
+        @media screen and (orientation: portrait) {
+            #rotate-warning { display: flex; }
+            #game-ui { display: none !important; }
+            .menu-container { display: none !important; }
+        }
+
+        #game-ui { display: flex; flex-direction: column; height: 100%; width: 100%; position: relative; }
+
+        /* HEADER UI INFO */
+        .top-bar {
+            display: flex; justify-content: space-between; align-items: center; padding: 10px 20px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.8), transparent);
+            position: absolute; width: 100%; top: 0; left: 0; box-sizing: border-box; z-index: 10;
+        }
+        .joker-info {
+            background: rgba(0,0,0,0.5); border: 1px solid var(--gold); backdrop-filter: blur(5px);
+            padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; color: var(--gold);
+        }
+        .status-info {
+            font-size: 12px; font-weight: bold; color: #00FF9D; background: rgba(0,0,0,0.6);
+            padding: 5px 15px; border-radius: 20px; border: 1px solid #00FF9D; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; text-shadow: 0 0 10px #00FF9D;} 100% { opacity: 0.8; } }
+        .btn-tutup {
+            background: var(--red-suit); color: white; border: none; padding: 6px 15px;
+            border-radius: 20px; font-weight: bold; font-family: 'Poppins'; font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* TATA LETAK MEJA */
+        .game-table {
+            flex: 1; position: relative; display: grid;
+            grid-template-rows: 1fr 1fr 1fr; grid-template-columns: 1fr 1.5fr 1fr;
+            padding: 10px; padding-top: 40px;
+        }
+
+        .player-area { display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s;}
+        .player-top { grid-row: 1; grid-column: 2; }
+        .player-left { grid-row: 2; grid-column: 1; flex-direction: row; }
+        .player-right { grid-row: 2; grid-column: 3; flex-direction: row-reverse; }
+        .player-bottom { grid-row: 3; grid-column: 1 / span 3; justify-content: flex-end; padding-bottom: 10px;}
+
+        /* HIGHLIGHT GILIRAN */
+        .active-turn .avatar { box-shadow: var(--turn-glow); border-color: white; transform: scale(1.1); }
+        .active-turn .player-name { background: var(--gold); color: black; }
+
+        .avatar-container { display: flex; flex-direction: column; align-items: center; transition: 0.3s; }
+        .avatar {
+            width: 45px; height: 45px; background: rgba(0,0,0,0.6); border: 2px solid #555;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 5; transition: 0.3s;
+        }
+        .player-name {
+            background: rgba(0,0,0,0.8); padding: 2px 10px; border-radius: 10px;
+            font-size: 10px; margin-top: -8px; z-index: 6; border: 1px solid #555; white-space: nowrap; transition: 0.3s;
+        }
+        .card-count { font-size: 9px; color: var(--gold); margin-top: 2px; font-weight: bold; text-shadow: 1px 1px 2px black; }
+
+        /* LAPAK BUANGAN */
+        .discard-pile {
+            width: 45px; height: 65px; border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 6px; margin: 10px; position: relative;
+            display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.15);
+        }
+
+        /* SISA KARTU TENGAH */
+        .center-area { grid-row: 2; grid-column: 2; display: flex; align-items: center; justify-content: center; gap: 20px; }
+        .deck-wrapper { position: relative; cursor: pointer; transition: transform 0.2s; }
+        .deck-wrapper:active { transform: scale(0.9); }
+        .deck-pile {
+            width: 50px; height: 75px; background: repeating-linear-gradient(45deg, #1e272e, #1e272e 5px, #485460 5px, #485460 10px);
+            border-radius: 6px; border: 2px solid white; box-shadow: -2px 2px 0 #fff, -4px 4px 0 #aaa, 0 10px 20px rgba(0,0,0,0.6);
+            display: flex; align-items: center; justify-content: center; font-family: 'Rye', serif; color: white; font-size: 12px;
+        }
+        .deck-count { position: absolute; bottom: -20px; width: 100%; text-align: center; font-size: 11px; font-weight: bold; text-shadow: 0 2px 4px black; }
+
+        /* KARTU VISUAL */
+        .playing-card {
+            width: 50px; height: 75px; background: #fffaf0; border-radius: 6px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: absolute;
+            display: flex; flex-direction: column; justify-content: space-between;
+            padding: 4px; box-sizing: border-box; font-family: 'Rye', serif;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s; 
+            transform-origin: bottom center; cursor: pointer; border: 1px solid #ddd; color: black;
+        }
+        .card-red { color: var(--red-suit); }
+        .card-black { color: var(--black-suit); }
+        .card-top { font-size: 12px; line-height: 1; }
+        .card-center { font-size: 22px; text-align: center; margin-top: -5px;}
+        .card-bottom { font-size: 12px; line-height: 1; transform: rotate(180deg); }
+
+        /* UI TANGAN PEMAIN */
+        .my-hand-container { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; }
+        .action-buttons {
+            display: flex; gap: 8px; position: absolute; top: -45px;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); padding: 8px 15px; border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            opacity: 0; pointer-events: none; transform: translateY(15px) scale(0.9); transition: 0.3s; z-index: 200;
+        }
+        .action-buttons.active { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+        .btn-action { 
+            background: rgba(255, 255, 255, 0.1); color: white; border: none; padding: 6px 12px; 
+            border-radius: 15px; font-weight: bold; font-size: 11px; cursor: pointer; transition: 0.2s;
+        }
+        .btn-action:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn-action:active { transform: scale(0.9); }
+        .btn-buang { background: var(--red-suit) !important; color: white !important; box-shadow: 0 0 10px rgba(232, 65, 24, 0.5); }
+        
+        .my-hand { display: flex; justify-content: center; width: 100%; height: 80px; position: relative; }
+        .my-hand .playing-card { position: absolute; margin-left: 0; }
+        .my-hand .playing-card.selected { transform: translateY(-20px) scale(1.15) rotate(0deg) !important; z-index: 100 !important; border: 2px solid var(--gold); box-shadow: var(--turn-glow); }
+    </style>
+</head>
+<body>
+
+    <div id="rotate-warning">
+        <h1 style="font-size: 50px; margin: 0;">🔄</h1>
+        <h3>Harap Putar HP Anda</h3>
+        <p style="font-size: 12px; opacity: 0.8;">Game ini dimainkan dalam mode mendatar (Landscape).</p>
+    </div>
+
+    <div id="custom-modal-overlay" class="hidden">
+        <div class="custom-modal">
+            <h3 id="modal-title" style="margin-top:0; color:var(--gold);">JUDUL</h3>
+            <p id="modal-text" style="font-size: 14px; color:#ddd;">Deskripsi</p>
+            <div class="modal-actions">
+                <button id="modal-btn-yes" class="btn btn-gold" style="width:auto; padding:8px 20px;">YA</button>
+                <button id="modal-btn-no" class="btn btn-red" style="width:auto; padding:8px 20px;">BATAL</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-menu" class="menu-container">
+        <div class="panel" id="panel-login">
+            <h2 style="margin-top:0; color:var(--gold);">REMI SUROBOYOAN</h2>
+            <input type="text" id="input-nama" placeholder="Ketik Namamu..." maxlength="15">
+            <button class="btn btn-gold" onclick="createRoom()">Buat Room Baru</button>
+            <p style="font-size:12px; color:#aaa;">- ATAU -</p>
+            <input type="text" id="input-kode" placeholder="KODE ROOM" style="text-transform:uppercase;" maxlength="5">
+            <button class="btn btn-blue" onclick="joinRoom()">Gabung Room</button>
+            <button class="btn btn-red" onclick="resetLocalData()" style="margin-top: 20px; font-size:10px;">Reset Data Lokal</button>
+        </div>
+
+        <div class="panel hidden" id="panel-lobby">
+            <h3 style="color:var(--gold); margin-top:0;">LOBBY MENUNGGU</h3>
+            <h1 id="display-kode-room" style="letter-spacing: 5px; margin: 10px 0;">----</h1>
+            <ul id="player-list" style="list-style:none; padding:0; text-align:left; font-size:14px;"></ul>
+            <div id="host-controls" class="hidden">
+                <p style="font-size:11px; color:#aaa;">Slot kosong otomatis diisi BOT (Siti, Joni, Anam).</p>
+                <button class="btn btn-gold" onclick="confirmStartGame()">MULAI PERMAINAN</button>
+            </div>
+            <p id="waiting-msg" style="font-size:12px; color:#00FF9D;" class="hidden">Menunggu Host Memulai...</p>
+            <button class="btn btn-red" onclick="confirmLeaveRoom()" style="margin-top: 15px; font-size:12px;">Keluar Room</button>
+        </div>
+    </div>
+
+    <div id="game-ui" class="hidden">
+        <div class="top-bar">
+            <div id="joker-display" class="joker-info">🃏 JOKER: -</div>
+            <div id="turn-display" class="status-info">Menunggu...</div>
+            <button class="btn-tutup" onclick="confirmEndGame()">TUTUP GAME</button>
+        </div>
+
+        <div class="game-table">
+            <div id="slot-top" class="player-area player-top">
+                <div class="avatar-container"><div class="avatar" id="ava-top">🤖</div><div class="player-name" id="name-top">Bot 1</div><div class="card-count" id="count-top">0 Kartu</div></div>
+                <div class="discard-pile" id="discard-top"></div>
+            </div>
+
+            <div id="slot-left" class="player-area player-left">
+                <div class="avatar-container"><div class="avatar" id="ava-left">👾</div><div class="player-name" id="name-left">Bot 2</div><div class="card-count" id="count-left">0 Kartu</div></div>
+                <div class="discard-pile" id="discard-left" style="margin-left: 15px;"></div>
+            </div>
+
+            <div class="center-area">
+                <div class="deck-wrapper" onclick="drawFromDeck()">
+                    <div class="deck-pile">LUNA</div>
+                    <div id="deck-count" class="deck-count">0</div>
+                </div>
+            </div>
+
+            <div id="slot-right" class="player-area player-right">
+                <div class="avatar-container"><div class="avatar" id="ava-right">👽</div><div class="player-name" id="name-right">Bot 3</div><div class="card-count" id="count-right">0 Kartu</div></div>
+                <div class="discard-pile" id="discard-right" style="margin-right: 15px;"></div>
+            </div>
+
+            <div id="slot-bottom" class="player-area player-bottom">
+                <div style="display: flex; align-items: flex-end; width: 100%; justify-content: center;">
+                    <div class="discard-pile" id="discard-bottom" style="margin-right: 30px;"></div>
+                    
+                    <div class="my-hand-container">
+                        <div id="action-buttons" class="action-buttons">
+                            <button class="btn-action" onclick="moveCard('left')">◀ Geser</button>
+                            <button class="btn-action btn-buang" id="btn-buang" onclick="discardSelectedCard()">Buang Kartu</button>
+                            <button class="btn-action" onclick="moveCard('right')">Geser ▶</button>
+                        </div>
+                        <div id="my-hand" class="my-hand"></div>
+                    </div>
+
+                    <div class="avatar-container" style="margin-left: 30px;">
+                        <div class="avatar" style="font-size: 18px;">😎</div>
+                        <div class="player-name" id="my-name">Kamu</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, update, get, runTransaction, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
@@ -6,7 +288,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyBSOOCaSfzAELvbtrEFOxdR8nYsKWlCnag",
             authDomain: "remi-suroboyoan.firebaseapp.com",
-            databaseURL: "https://remi-suroboyoan-default-rtdb.asia-southeast1.firebasedatabase.app", // Wajib ada untuk Realtime DB
+            databaseURL: "https://remi-suroboyoan-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "remi-suroboyoan",
             storageBucket: "remi-suroboyoan.firebasestorage.app",
             messagingSenderId: "583998906308",
@@ -32,10 +314,10 @@
         let myPlayerId = localStorage.getItem("remi_pid");
         let currentRoomId = localStorage.getItem("remi_room");
         let amIHost = false;
-        let mySlotIndex = -1; // Index 0-3 di array meja
+        let mySlotIndex = -1; 
         let selectedCardIndex = null;
         let isMyTurn = false;
-        let turnPhase = ""; // 'DRAW' atau 'DISCARD'
+        let turnPhase = ""; 
 
         const BOT_NAMES = ["Bot Joni 🤖", "Bot Siti 👾", "Bot Anam 👽"];
 
@@ -77,7 +359,6 @@
                 localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", roomId);
                 enterLobby(roomId, true);
             }).catch(error => {
-                // ALERT DITAMBAHKAN AGAR TIDAK SILENT ERROR
                 alert("Gagal membuat room!\nError: " + error.message + "\n\nPastikan Realtime Database aktif & Rules diset true.");
             });
         };
@@ -121,7 +402,6 @@
                 if(!snap.exists()) { resetLocalData(); return; }
                 const game = snap.val();
                 
-                // Update UI Lobby
                 const list = document.getElementById('player-list'); list.innerHTML = "";
                 if(game.players) {
                     game.players.forEach((p, idx) => {
@@ -142,14 +422,12 @@
         function executeStartGame() {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                 if (game) {
-                    // Isi sisa slot dengan Bot
                     let botsAdded = 0;
                     while(game.players.length < 4) {
                         game.players.push({ id: `bot_${botsAdded}`, name: BOT_NAMES[botsAdded], isBot: true, hand: [], discard: [] });
                         botsAdded++;
                     }
 
-                    // Buat Deck & Kocok
                     const SUITS = ['♥', '♦', '♠', '♣'];
                     const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
                     let deck = [];
@@ -165,10 +443,9 @@
 
                     let jokerCard = deck.pop();
                     game.jokerRank = jokerCard.rank;
-                    deck.push(jokerCard); // Balikkan ke deck
+                    deck.push(jokerCard); 
                     for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
 
-                    // Bagi 7 kartu
                     for(let i=0; i<7; i++) {
                         for(let p=0; p<4; p++) {
                             if(!game.players[p].hand) game.players[p].hand = [];
@@ -178,7 +455,7 @@
 
                     game.deck = deck;
                     game.turnIndex = 0;
-                    game.turnPhase = 'DRAW'; // Fase 1: Harus ngambil kartu dulu
+                    game.turnPhase = 'DRAW'; 
                     game.status = "PLAYING";
                 }
                 return game;
@@ -197,7 +474,6 @@
             isMyTurn = (game.turnIndex % 4 === mySlotIndex);
             turnPhase = game.turnPhase;
 
-            // Update Teks Status Giliran
             const activePlayer = game.players[game.turnIndex % 4];
             if (isMyTurn) {
                 document.getElementById('turn-display').innerText = turnPhase === 'DRAW' ? "Giliranmu! Ambil Kartu dari Deck." : "Giliranmu! Buang 1 Kartu.";
@@ -208,13 +484,12 @@
                 document.getElementById('turn-display').innerText = `Giliran ${activePlayer.name}...`;
                 document.getElementById('turn-display').style.color = "#00FF9D";
                 document.getElementById('turn-display').style.borderColor = "#00FF9D";
-                selectedCardIndex = null; // Reset pilihan
+                selectedCardIndex = null; 
             }
 
-            // Pemetaan Posisi Meja
             const positions = ['bottom', 'left', 'top', 'right'];
             for(let i=0; i<4; i++) {
-                let pIndex = (mySlotIndex + i) % 4; // 0=Bottom(Saya), 1=Kiri, 2=Atas, 3=Kanan
+                let pIndex = (mySlotIndex + i) % 4; 
                 let pos = positions[i];
                 let pData = game.players[pIndex];
 
@@ -237,7 +512,6 @@
                 }
             }
 
-            // Render Tangan Pemain Lokal (Bottom)
             const myHandDiv = document.getElementById('my-hand');
             myHandDiv.innerHTML = '';
             let myHand = game.players[mySlotIndex].hand || [];
@@ -264,12 +538,10 @@
                 myHandDiv.appendChild(cardElement);
             });
 
-            // Munculkan Tombol Aksi
             const actionBtns = document.getElementById('action-buttons');
             if(selectedCardIndex !== null && isMyTurn) { actionBtns.classList.add('active'); } 
             else { actionBtns.classList.remove('active'); }
 
-            // --- JALANKAN LOGIKA BOT ---
             if(amIHost && activePlayer.isBot) {
                 setTimeout(() => { playBotTurn(game); }, 1500); 
             }
@@ -368,3 +640,5 @@
             }).then(() => { isBotThinking = false; });
         }
     </script>
+</body>
+</html>
