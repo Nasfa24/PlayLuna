@@ -41,17 +41,17 @@
             background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
         }
         .panel {
-            background: linear-gradient(145deg, #2c1e16, #1e130c); padding: 20px; border-radius: 15px; border: 2px solid var(--gold);
+            background: linear-gradient(145deg, #2c1e16, #1e130c); padding: 25px; border-radius: 15px; border: 2px solid var(--gold);
             text-align: center; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             max-height: 90vh; overflow-y: auto;
         }
         input, select {
-            width: 100%; padding: 8px; margin: 6px 0; border-radius: 8px; border: 1px solid #555;
-            background: #111; color: white; text-align: center; font-family: 'Poppins'; font-weight: bold; box-sizing: border-box; font-size: 12px;
+            width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #555;
+            background: #111; color: white; text-align: center; font-family: 'Poppins'; font-weight: bold; box-sizing: border-box; font-size: 14px;
         }
         .btn {
-            width: 100%; padding: 10px; margin: 5px 0; border: none; border-radius: 8px;
-            font-weight: bold; font-family: 'Poppins'; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase;
+            width: 100%; padding: 10px; margin: 6px 0; border: none; border-radius: 8px;
+            font-weight: bold; font-family: 'Poppins'; cursor: pointer; transition: 0.2s; font-size: 13px; text-transform: uppercase;
         }
         .btn:active { transform: scale(0.95); }
         .btn-gold { background: var(--gold); color: #000; box-shadow: 0 4px 0 #d35400; }
@@ -66,21 +66,21 @@
             display: flex; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box;
         }
         .custom-modal {
-            background: linear-gradient(145deg, #2c1e16, #1e130c); width: 100%; max-width: 450px;
-            padding: 15px; border-radius: 15px; border: 2px solid var(--gold); text-align: center;
+            background: linear-gradient(145deg, #2c1e16, #1e130c); width: 100%; max-width: 400px;
+            padding: 20px; border-radius: 15px; border: 2px solid var(--gold); text-align: center;
             box-shadow: 0 15px 40px rgba(0,0,0,0.8); max-height: 95vh; overflow-y: auto;
         }
-        #modal-title { margin-top: 0; color: var(--gold); font-size: 1.1rem; letter-spacing: 1px; margin-bottom: 10px; }
-        #modal-text { font-size: 0.8rem; color: #ddd; line-height: 1.4; margin-bottom: 15px; text-align: left; }
+        #modal-title { margin-top: 0; color: var(--gold); font-size: 1.2rem; letter-spacing: 1px; margin-bottom: 10px; }
+        #modal-text { font-size: 0.85rem; color: #ddd; line-height: 1.4; margin-bottom: 20px; text-align: left; }
         .modal-actions { display: flex; gap: 10px; justify-content: center; }
         .modal-actions .btn { flex: 1; margin: 0; }
 
         /* UI SHOWDOWN CARDS */
-        .showdown-player { background: rgba(0,0,0,0.5); padding: 6px; border-radius: 8px; margin-bottom: 6px; border: 1px solid #444; }
-        .showdown-name { font-weight: bold; color: var(--gold); font-size: 11px; margin-bottom: 4px; display: flex; justify-content: space-between;}
+        .showdown-player { background: rgba(0,0,0,0.5); padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #444; }
+        .showdown-name { font-weight: bold; color: var(--gold); font-size: 12px; margin-bottom: 5px; display: flex; justify-content: space-between;}
         .showdown-cards { display: flex; gap: 4px; flex-wrap: wrap; }
         .mini-card {
-            width: 22px; height: 32px; font-size: 10px; background: #fffaf0; border-radius: 3px;
+            width: 20px; height: 30px; font-size: 9px; background: #fffaf0; border-radius: 3px;
             color: black; display: flex; flex-direction: column; align-items: center; justify-content: center;
             border: 1px solid #ccc; font-weight: bold; line-height: 1; font-family: 'Rye', serif;
         }
@@ -142,9 +142,8 @@
         }
         .center-area { grid-row: 2; grid-column: 2; display: flex; align-items: center; justify-content: center; }
         .deck-wrapper { position: relative; cursor: pointer; transition: 0.2s; }
-        .deck-wrapper:active { transform: scale(0.9); }
         .deck-pile {
-            width: 40px; height: 55px; background: repeating-linear-gradient(45deg, #1e272e, #1e272e 5px, #485460 5px, #485460 10px);
+            width: 40px; height: 60px; background: repeating-linear-gradient(45deg, #1e272e, #1e272e 5px, #485460 5px, #485460 10px);
             border-radius: 4px; border: 1px solid white; box-shadow: -2px 2px 0 #fff, -3px 3px 0 #aaa;
             display: flex; align-items: center; justify-content: center; font-family: 'Rye', serif; color: white; font-size: 9px;
         }
@@ -152,7 +151,7 @@
 
         /* KARTU VISUAL MOBILE */
         .playing-card {
-            width: 40px; height: 55px; background: #fffaf0; border-radius: 4px;
+            width: 40px; height: 60px; background: #fffaf0; border-radius: 4px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.5); position: absolute;
             display: flex; flex-direction: column; justify-content: space-between;
             padding: 2px; box-sizing: border-box; font-family: 'Rye', serif;
@@ -160,9 +159,9 @@
             transform-origin: bottom center; cursor: pointer; border: 1px solid #ddd; color: black;
         }
         .card-top { font-size: 10px; line-height: 1; }
-        .card-center { font-size: 14px; text-align: center; margin-top: -2px;}
+        .card-center { font-size: 16px; text-align: center; margin-top: -3px;}
         .card-bottom { font-size: 10px; line-height: 1; transform: rotate(180deg); }
-        .card-fresh { box-shadow: var(--fresh-glow); border: 2px solid #00FF9D; z-index: 10; } /* Semua buangan aktif menyala */
+        .card-fresh { box-shadow: var(--fresh-glow); border: 2px solid #00FF9D; z-index: 10; }
 
         /* UI TANGAN PEMAIN & SKOR */
         .my-hand-container { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; }
@@ -186,7 +185,7 @@
         .btn-buang { background: var(--red-suit) !important; color: white !important; }
         .btn-tutup-game { background: #00FF9D !important; color: black !important; display: none; }
         
-        .my-hand { display: flex; justify-content: center; width: 100%; height: 60px; position: relative; }
+        .my-hand { display: flex; justify-content: center; width: 100%; height: 65px; position: relative; }
         .my-hand .playing-card { position: absolute; margin-left: 0; }
         .my-hand .playing-card.selected { transform: translateY(-15px) scale(1.1) rotate(0deg) !important; z-index: 100 !important; border: 2px solid var(--gold); box-shadow: var(--turn-glow); }
         .my-hand .paired { border: 2px solid #00FF9D; box-shadow: inset 0 0 5px rgba(0,255,157,0.3); }
@@ -328,9 +327,10 @@
             document.getElementById('modal-text').innerHTML = htmlContent;
             
             const btnArea = document.getElementById('modal-btn-area');
-            btnArea.innerHTML = ""; 
+            btnArea.innerHTML = ""; // Bersihkan tombol lama
             
             if(buttons.length === 0) {
+                // Default tombol OK
                 btnArea.innerHTML = `<button class="btn btn-gold" onclick="document.getElementById('custom-modal-overlay').classList.add('hidden')">OK</button>`;
             } else {
                 buttons.forEach(b => {
@@ -351,7 +351,7 @@
             ]);
         };
 
-        // --- ALGORITMA PENILAIAN (Ketat Joker) ---
+        // --- ALGORITMA PENILAIAN ---
         function getCardPoints(rank, isJoker) {
             if (isJoker) return 25;
             if (rank === 'A') return 15;
@@ -370,7 +370,7 @@
                 return true;
             }
 
-            // Aturan 2 Joker + 1 Bebas (HANYA KARTU ANGKA 2-10)
+            // Aturan 2 Joker + 1 Angka
             if (jokers.length >= 2 && cards.length === 3) {
                 if (normals.length === 1 && !['J','Q','K','A'].includes(normals[0].rank)) return true;
                 if (normals.length === 0) return true; // All Jokers
@@ -445,7 +445,7 @@
                 if (hasJ) group.push(hasJ.index); else missing++;
                 if (hasQ) group.push(hasQ.index); else missing++;
                 if (hasK) group.push(hasK.index); else missing++;
-                if (missing === 0) { group.forEach(idx => groupedIndices.add(idx)); } // Gambar tanpa joker
+                if (missing === 0) { group.forEach(idx => groupedIndices.add(idx)); }
             });
 
             SUITS.forEach(suit => {
@@ -713,6 +713,7 @@
             }
             game.turnIndex = turnIdx;
             game.turnPhase = 'DRAW';
+            game.logs = ["🏁 Ronde Baru Dimulai!"];
         }
 
         function executeStartGame() {
@@ -776,7 +777,7 @@
                 discardDiv.innerHTML = "";
                 if(pData.discard && pData.discard.length > 0) {
                     let topCard = pData.discard[pData.discard.length - 1];
-                    let isFresh = true; // SEMUA KARTU TOP BISA DITEMBAK
+                    let isFresh = (turnPhase === 'DRAW'); // Kartu yang baru dibuang putaran ini
                     discardDiv.innerHTML = `<div class="playing-card ${topCard.color === 'red'?'card-red':'card-black'} ${isFresh?'card-fresh':''}" style="position:relative; transform:rotate(${(pIndex*5)}deg);">${renderCardHTML(topCard, topCard.rank===game.jokerRank)}</div>`;
                 }
 
@@ -851,11 +852,6 @@
             if(amIHost && activePlayer.isBot) { setTimeout(() => { playBotTurn(game); }, 1500); }
         }
 
-        function renderCardHTML(card, isJoker = false) {
-            let jokerText = isJoker ? `<div style="font-size: 8px; margin-top:2px; font-family:'Poppins'; color:var(--gold);">JOKER</div>` : '';
-            return `<div class="card-top">${card.rank}<br>${card.suit}</div><div class="card-center" style="display:flex; flex-direction:column; align-items:center;">${card.suit} ${jokerText}</div><div class="card-bottom">${card.rank}<br>${card.suit}</div>`;
-        }
-
         window.selectCard = (index) => {
             let pos = selectedCardIndices.indexOf(index);
             if (pos > -1) selectedCardIndices.splice(pos, 1); else selectedCardIndices.push(index);
@@ -897,12 +893,10 @@
 
         // GLOBAL NEMBAK LOGIC
         window.drawFromDiscard = (posStr) => {
-            if (!isMyTurn) return; // Bisa nembak kapan saja saat gilirannya!
+            if (!isMyTurn || turnPhase !== 'DRAW') return;
             
             let targetPIndex = ['bottom', 'left', 'top', 'right'].indexOf(posStr);
             let actualTargetIdx = (mySlotIndex + targetPIndex) % 4;
-
-            if (actualTargetIdx === mySlotIndex) return; // Tdk bisa ambil sampah sendiri
 
             if (selectedCardIndices.length < 2) {
                 showAlertModal("NEMBAK KARTU", "Pilih minimal 2 kartu di tangan yang pasangannya cocok dengan kartu ini.");
@@ -957,7 +951,7 @@
                 let handInfo = evaluateHand(myHand, myMelds, game.jokerRank);
                 let cardToThrow = myHand[sIndex];
                 
-                if (cardToThrow.rank === 'A' && !handInfo.hasValidGroup && (!myMelds || myMelds.length === 0)) {
+                if (cardToThrow.rank === 'A' && !handInfo.hasValidGroup) {
                     showAlertModal("PELANGGARAN!", "Tidak boleh membuang kartu AS sebelum kamu memiliki pasangan.");
                     return;
                 }
@@ -984,8 +978,7 @@
             if (!isMyTurn || turnPhase !== 'DISCARD') return;
             
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let pData = snap.val().players[mySlotIndex];
-                let v = pData.knockVictims || [];
+                let v = snap.val().players[mySlotIndex].knockVictims || [];
                 let victimMsg = v.length > 0 ? `Target Minus -50: ${v.map(idx => snap.val().players[idx].name).join(', ')}` : `Semua musuh akan terkena -50 poin.`;
 
                 showConfirmModal("TUTUP PERMAINAN?", "Yakin menekan TUTUP?<br><br><span style='color:var(--gold)'>" + victimMsg + "</span>", () => {
