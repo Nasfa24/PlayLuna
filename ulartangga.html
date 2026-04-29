@@ -290,19 +290,19 @@
             { id: "SNAKE_BITE", name: "Snake Bite", icon: "🐍", type: "c-attack", target: "ENEMY", desc: "Mundurkan 1 musuh (10 langkah)." },
             { id: "BACKSTAB", name: "Backstab", icon: "🔪", type: "c-attack", target: "NONE", desc: "Rank 1 mundur 10 langkah." },
             { id: "FREEZE", name: "Freeze", icon: "❄️", type: "c-attack", target: "ENEMY", desc: "Skip giliran musuh." },
-            { id: "POISON", name: "Poison", icon: "🧪", type: "c-attack", target: "ENEMY", desc: "Musuh mundur 2 langkah (3 turn)." },
+            { id: "POISON", name: "Poison", icon: "🧪", type: "c-attack", target: "ENEMY", desc: "Musuh mundur 3 langkah (2 turn)." },
             { id: "METEOR", name: "Meteor", icon: "☄️", type: "c-attack", target: "NONE", desc: "Semua musuh mundur 5 langkah." },
             { id: "MAGNET", name: "Magnet", icon: "🧲", type: "c-attack", target: "NONE", desc: "Tarik semua musuh 5 langkah ke arahmu." },
             { id: "EQUALIZER", name: "Equalizer", icon: "⚖️", type: "c-attack", target: "NONE", desc: "Musuh di depan ditarik sejajar denganmu." },
             { id: "KAMIKAZE", name: "Kamikaze", icon: "✈️", type: "c-attack", target: "ENEMY", desc: "Kamu & Target kembali ke Start." },
             { id: "NITRO", name: "Nitro", icon: "🚀", type: "c-defense", target: "SELF", desc: "Maju 6 langkah." },
             { id: "SUPER_JUMP", name: "Super Jump", icon: "🦗", type: "c-defense", target: "SELF", desc: "Maju 12 langkah." },
-            { id: "SHIELD", name: "Shield", icon: "🛡️", type: "c-defense", target: "SELF", desc: "Kebal Ular/Trap (1 Turn)." },
-            { id: "ANCHOR", name: "Anchor", icon: "⚓", type: "c-defense", target: "SELF", desc: "Anti-Mundur (Pasif)." },
-            { id: "WALL", name: "Wall", icon: "🧱", type: "c-defense", target: "NONE", desc: "Bangun tembok di posisimu." },
-            { id: "TRAP", name: "Trap Set", icon: "💣", type: "c-defense", target: "NONE", desc: "Pasang ranjau di posisimu." },
+            { id: "SHIELD", name: "Shield", icon: "🛡️", type: "c-defense", target: "SELF", desc: "Tangkal serangan & efek papan (1 Turn)." },
+            { id: "ANCHOR", name: "Anchor", icon: "⚓", type: "c-defense", target: "SELF", desc: "Tahan 1x efek mundur (Permanen pasif)." },
+            { id: "WALL", name: "Wall", icon: "🧱", type: "c-defense", target: "NONE", desc: "Pasang tembok 5 langkah di depan." },
+            { id: "TRAP", name: "Trap Set", icon: "💣", type: "c-defense", target: "NONE", desc: "Pasang ranjau 5 langkah di depan (-5)." },
             { id: "CHECKPOINT", name: "Checkpt", icon: "🚩", type: "c-defense", target: "SELF", desc: "Set spawn point di sini." },
-            { id: "PURIFY", name: "Purify", icon: "💊", type: "c-defense", target: "SELF", desc: "Hapus racun/beku/status buruk." },
+            { id: "PURIFY", name: "Purify", icon: "💊", type: "c-defense", target: "SELF", desc: "Hapus debuff & Imun status (2 Turn)." },
             { id: "PIRATE", name: "Pirate", icon: "🏴‍☠️", type: "c-trick", target: "ENEMY", desc: "Curi 1 kartu musuh." },
             { id: "PORTAL", name: "Portal", icon: "🌀", type: "c-trick", target: "ENEMY", desc: "Tukar posisi dengan target." },
             { id: "SWAP_RND", name: "Swap Rnd", icon: "🎲", type: "c-trick", target: "NONE", desc: "Tukar posisi dengan acak orang." },
@@ -313,7 +313,7 @@
             { id: "DICE_1", name: "Dice 1", icon: "1️⃣", type: "c-god", target: "SELF", desc: "Roll selanjutnya pasti 1." },
             { id: "DICE_6", name: "Dice 6", icon: "6️⃣", type: "c-god", target: "SELF", desc: "Roll selanjutnya pasti 6." },
             { id: "DOUBLE", name: "Double", icon: "🎰", type: "c-god", target: "SELF", desc: "Hasil dadu x2." },
-            { id: "SNAIL", name: "Snail", icon: "🐌", type: "c-god", target: "SELF", desc: "Hasil dadu dibagi 2." },
+            { id: "SNAIL", name: "Snail", icon: "🐌", type: "c-trick", target: "ENEMY", desc: "Hasil dadu target dibagi 2." },
             { id: "OVERDRIVE", name: "Overdrive", icon: "🔥", type: "c-god", target: "SELF", desc: "Dadu acak 4-12." },
             { id: "GAMBLER", name: "Gambler", icon: "🃏", type: "c-god", target: "SELF", desc: "Gacha: +15 atau -5." },
             { id: "DBL_TURN", name: "2x Turn", icon: "🔄", type: "c-god", target: "SELF", desc: "Main 2x berturut-turut." }
@@ -584,34 +584,38 @@
 
                 // STATUS 2: RONDE SELESAI (TRANSISI)
                 if(game.status === "ROUND_ENDED") {
-                    document.getElementById('screen-game').classList.add('hidden');
-                    document.getElementById('screen-round-ended').classList.remove('hidden');
-                    document.getElementById('round-winner-text').innerText = `🏁 ${game.roundWinner} Menang Ronde Ini!`;
+                    showCardSplash("KEMENANGAN!", "🏆");
                     
-                    let scores = Object.values(game.tournamentScores || {}); 
-                    scores.sort((a,b) => b.score - a.score);
-                    let html = "";
-                    scores.forEach((s, i) => {
-                        let rank = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `<b>${i+1}.</b>`;
-                        html += `<div class="lb-row"><span style="color:white;">${rank} ${s.name}</span><span style="color:var(--gold); font-weight:bold;">${s.score} LP</span></div>`;
-                    });
-                    document.getElementById('round-leaderboard').innerHTML = html;
-                    
-                    if(amIHost && !isSpectator) {
-                        document.getElementById('round-host-controls').classList.remove('hidden');
-                        document.getElementById('round-waiting-msg').classList.add('hidden');
-                        if(game.currentRound >= game.maxRounds) {
-                            document.getElementById('btn-next-round').classList.add('hidden');
-                            document.getElementById('btn-finish-tourney').classList.remove('hidden');
+                    setTimeout(() => {
+                        document.getElementById('screen-game').classList.add('hidden');
+                        document.getElementById('screen-round-ended').classList.remove('hidden');
+                        document.getElementById('round-winner-text').innerText = `🏁 ${game.roundWinner} Menang Ronde Ini!`;
+                        
+                        let scores = Object.values(game.tournamentScores || {}); 
+                        scores.sort((a,b) => b.score - a.score);
+                        let html = "";
+                        scores.forEach((s, i) => {
+                            let rank = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `<b>${i+1}.</b>`;
+                            html += `<div class="lb-row"><span style="color:white;">${rank} ${s.name}</span><span style="color:var(--gold); font-weight:bold;">${s.score} LP</span></div>`;
+                        });
+                        document.getElementById('round-leaderboard').innerHTML = html;
+                        
+                        if(amIHost && !isSpectator) {
+                            document.getElementById('round-host-controls').classList.remove('hidden');
+                            document.getElementById('round-waiting-msg').classList.add('hidden');
+                            if(game.currentRound >= game.maxRounds) {
+                                document.getElementById('btn-next-round').classList.add('hidden');
+                                document.getElementById('btn-finish-tourney').classList.remove('hidden');
+                            } else {
+                                document.getElementById('btn-next-round').classList.remove('hidden');
+                                document.getElementById('btn-finish-tourney').classList.add('hidden');
+                                document.getElementById('btn-next-round').innerText = `MULAI RONDE ${game.currentRound + 1}`;
+                            }
                         } else {
-                            document.getElementById('btn-next-round').classList.remove('hidden');
-                            document.getElementById('btn-finish-tourney').classList.add('hidden');
-                            document.getElementById('btn-next-round').innerText = `MULAI RONDE ${game.currentRound + 1}`;
+                            document.getElementById('round-host-controls').classList.add('hidden');
+                            document.getElementById('round-waiting-msg').classList.remove('hidden');
                         }
-                    } else {
-                        document.getElementById('round-host-controls').classList.add('hidden');
-                        document.getElementById('round-waiting-msg').classList.remove('hidden');
-                    }
+                    }, 3000); // 3 detik jeda sebelum layar pemenang
                     return; 
                 } else {
                     document.getElementById('screen-round-ended').classList.add('hidden');
@@ -627,10 +631,13 @@
                 document.getElementById('round-info').innerText = `RONDE: ${game.currentRound || 1} / ${game.maxRounds || 1}`;
 
                 const turnPid = game.order[(game.turnIndex || 0) % Math.max(1, game.order.length)];
-                if(turnPid) document.getElementById('turn-name').innerText = game.players[turnPid] ? game.players[turnPid].name : "...";
+                if(turnPid) {
+                    const pInfo = game.players[turnPid];
+                    document.getElementById('turn-name').innerText = pInfo ? `${pInfo.avatar} ${pInfo.name}` : "...";
+                }
                 
-                const isNewUpdate = (Date.now() - (game.lastTurnTime || 0)) < 3000;
-                const delayTime = isNewUpdate ? 2000 : 0; 
+                const isNewUpdate = (Date.now() - (game.lastTurnTime || 0)) < 4000;
+                const delayTime = isNewUpdate ? 3500 : 0; // Waktu jeda sinkronisasi agar animasi selesai
                 
                 if(!isSpectator) {
                     isMyTurn = (turnPid === myPlayerId);
@@ -800,13 +807,16 @@
 
                 if(p.status.FREEZE) {
                     p.status.FREEZE--; if(p.status.FREEZE<=0) delete p.status.FREEZE;
-                    addLog(game, `❄️ ${p.name} beku, giliran lewat.`);
+                    addLog(game, `❄️ ${p.avatar} ${p.name} beku, giliran lewat.`);
                     game.turnIndex++; game.lastTurnTime = Date.now(); return game;
                 }
                 if(p.status.POISON) {
-                    p.position = Math.max(1, p.position - 2);
+                    p.position = Math.max(1, p.position - 3); // Mundur 3 langkah (Buffed)
                     p.status.POISON--; if(p.status.POISON<=0) delete p.status.POISON;
-                    logMsg += " 🧪 Racun -2!";
+                    logMsg += " 🧪 Racun -3!";
+                }
+                if(p.status.IMMUNE) {
+                    p.status.IMMUNE--; if(p.status.IMMUNE<=0) delete p.status.IMMUNE;
                 }
 
                 let roll1 = Math.ceil(Math.random()*6);
@@ -833,11 +843,24 @@
 
                 if(fx[newPos]) {
                     if(p.status.SHIELD) {
-                         logMsg += " 🛡️ Tahan Efek!";
+                         logMsg += " 🛡️ Tahan Efek Papan!";
                     } else {
-                        if(fx[newPos].type === "TRAP") { newPos = Math.max(1, newPos-5); logMsg += " 💣 BOOM!"; delete fx[newPos]; }
-                        if(fx[newPos].type === "WALL") { newPos = p.position; logMsg += " 🧱 DIBLOK!"; }
-                        if(fx[newPos].type === "BLACK_HOLE") { newPos = 1; logMsg += " 🕳️ TERSEDOT!"; }
+                        if(fx[newPos].type === "TRAP") { 
+                            if(p.status.ANCHOR) { 
+                                logMsg += " ⚓ Tahan Ranjau! (Anchor Hancur)"; delete p.status.ANCHOR; 
+                            } else { 
+                                newPos = Math.max(1, newPos-5); logMsg += " 💣 BOOM (-5)!"; 
+                            }
+                            delete game.boardEffects[newPos]; // Ranjau hancur
+                        }
+                        if(fx[newPos].type === "WALL") { 
+                            newPos = p.position; logMsg += " 🧱 NABRAK TEMBOK!"; 
+                            delete game.boardEffects[newPos]; // Tembok hancur
+                        }
+                        if(fx[newPos].type === "BLACK_HOLE") { 
+                            newPos = p.status.CHECKPOINT || 1; 
+                            logMsg += " 🕳️ TERSEDOT BLACK HOLE!"; 
+                        }
                     }
                 } else if(map[newPos]) {
                     if(map[newPos] === "?") {
@@ -845,12 +868,17 @@
                         if(!p.cards) p.cards = []; p.cards.push(rand.id);
                         logMsg += ` 🎴 Dapat ${rand.name}!`;
                     } else if(typeof map[newPos] === 'number') {
-                        if(p.status.SHIELD && map[newPos] < newPos) {
-                            logMsg += " 🛡️ Tahan Ular!";
+                        const isUp = map[newPos] > newPos;
+                        if(isUp) {
+                            newPos = map[newPos]; logMsg += " ⏫ NAIK!";
                         } else {
-                            const isUp = map[newPos] > newPos;
-                            newPos = map[newPos];
-                            logMsg += isUp ? " ⏫ NAIK!" : " 🐍 TURUN!";
+                            if(p.status.SHIELD) { 
+                                logMsg += " 🛡️ Tahan Ular!"; 
+                            } else if(p.status.ANCHOR) { 
+                                logMsg += " ⚓ Tahan Ular! (Anchor Hancur)"; delete p.status.ANCHOR; 
+                            } else {
+                                newPos = map[newPos]; logMsg += " 🐍 DIGIGIT ULAR!"; 
+                            }
                         }
                     }
                 }
@@ -886,7 +914,7 @@
 
                 if(p.status.SHIELD) { p.status.SHIELD--; if(p.status.SHIELD<=0) delete p.status.SHIELD; }
 
-                addLog(game, `> ${p.name} (Roll ${totalRoll}) ke ${newPos}. ${logMsg}`);
+                addLog(game, `> ${p.avatar} ${p.name} (Roll ${totalRoll}) ke ${newPos}. ${logMsg}`);
                 
                 if(p.status.DBL_TURN) { delete p.status.DBL_TURN; addLog(game, "🔄 Main lagi!"); }
                 else { game.turnIndex++; }
@@ -924,34 +952,65 @@
                 if(!game) return;
                 const me = game.players[myPlayerId];
                 const cid = selectedCardData.id;
-                let msg = `⚡ ${me.name} pakai ${selectedCardData.name}`;
+                let msg = `⚡ ${me.avatar} ${me.name} pakai ${selectedCardData.name}`;
 
-                if(cid === "SNAKE_BITE" && targetId) game.players[targetId].position = Math.max(1, game.players[targetId].position - 10);
+                // FUNGSI BANTUAN UNTUK CEK PERTAHANAN MUSUH
+                const checkDefense = (pid) => {
+                    const p = game.players[pid];
+                    if (p.status?.SHIELD) { msg += ` (🛡️ Ditangkis Shield ${p.name}!)`; return true; }
+                    if (p.status?.ANCHOR) { msg += ` (⚓ Ditahan Anchor ${p.name}!)`; delete p.status.ANCHOR; return true; }
+                    return false;
+                };
+                const checkImmunity = (pid) => {
+                    const p = game.players[pid];
+                    if (p.status?.SHIELD || p.status?.IMMUNE) { msg += ` (🛡️ Imun/Ditangkis!)`; return true; }
+                    return false;
+                };
+
+                // LOGIKA KARTU SERANGAN
+                if(cid === "SNAKE_BITE" && targetId) { if(!checkDefense(targetId)) game.players[targetId].position = Math.max(1, game.players[targetId].position - 10); }
                 if(cid === "BACKSTAB") {
                     let leadId=null, max=0; for(let pid in game.players) if(game.players[pid].position > max){max=game.players[pid].position; leadId=pid;}
-                    if(leadId) game.players[leadId].position = Math.max(1, max-10);
+                    if(leadId && !checkDefense(leadId)) game.players[leadId].position = Math.max(1, max-10);
                 }
-                if(cid === "FREEZE" && targetId) { if(!game.players[targetId].status) game.players[targetId].status={}; game.players[targetId].status.FREEZE=1; }
-                if(cid === "POISON" && targetId) { if(!game.players[targetId].status) game.players[targetId].status={}; game.players[targetId].status.POISON=3; }
-                if(cid === "METEOR") { for(let pid in game.players) if(pid!==myPlayerId) game.players[pid].position = Math.max(1, game.players[pid].position - 5); }
+                if(cid === "FREEZE" && targetId) { if(!checkImmunity(targetId)) { if(!game.players[targetId].status) game.players[targetId].status={}; game.players[targetId].status.FREEZE=1; } }
+                if(cid === "POISON" && targetId) { if(!checkImmunity(targetId)) { if(!game.players[targetId].status) game.players[targetId].status={}; game.players[targetId].status.POISON=2; } } // Buff racun: durasi 2 turn
+                if(cid === "METEOR") { for(let pid in game.players) if(pid!==myPlayerId && !checkDefense(pid)) game.players[pid].position = Math.max(1, game.players[pid].position - 5); }
                 if(cid === "MAGNET") { 
-                    for(let pid in game.players) if(pid!==myPlayerId) {
+                    for(let pid in game.players) if(pid!==myPlayerId && !checkDefense(pid)) {
                         const p = game.players[pid];
                         if(p.position < me.position) p.position += 5; else p.position = Math.max(1, p.position - 5);
                     }
                 }
-                if(cid === "EQUALIZER") { for(let pid in game.players) if(game.players[pid].position > me.position) game.players[pid].position = me.position; }
-                if(cid === "KAMIKAZE" && targetId) { me.position = 1; game.players[targetId].position = 1; }
+                if(cid === "EQUALIZER") { for(let pid in game.players) if(game.players[pid].position > me.position && !checkDefense(pid)) game.players[pid].position = me.position; }
+                if(cid === "KAMIKAZE" && targetId) { 
+                    if(!checkDefense(targetId)) game.players[targetId].position = game.players[targetId].status?.CHECKPOINT || 1; 
+                    me.position = me.status?.CHECKPOINT || 1; 
+                }
 
+                // LOGIKA KARTU PERTAHANAN BARU
                 if(cid === "NITRO") me.position = Math.min(100, me.position + 6);
                 if(cid === "SUPER_JUMP") me.position = Math.min(100, me.position + 12);
                 if(cid === "SHIELD") { if(!me.status) me.status={}; me.status.SHIELD = 1; } 
                 if(cid === "ANCHOR") { if(!me.status) me.status={}; me.status.ANCHOR = 1; }
-                if(cid === "WALL") { if(!game.boardEffects) game.boardEffects={}; game.boardEffects[me.position] = {type:"WALL"}; }
-                if(cid === "TRAP") { if(!game.boardEffects) game.boardEffects={}; game.boardEffects[me.position] = {type:"TRAP"}; }
+                if(cid === "WALL") { 
+                    let pos = Math.min(99, me.position + 5); 
+                    if(!game.boardEffects) game.boardEffects={}; game.boardEffects[pos] = {type:"WALL"}; 
+                    msg += ` di kotak ${pos}`;
+                }
+                if(cid === "TRAP") { 
+                    let pos = Math.min(99, me.position + 5); 
+                    if(!game.boardEffects) game.boardEffects={}; game.boardEffects[pos] = {type:"TRAP"}; 
+                    msg += ` di kotak ${pos}`;
+                }
                 if(cid === "CHECKPOINT") { if(!me.status) me.status={}; me.status.CHECKPOINT = me.position; }
-                if(cid === "PURIFY") { me.status = {}; }
+                if(cid === "PURIFY") { 
+                    if(!me.status) me.status={}; 
+                    delete me.status.POISON; delete me.status.FREEZE; delete me.status.CONFUSE; 
+                    me.status.IMMUNE = 2; // Vaksin imun 2 putaran
+                }
 
+                // LOGIKA TRIK & GOD
                 if(cid === "PIRATE" && targetId) { 
                     if(game.players[targetId].cards?.length > 0) {
                         const stolen = game.players[targetId].cards.pop();
@@ -966,27 +1025,31 @@
                         const tmp = me.position; me.position = game.players[rndId].position; game.players[rndId].position = tmp;
                     }
                 }
-                if(cid === "CONFUSE" && targetId) { if(!game.players[targetId].status) game.players[targetId].status={}; game.players[targetId].status.CONFUSE=1; }
+                if(cid === "CONFUSE" && targetId && !checkImmunity(targetId)) { if(!game.players[targetId].status) game.players[targetId].status={}; game.players[targetId].status.CONFUSE=1; }
                 if(cid === "REPEL") {
-                    for(let pid in game.players) if(pid!==myPlayerId) {
+                    for(let pid in game.players) if(pid!==myPlayerId && !checkDefense(pid)) {
                         const dist = Math.abs(game.players[pid].position - me.position);
                         if(dist <= 5) game.players[pid].position = Math.max(1, game.players[pid].position - 5);
                     }
                 }
                 if(cid === "TAX") {
                     let totalSteal = 0;
-                    for(let pid in game.players) if(pid!==myPlayerId && game.players[pid].position > 1) {
+                    for(let pid in game.players) if(pid!==myPlayerId && game.players[pid].position > 1 && !checkDefense(pid)) {
                         game.players[pid].position -= 1; totalSteal++;
                     }
                     me.position = Math.min(100, me.position + totalSteal);
                 }
-                if(cid === "BLACK_HOLE") { if(!game.boardEffects) game.boardEffects={}; game.boardEffects[me.position] = {type:"BLACK_HOLE"}; }
+                if(cid === "BLACK_HOLE") { 
+                    let pos = Math.min(99, me.position + 5); 
+                    if(!game.boardEffects) game.boardEffects={}; game.boardEffects[pos] = {type:"BLACK_HOLE"}; 
+                    msg += ` di kotak ${pos}`;
+                }
 
                 if(!me.status) me.status = {};
                 if(cid === "DICE_1") me.status.FORCE_ROLL = 1;
                 if(cid === "DICE_6") me.status.FORCE_ROLL = 6;
                 if(cid === "DOUBLE") me.status.DICE_MOD = 2;
-                if(cid === "SNAIL") me.status.DICE_MOD = 0.5;
+                if(cid === "SNAIL" && targetId) { if(!game.players[targetId].status) game.players[targetId].status={}; game.players[targetId].status.DICE_MOD = 0.5; }
                 if(cid === "OVERDRIVE") me.status.OVERDRIVE = true;
                 if(cid === "GAMBLER") me.status.GAMBLER = true;
                 if(cid === "DBL_TURN") me.status.DBL_TURN = true;
