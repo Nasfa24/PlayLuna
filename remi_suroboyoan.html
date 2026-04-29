@@ -10,10 +10,15 @@
         :root {
             --bg-dark: #0f172a; --bg-light: #1e293b; --gold: #f59e0b;
             --gold-glow: 0 0 15px rgba(245, 158, 11, 0.5);
-            --red-suit: #ef4444; --black-suit: #111827; 
             --neon-green: #10b981; --green-glow: 0 0 15px rgba(16, 185, 129, 0.5);
-            --panel-bg: rgba(30, 41, 59, 0.9);
+            --panel-bg: rgba(15, 23, 42, 0.95);
             --blue: #3b82f6;
+            
+            /* 4-Color Deck System */
+            --suit-heart: #ef4444;    /* Merah */
+            --suit-diamond: #3b82f6;  /* Biru */
+            --suit-spade: #111827;    /* Hitam */
+            --suit-club: #059669;     /* Hijau */
         }
 
         body {
@@ -38,16 +43,16 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.6); max-height: 90vh; overflow-y: auto;
         }
         input, select {
-            width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);
+            width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);
             background: rgba(0,0,0,0.4); color: white; text-align: center; font-family: 'Poppins'; 
             font-weight: 600; box-sizing: border-box; font-size: 14px; outline: none; transition: 0.3s;
         }
         input:focus { border-color: var(--gold); box-shadow: var(--gold-glow); }
         
         .btn {
-            width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 10px;
+            width: 100%; padding: 14px; margin: 8px 0; border: none; border-radius: 12px;
             font-weight: 800; font-family: 'Poppins'; cursor: pointer; transition: 0.2s; 
-            font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+            font-size: 13px; letter-spacing: 1px; text-transform: uppercase;
         }
         .btn:active { transform: scale(0.96); }
         .btn-gold { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; }
@@ -63,19 +68,19 @@
         }
         .custom-modal {
             background: var(--panel-bg); width: 100%; max-width: 380px;
-            padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center;
+            padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center;
             box-shadow: 0 20px 50px rgba(0,0,0,0.7); max-height: 90vh; overflow-y: auto;
         }
-        #modal-title { margin-top: 0; color: var(--gold); font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; }
-        #modal-text { font-size: 0.9rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 25px; text-align: center; }
+        #modal-title { margin-top: 0; color: var(--gold); font-size: 1.4rem; font-weight: 800; margin-bottom: 10px; }
+        #modal-text { font-size: 0.95rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 25px; text-align: center; }
         .modal-actions { display: flex; gap: 10px; justify-content: center; }
         .modal-actions .btn { flex: 1; margin: 0; }
 
         /* UI SHOWDOWN CARDS */
-        .showdown-player { background: rgba(0,0,0,0.4); padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        .showdown-player { background: rgba(0,0,0,0.5); padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); }
         .showdown-name { font-weight: bold; color: white; font-size: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;}
-        .showdown-cards { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;}
-        .showdown-group { display: flex; padding: 4px; border: 1px dashed var(--neon-green); border-radius: 6px; background: rgba(16, 185, 129, 0.1); }
+        .showdown-cards { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;}
+        .showdown-group { display: flex; padding: 4px; border: 1px dashed var(--neon-green); border-radius: 8px; background: rgba(16, 185, 129, 0.1); }
         .showdown-hand { display: flex; gap: 3px; }
 
         #game-ui { display: flex; flex-direction: column; height: 100%; width: 100%; position: relative; }
@@ -95,18 +100,18 @@
             padding: 6px 12px; border-radius: 20px; border: 1px solid var(--neon-green); width: 100%; text-align: center;
         }
 
-        /* TATA LETAK MEJA */
+        /* TATA LETAK MEJA - FULL PORTRAIT (PWA) */
         .game-table {
-            flex: 1; position: relative; display: grid;
-            grid-template-rows: auto 1fr auto; grid-template-columns: 1fr 1fr 1fr;
-            padding: 10px; padding-top: 60px; gap: 5px; height: 100%; box-sizing: border-box;
+            flex: 1; position: relative; display: flex; flex-direction: column;
+            justify-content: space-between; padding: 10px; padding-top: 70px; padding-bottom: 10px;
+            box-sizing: border-box; height: 100%;
         }
 
+        .row-top { display: flex; justify-content: center; width: 100%; }
+        .row-mid { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 10px; box-sizing: border-box; }
+        .center-area { flex: 1; display: flex; justify-content: center; }
+
         .player-area { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-        .player-top { grid-row: 1; grid-column: 2; margin-top: 5px; }
-        .player-left { grid-row: 2; grid-column: 1; justify-content: flex-start; margin-top: -15px;}
-        .player-right { grid-row: 2; grid-column: 3; justify-content: flex-start; margin-top: -15px;}
-        .player-bottom { grid-row: 3; grid-column: 1 / span 3; justify-content: flex-end; padding-bottom: 20px;}
 
         .avatar-container { display: flex; flex-direction: column; align-items: center; transition: 0.3s; z-index: 6;}
         .avatar {
@@ -123,37 +128,39 @@
         /* AREA MELDS (KARTU TURUN) */
         .melds-area { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 8px; z-index: 4; }
         .meld-group { display: flex; }
-        .meld-group .mini-card:not(:first-child) { margin-left: -12px; }
+        .meld-group .mini-card:not(:first-child) { margin-left: -15px; }
 
         /* KARTU KECIL (MELD/SHOWDOWN) */
         .mini-card {
-            width: 30px; height: 42px; font-size: 11px; background: #f8fafc; border-radius: 4px;
+            width: 32px; height: 48px; font-size: 13px; background: #f8fafc; border-radius: 5px;
             color: var(--black-suit); display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border: 1px solid #cbd5e1; font-weight: 800; line-height: 1; font-family: 'Rye', serif; box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            border: 1px solid #cbd5e1; font-weight: 800; line-height: 1; font-family: 'Rye', serif; box-shadow: 0 2px 5px rgba(0,0,0,0.4);
         }
-        .mini-card.c-red { color: var(--red-suit); }
+        .c-heart { color: var(--suit-heart); }
+        .c-diamond { color: var(--suit-diamond); }
+        .c-club { color: var(--suit-club); }
+        .c-spade { color: var(--suit-spade); }
         .mini-card.face-card { background: linear-gradient(135deg, #fff 0%, #fde047 100%); }
 
-        /* LAPAK BUANGAN & SISA KARTU */
+        /* LAPAK BUANGAN & SISA KARTU - JUMBO */
         .discard-pile {
-            width: 55px; height: 75px; border: 2px dashed rgba(255,255,255,0.3);
-            border-radius: 8px; margin: 8px; position: relative;
+            width: 60px; height: 85px; border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 8px; margin: 5px; position: relative;
             display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2);
             cursor: pointer; z-index: 5;
         }
-        .center-area { grid-row: 2; grid-column: 2; display: flex; align-items: center; justify-content: center; margin-top: -20px; }
         .deck-wrapper { position: relative; cursor: pointer; transition: 0.2s; }
         .deck-wrapper:active { transform: scale(0.9); }
         .deck-pile {
-            width: 60px; height: 85px; background: repeating-linear-gradient(45deg, #1e293b, #1e293b 5px, #334155 5px, #334155 10px);
+            width: 65px; height: 95px; background: repeating-linear-gradient(45deg, #1e293b, #1e293b 5px, #334155 5px, #334155 10px);
             border-radius: 8px; border: 2px solid white; box-shadow: -3px 3px 0 #cbd5e1, -6px 6px 0 #64748b;
-            display: flex; align-items: center; justify-content: center; font-family: 'Rye', serif; color: white; font-size: 14px;
+            display: flex; align-items: center; justify-content: center; font-family: 'Rye', serif; color: white; font-size: 16px;
         }
-        .deck-count { position: absolute; bottom: -22px; width: 100%; text-align: center; font-size: 11px; font-weight: 800; color: #94a3b8; }
+        .deck-count { position: absolute; bottom: -25px; width: 100%; text-align: center; font-size: 13px; font-weight: 800; color: #94a3b8; }
 
         /* KARTU VISUAL UTAMA (SUPER JUMBO) */
         .playing-card {
-            width: 68px; height: 98px; background: #ffffff; border-radius: 8px;
+            width: 65px; height: 95px; background: #ffffff; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.7); position: absolute;
             display: flex; flex-direction: column; justify-content: space-between;
             padding: 4px; box-sizing: border-box; font-family: 'Rye', serif;
@@ -161,9 +168,8 @@
             transform-origin: bottom center; cursor: pointer; border: 1px solid #94a3b8; color: var(--black-suit);
         }
         .card-top { font-size: 14px; line-height: 1; font-weight: 900; }
-        .card-center { font-size: 32px; text-align: center; margin-top: -8px; }
+        .card-center { font-size: 32px; text-align: center; margin-top: -6px; }
         .card-bottom { font-size: 14px; line-height: 1; font-weight: 900; transform: rotate(180deg); }
-        .card-red { color: var(--red-suit); }
         .card-fresh { box-shadow: var(--green-glow); border: 3px solid var(--neon-green); z-index: 10; } 
         
         /* Tema Kartu Kasta (Visual Kontras) */
@@ -171,17 +177,17 @@
         .joker-card { background: linear-gradient(135deg, #ffffff 0%, #a7f3d0 100%); border: 2px solid var(--neon-green); }
 
         /* UI TANGAN PEMAIN & SKOR */
-        .my-hand-container { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; margin-bottom: 5px; }
+        .my-hand-container { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; margin-top: auto; padding-bottom: 20px;}
         .score-display {
-            background: rgba(15,23,42,0.9); border: 1px solid #475569; padding: 5px 20px; border-radius: 20px;
-            font-size: 12px; font-weight: 600; margin-bottom: 25px; color: #cbd5e1; display: flex; gap: 15px; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            background: rgba(15,23,42,0.9); border: 1px solid #475569; padding: 6px 20px; border-radius: 20px;
+            font-size: 13px; font-weight: 600; margin-bottom: 30px; color: #cbd5e1; display: flex; gap: 15px; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .score-display span { color: var(--gold); font-size: 15px; font-weight: 800; }
+        .score-display span { color: var(--gold); font-size: 16px; font-weight: 800; }
 
         /* ACTION BUTTONS (FLOATING) */
         .action-buttons {
-            display: flex; gap: 8px; position: absolute; top: -55px;
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(5px); padding: 8px 12px; border-radius: 25px;
+            display: flex; gap: 10px; position: absolute; top: -60px;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(5px); padding: 10px 15px; border-radius: 30px;
             border: 1px solid rgba(255,255,255,0.2); opacity: 0; pointer-events: none; transform: translateY(10px); transition: 0.3s; z-index: 200; box-shadow: 0 10px 25px rgba(0,0,0,0.6);
         }
         .action-buttons.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
@@ -197,8 +203,15 @@
         .my-hand .playing-card { position: absolute; margin-left: 0; }
         
         /* Merapatkan Kartu Tangan Tapi Jelas */
-        .my-hand .playing-card.selected { transform: translateY(-25px) scale(1.1) rotate(0deg) !important; z-index: 100 !important; border: 3px solid var(--gold) !important; box-shadow: var(--gold-glow); }
-        .my-hand .paired { border: 2px solid var(--neon-green); box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.3); }
+        .my-hand .playing-card.selected { transform: translateY(-30px) scale(1.1) rotate(0deg) !important; z-index: 100 !important; border: 3px solid var(--gold) !important; box-shadow: var(--gold-glow); }
+        .my-hand .paired { border: 3px solid var(--neon-green); box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.4); }
+
+        /* Tweak for super small screens */
+        @media screen and (max-height: 650px) {
+            .game-table { padding-top: 55px; }
+            .score-display { margin-bottom: 15px; }
+            .action-buttons { top: -50px; }
+        }
     </style>
 </head>
 <body>
@@ -219,15 +232,15 @@
             <p style="font-size:12px; color:#64748b; margin:15px;">- ATAU -</p>
             <input type="text" id="input-kode" placeholder="KODE ROOM" style="text-transform:uppercase;" maxlength="5">
             <button class="btn btn-blue" onclick="joinRoom()">Gabung Room</button>
-            <button class="btn btn-red" onclick="resetLocalData()" style="margin-top: 30px; font-size:10px;">Reset Data Lokal</button>
+            <button class="btn btn-red" onclick="resetLocalData()" style="margin-top: 30px; font-size:11px;">Reset Data Lokal</button>
         </div>
 
         <div class="panel hidden" id="panel-lobby">
             <h3 style="color:var(--gold); margin-top:0; font-weight:800;">LOBBY MENUNGGU</h3>
-            <h1 id="display-kode-room" style="letter-spacing: 6px; margin: 10px 0; color:white;">----</h1>
+            <h1 id="display-kode-room" style="letter-spacing: 6px; margin: 10px 0; color:white; font-size: 32px;">----</h1>
             <ul id="player-list" style="list-style:none; padding:10px; text-align:left; font-size:14px; background:rgba(0,0,0,0.3); border-radius:10px;"></ul>
             <div id="host-controls" class="hidden">
-                <select id="target-score" style="color:var(--gold); border-color:var(--gold); background:#0f172a;">
+                <select id="target-score" style="color:var(--gold); border-color:var(--gold); background:#0f172a; padding: 12px;">
                     <option value="250">🏆 Target 250 Poin</option>
                     <option value="500">🏆 Target 500 Poin</option>
                 </select>
@@ -240,51 +253,54 @@
 
     <div id="game-ui" class="hidden">
         <div class="top-bar">
-            <button class="btn-action" id="btn-end-match" style="background:var(--blue); display:none; padding:6px 12px; margin-right:10px;" onclick="forceEndMatch()">🏁 AKHIRI TURNAMEN</button>
+            <button class="btn-action" id="btn-end-match" style="background:var(--red-suit); display:none; padding:8px 12px; margin-right:10px;" onclick="forceEndMatch()">🏁 AKHIRI TURNAMEN</button>
             <div id="joker-display" class="joker-info">🃏 JOKER: -</div>
             <div id="turn-display" class="status-info" style="flex:1; margin-left:10px;">Menunggu...</div>
         </div>
 
         <div class="game-table">
-            <div id="slot-top" class="player-area player-top">
-                <div class="avatar-container">
-                    <div class="avatar" id="ava-top">🤖</div><div class="player-name" id="name-top">Bot 1</div>
-                    <div class="melds-area" id="melds-top"></div>
-                </div>
-                <div class="discard-pile" id="discard-top" onclick="drawFromDiscard('top')"></div>
-            </div>
-
-            <div id="slot-left" class="player-area player-left">
-                <div class="avatar-container">
-                    <div class="avatar" id="ava-left">👾</div><div class="player-name" id="name-left">Bot 2</div>
-                    <div class="melds-area" id="melds-left"></div>
-                </div>
-                <div class="discard-pile" id="discard-left" style="margin-left: 15px;" onclick="drawFromDiscard('left')"></div>
-            </div>
-
-            <div class="center-area">
-                <div class="deck-wrapper" onclick="drawFromDeck()">
-                    <div class="deck-pile">LUNA</div>
-                    <div id="deck-count" class="deck-count">0</div>
+            <div class="row-top">
+                <div id="slot-top" class="player-area">
+                    <div class="avatar-container">
+                        <div class="avatar" id="ava-top">🤖</div><div class="player-name" id="name-top">Bot 1</div>
+                        <div class="melds-area" id="melds-top"></div>
+                    </div>
+                    <div class="discard-pile" id="discard-top" onclick="drawFromDiscard('top')"></div>
                 </div>
             </div>
 
-            <div id="slot-right" class="player-area player-right">
-                <div class="discard-pile" id="discard-right" style="margin-right: 15px;" onclick="drawFromDiscard('right')"></div>
-                <div class="avatar-container">
-                    <div class="avatar" id="ava-right">👽</div><div class="player-name" id="name-right">Bot 3</div>
-                    <div class="melds-area" id="melds-right"></div>
+            <div class="row-mid">
+                <div id="slot-left" class="player-area">
+                    <div class="avatar-container">
+                        <div class="avatar" id="ava-left">👾</div><div class="player-name" id="name-left">Bot 2</div>
+                        <div class="melds-area" id="melds-left"></div>
+                    </div>
+                    <div class="discard-pile" id="discard-left" onclick="drawFromDiscard('left')"></div>
+                </div>
+
+                <div class="center-area">
+                    <div class="deck-wrapper" onclick="drawFromDeck()">
+                        <div class="deck-pile">LUNA</div>
+                        <div id="deck-count" class="deck-count">0</div>
+                    </div>
+                </div>
+
+                <div id="slot-right" class="player-area">
+                    <div class="avatar-container">
+                        <div class="avatar" id="ava-right">👽</div><div class="player-name" id="name-right">Bot 3</div>
+                        <div class="melds-area" id="melds-right"></div>
+                    </div>
+                    <div class="discard-pile" id="discard-right" onclick="drawFromDiscard('right')"></div>
                 </div>
             </div>
 
-            <div id="slot-bottom" class="player-area player-bottom">
-                <div style="display: flex; flex-direction: column; align-items: center; width: 100%; position:relative;">
-                    
+            <div class="row-bottom">
+                <div id="slot-bottom" class="player-area" style="width: 100%;">
                     <div style="display:flex; justify-content:space-between; width:100%; padding:0 20px; box-sizing:border-box; align-items:flex-end; margin-bottom:15px;">
                         <div class="discard-pile" id="discard-bottom" style="margin:0;"></div>
                         <div class="avatar-container">
                             <div class="melds-area" id="melds-bottom" style="margin-bottom:8px;"></div>
-                            <div class="avatar" style="font-size: 24px;">😎</div>
+                            <div class="avatar" style="font-size: 26px;">😎</div>
                             <div class="player-name" id="my-name">Kamu</div>
                         </div>
                     </div>
@@ -324,6 +340,14 @@
         };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+
+        // --- 4 COLOR DECK HELPER ---
+        function getSuitClass(suit) {
+            if(suit === '♥') return 'c-heart';
+            if(suit === '♦') return 'c-diamond';
+            if(suit === '♣') return 'c-club';
+            return 'c-spade';
+        }
 
         // --- SISTEM MODAL KUSTOM ---
         window.showAlertModal = function(title, htmlContent, buttons = []) {
@@ -500,7 +524,6 @@
             return { score, hasValidGroup, isAllPaired, groupedIndices };
         }
 
-        // --- SISTEM SHOWDOWN (Buka Kartu) ---
         function handleRoundEnd(game, knockerIdx, victims) {
             if (!game.globalScores) game.globalScores = {};
             
@@ -548,7 +571,7 @@
                         html += `<div class="showdown-group">`;
                         m.forEach(c => {
                             let fClass = ['J','Q','K'].includes(c.rank) ? 'face-card' : '';
-                            html += `<div class="mini-card ${c.color==='red'?'c-red':''} ${fClass}">${c.rank}<br><span style="font-size:10px;">${c.suit}</span></div>`;
+                            html += `<div class="mini-card ${getSuitClass(c.suit)} ${fClass}">${c.rank}<br><span style="font-size:10px;">${c.suit}</span></div>`;
                         });
                         html += `</div>`;
                     });
@@ -557,7 +580,7 @@
                     html += `<div class="showdown-hand">`;
                     p.hand.forEach(c => {
                         let fClass = ['J','Q','K'].includes(c.rank) ? 'face-card' : '';
-                        html += `<div class="mini-card ${c.color==='red'?'c-red':''} ${fClass}">${c.rank}<br><span style="font-size:10px;">${c.suit}</span></div>`;
+                        html += `<div class="mini-card ${getSuitClass(c.suit)} ${fClass}">${c.rank}<br><span style="font-size:10px;">${c.suit}</span></div>`;
                     });
                     html += `</div>`;
                 }
@@ -606,7 +629,7 @@
         };
 
         window.forceEndMatch = () => {
-            showConfirmModal("AKHIRI TURNAMEN?", "Selesaikan turnamen sekarang dan lihat siapa juaranya?", () => {
+            showConfirmModal("AKHIRI TURNAMEN?", "Yakin ingin menyelesaikan turnamen sekarang dan melihat siapa juaranya?", () => {
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                     if(game) {
                         let maxScore = -9999; let winner = "";
@@ -630,7 +653,6 @@
         let selectedCardIndices = []; 
         let isMyTurn = false;
         let turnPhase = ""; 
-        let currentJokerRank = "";
 
         const BOT_NAMES = ["Bot Joni 🤖", "Bot Siti 👾", "Bot Anam 👽"];
         const SUITS = ['♥', '♦', '♠', '♣'];
@@ -811,7 +833,7 @@
                 if(pData.discard && pData.discard.length > 0) {
                     let topCard = pData.discard[pData.discard.length - 1];
                     let isFresh = (turnPhase === 'DRAW'); 
-                    discardDiv.innerHTML = `<div class="playing-card ${topCard.color === 'red'?'card-red':'card-black'} ${isFresh?'card-fresh':''}" style="position:relative; transform:rotate(${(pIndex*5)}deg);">${renderCardHTML(topCard, topCard.rank===game.jokerRank)}</div>`;
+                    discardDiv.innerHTML = `<div class="playing-card ${getSuitClass(topCard.suit)} ${isFresh?'card-fresh':''}" style="position:relative; transform:rotate(${(pIndex*5)}deg);">${renderCardHTML(topCard, topCard.rank===game.jokerRank)}</div>`;
                 }
 
                 let meldsDiv = document.getElementById(`melds-${pos}`);
@@ -823,7 +845,7 @@
                             groupDiv.className = 'meld-group';
                             group.forEach((c) => {
                                 let fClass = ['J','Q','K'].includes(c.rank) ? 'face-card' : '';
-                                groupDiv.innerHTML += `<div class="mini-card ${c.color==='red'?'c-red':''} ${fClass}">${c.rank}<br><span style="font-size:10px;">${c.suit}</span></div>`;
+                                groupDiv.innerHTML += `<div class="mini-card ${getSuitClass(c.suit)} ${fClass}">${c.rank}<br><span style="font-size:11px;">${c.suit}</span></div>`;
                             });
                             meldsDiv.appendChild(groupDiv);
                         });
@@ -851,15 +873,15 @@
                 let cardElement = document.createElement('div');
                 let faceClass = ['J','Q','K'].includes(card.rank) ? 'face-card' : '';
                 let jokerClass = isJoker ? 'joker-card' : '';
-                cardElement.className = `playing-card ${card.color === 'red' ? 'card-red' : 'card-black'} ${isSelected ? 'selected' : ''} ${isPaired ? 'paired' : ''} ${faceClass} ${jokerClass}`;
+                cardElement.className = `playing-card ${getSuitClass(card.suit)} ${isSelected ? 'selected' : ''} ${isPaired ? 'paired' : ''} ${faceClass} ${jokerClass}`;
                 cardElement.style.zIndex = index + 10;
                 
                 let offset = index - centerIndex;
                 if (!isSelected) {
-                    cardElement.style.transform = `translateX(${offset * 24}px) translateY(${Math.abs(offset) * 2}px) rotate(${offset * 3}deg)`;
+                    cardElement.style.transform = `translateX(${offset * 18}px) translateY(${Math.abs(offset) * 2}px) rotate(${offset * 3}deg)`;
                     if(isJoker && !isPaired) cardElement.style.border = "2px solid var(--gold)";
                 } else {
-                    cardElement.style.transform = `translateX(${offset * 24}px)`; 
+                    cardElement.style.transform = `translateX(${offset * 18}px)`; 
                 }
                 
                 cardElement.innerHTML = renderCardHTML(card, isJoker);
@@ -892,10 +914,10 @@
         }
 
         function renderCardHTML(card, isJoker = false) {
-            let jokerText = isJoker ? `<div style="font-size: 9px; margin-top:2px; font-family:'Poppins'; color:var(--neon-green); font-weight:900;">JOKER</div>` : '';
-            return `<div class="card-top">${card.rank}<br><span style="font-size:16px; font-family:sans-serif;">${card.suit}</span></div>
-                    <div class="card-center">${card.suit} ${jokerText}</div>
-                    <div class="card-bottom">${card.rank}<br><span style="font-size:16px; font-family:sans-serif;">${card.suit}</span></div>`;
+            let jokerText = isJoker ? `<div style="font-size: 10px; margin-top:4px; font-family:'Poppins'; color:var(--neon-green); font-weight:900;">JOKER</div>` : '';
+            return `<div class="card-top">${card.rank}</div>
+                    <div class="card-center" style="font-size:36px; line-height:0.8;">${card.suit} ${jokerText}</div>
+                    <div class="card-bottom">${card.rank}</div>`;
         }
 
         window.selectCard = (index) => {
@@ -929,7 +951,7 @@
                 let selectedCards = selectedCardIndices.map(i => myHand[i]);
 
                 if (!isValidSingleGroup(selectedCards, game.jokerRank)) {
-                    showAlertModal("KOMBINASI SALAH", "Kartu yang dipilih tidak sah untuk diturunkan sebagai pasangan.");
+                    showAlertModal("KOMBINASI SALAH", "Kartu yang dipilih tidak sah untuk diturunkan ke meja sebagai pasangan.");
                     return;
                 }
 
@@ -967,7 +989,6 @@
             });
         };
 
-        // GLOBAL NEMBAK LOGIC
         window.drawFromDiscard = (posStr) => {
             if (!isMyTurn || turnPhase !== 'DRAW') return;
             
@@ -1010,17 +1031,6 @@
                         if(!pData.knockVictims) pData.knockVictims = [];
                         if(!pData.knockVictims.includes(actualTargetIdx)) pData.knockVictims.push(actualTargetIdx);
 
-                        // EFEK NYAPU
-                        let seq = []; let curr = actualTargetIdx;
-                        while(curr !== mySlotIndex) { seq.push(curr); curr = (curr + 1) % 4; }
-                        for(let i=1; i<seq.length; i++) {
-                            let iterPlayer = gameTx.players[seq[i]];
-                            if(iterPlayer.discard && iterPlayer.discard.length > 0) {
-                                let sweptCard = iterPlayer.discard.pop();
-                                pData.hand.push(sweptCard); 
-                            }
-                        }
-
                         gameTx.turnPhase = 'DISCARD';
                         selectedCardIndices = [];
                     }
@@ -1040,7 +1050,7 @@
                 let cardToThrow = myHand[sIndex];
                 
                 if (cardToThrow.rank === 'A' && (!myMelds || myMelds.length === 0)) {
-                    showAlertModal("PELANGGARAN!", "Kartu AS tidak bisa dibuang! Kamu harus <b>'TURUN'</b> kombinasi kartu terlebih dahulu ke meja.");
+                    showAlertModal("PELANGGARAN!", "Kartu AS tidak bisa dibuang! Kamu harus <b>'TURUN'</b> kombinasi kartu terlebih dahulu ke meja dengan memilih 3 kartu sah lalu tekan tombol TURUN.");
                     return;
                 }
 
@@ -1067,7 +1077,7 @@
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
                 let pData = snap.val().players[mySlotIndex];
                 let v = pData.knockVictims || [];
-                let victimMsg = v.length > 0 ? `Target Minus -50:<br><span style='color:var(--red-suit)'>${v.map(idx => snap.val().players[idx].name).join(', ')}</span>` : `Semua musuh akan terkena -50 poin.`;
+                let victimMsg = v.length > 0 ? `Target Minus -50:<br><span style='color:var(--red-suit); font-size:16px; font-weight:800;'>${v.map(idx => snap.val().players[idx].name).join(', ')}</span>` : `Semua musuh akan terkena -50 poin.`;
 
                 showConfirmModal("TUTUP PERMAINAN?", "Yakin menekan TUTUP?<br><br><span style='color:var(--gold)'>" + victimMsg + "</span>", () => {
                     runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
