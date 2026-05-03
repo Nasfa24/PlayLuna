@@ -335,6 +335,46 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // --- SISTEM PENJAGA ARRAY FIREBASE (ANTI-CRASH) ---
+        // Firebase seringkali mengubah Array menjadi Object jika index terputus/kosong.
+        // Fungsi ini akan memaksa data kembali menjadi Array yang sehat.
+        function sanitizeGame(game) {
+            if(!game) return game;
+            
+            // Jaga Deck
+            if(game.deck) {
+                game.deck = Array.isArray(game.deck) ? game.deck : Object.values(game.deck);
+            } else {
+                game.deck = [];
+            }
+            
+            // Jaga Pemain & Kartunya
+            if(game.players) {
+                let pArr = Array.isArray(game.players) ? game.players : Object.values(game.players);
+                pArr = pArr.filter(p => p !== null && p !== undefined); // Buang jika ada nyangkut null
+                
+                pArr.forEach(p => {
+                    p.hand = Array.isArray(p.hand) ? p.hand : Object.values(p.hand || {});
+                    p.discard = Array.isArray(p.discard) ? p.discard : Object.values(p.discard || {});
+                    
+                    let mArr = Array.isArray(p.melds) ? p.melds : Object.values(p.melds || {});
+                    p.melds = mArr.map(m => Array.isArray(m) ? m : Object.values(m || {}));
+                    
+                    p.knockVictims = Array.isArray(p.knockVictims) ? p.knockVictims : Object.values(p.knockVictims || {});
+                });
+                game.players = pArr;
+            }
+            
+            // Jaga Ready List
+            if(game.readyList) {
+                game.readyList = Array.isArray(game.readyList) ? game.readyList : Object.values(game.readyList);
+            } else {
+                game.readyList = [];
+            }
+            
+            return game;
+        }
+
         // --- 4 COLOR DECK HELPER ---
         function getSuitClass(suit) {
             if(suit === '♥') return 'c-heart';
@@ -518,7 +558,6 @@
             return { score, hasValidGroup, isAllPaired, groupedIndices };
         }
 
-        // --- SISTEM SHOWDOWN (Buka Kartu) ---
         function handleRoundEnd(game, knockerIdx, victims) {
             if (!game.globalScores) game.globalScores = {};
             
@@ -598,9 +637,9 @@
         }
 
         window.setPlayerReady = () => {
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (rawGame) => {
+                let game = sanitizeGame(rawGame);
                 if(game) {
-                    if(!game.readyList) game.readyList = [];
                     if(!game.readyList.includes(myPlayerId)) {
                         game.readyList.push(myPlayerId);
                         game.readyCount = game.readyList.length;
@@ -639,7 +678,8 @@
 
         window.forceEndMatch = () => {
             showConfirmModal("AKHIRI TURNAMEN?", "Selesaikan turnamen sekarang dan lihat siapa juaranya?", () => {
-                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (rawGame) => {
+                    let game = sanitizeGame(rawGame);
                     if(game) {
                         let maxScore = -9999; let winner = "";
                         for (let pid in game.globalScores) {
@@ -707,19 +747,18 @@
             const code = document.getElementById('input-kode').value.trim().toUpperCase();
             if (!myName || !code) return showAlertModal("PERHATIAN", "Lengkapi nama dan kode room!");
             
-            runTransaction(ref(db, `remi_rooms/${code}`), (game) => {
+            runTransaction(ref(db, `remi_rooms/${code}`), (rawGame) => {
+                let game = sanitizeGame(rawGame);
                 if(game && game.status === "LOBBY") {
-                    let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
-                    if(playersArr.length >= 4) return; // Full
+                    if(game.players.length >= 4) return; // Full
                     
                     myPlayerId = "p_" + Date.now();
-                    playersArr.push({ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [] });
-                    game.players = playersArr;
+                    game.players.push({ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [] });
                 }
                 return game;
             }).then(({committed, snapshot}) => {
                 if(committed) {
-                    const game = snapshot.val();
+                    const game = sanitizeGame(snapshot.val());
                     if(game.players.some(p => p.id === myPlayerId)) {
                         localStorage.setItem("luna_global_name", myName);
                         localStorage.setItem("remi_pid", myPlayerId); 
@@ -745,12 +784,11 @@
 
             onValue(ref(db, `remi_rooms/${roomId}`), snap => {
                 if(!snap.exists()) { resetLocalData(); return; }
-                const game = snap.val();
+                const game = sanitizeGame(snap.val());
                 
                 const list = document.getElementById('player-list'); list.innerHTML = "";
                 if(game.players) {
-                    let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
-                    playersArr.forEach((p, idx) => {
+                    game.players.forEach((p, idx) => {
                         list.innerHTML += `<li style="padding:8px 0; font-weight:600; color:#cbd5e1; border-bottom:1px solid rgba(255,255,255,0.1);">${idx+1}. ${p.name} ${p.id === game.host ? '👑' : ''}</li>`;
                     });
                 }
@@ -776,10 +814,10 @@
                 if(amIHost) {
                     remove(ref(db, `remi_rooms/${currentRoomId}`)).then(() => { resetLocalData(); });
                 } else {
-                    runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                    runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (rawGame) => {
+                        let game = sanitizeGame(rawGame);
                         if(game && game.players) {
-                            let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
-                            game.players = playersArr.filter(p => p.id !== myPlayerId);
+                            game.players = game.players.filter(p => p.id !== myPlayerId);
                         }
                         return game;
                     }).then(() => { resetLocalData(); });
@@ -790,18 +828,17 @@
         window.confirmStartGame = () => { showConfirmModal("MULAI?", "Semua slot kosong akan otomatis diisi Bot.", executeStartGame); };
 
         function executeStartGame() {
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (rawGame) => {
+                let game = sanitizeGame(rawGame);
                 if (game && game.status === "LOBBY") {
                     game.targetScore = parseInt(document.getElementById('target-score').value) || 250;
                     game.globalScores = {};
                     
-                    let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
                     let botsAdded = 0;
-                    while(playersArr.length < 4) {
-                        playersArr.push({ id: `bot_${botsAdded}`, name: BOT_NAMES[botsAdded], isBot: true, hand: [], discard: [], melds: [], knockVictims:[] });
+                    while(game.players.length < 4) {
+                        game.players.push({ id: `bot_${botsAdded}`, name: BOT_NAMES[botsAdded], isBot: true, hand: [], discard: [], melds: [], knockVictims:[] });
                         botsAdded++;
                     }
-                    game.players = playersArr;
                     game.players.forEach(p => { game.globalScores[p.id] = 0; });
                     
                     // JAMINAN DECK DIBUAT SAAT TRANSAKSI
@@ -826,13 +863,14 @@
         }
 
         // --- RENDERING IN-GAME ---
-        function startGameUI(game) {
-            // GUARD ANTI-CRASH: Jangan render jika data gagal diproses Firebase
-            if(!game || !game.players || !game.deck || !game.jokerRank) return;
+        function startGameUI(rawGame) {
+            // TERAPKAN SANITIZER ANTI-CRASH
+            let game = sanitizeGame(rawGame);
 
-            // Pastikan format array pemain aman
-            let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
-            mySlotIndex = playersArr.findIndex(p => p.id === myPlayerId);
+            // GUARD ANTI-CRASH: Jangan render jika data gagal diproses Firebase
+            if(!game || !game.players || game.players.length === 0 || !game.jokerRank) return;
+
+            mySlotIndex = game.players.findIndex(p => p.id === myPlayerId);
             
             // Jika pemain tidak terdaftar, lemparkan keluar
             if(mySlotIndex === -1) {
@@ -846,14 +884,14 @@
 
             currentJokerRank = game.jokerRank;
             document.getElementById('joker-display').innerText = `🃏 JOKER: ${game.jokerRank}`;
-            document.getElementById('deck-count').innerText = game.deck.length;
+            document.getElementById('deck-count').innerText = game.deck ? game.deck.length : 0;
 
             isMyTurn = (game.turnIndex % 4 === mySlotIndex);
             turnPhase = game.turnPhase;
 
             if(amIHost) { document.getElementById('btn-end-match').style.display = 'block'; }
 
-            const activePlayer = playersArr[game.turnIndex % 4];
+            const activePlayer = game.players[game.turnIndex % 4];
             if(!activePlayer) return; // Guard 
 
             if (isMyTurn) {
@@ -872,7 +910,7 @@
             for(let i=0; i<4; i++) {
                 let pIndex = (mySlotIndex + i) % 4; 
                 let pos = positions[i];
-                let pData = playersArr[pIndex];
+                let pData = game.players[pIndex];
 
                 if(!pData) continue; // Guard
 
@@ -907,8 +945,8 @@
                 }
             }
 
-            let myHand = playersArr[mySlotIndex].hand || [];
-            let myMelds = playersArr[mySlotIndex].melds || [];
+            let myHand = game.players[mySlotIndex].hand || [];
+            let myMelds = game.players[mySlotIndex].melds || [];
             let handInfo = evaluateHand(myHand, myMelds, game.jokerRank);
             
             document.getElementById('my-score-val').innerText = handInfo.score;
@@ -969,6 +1007,7 @@
             if(amIHost && activePlayer.isBot) { setTimeout(() => { playBotTurn(game); }, 1500); }
         }
 
+        // FUNGSI RENDER VISUAL KARTU (PIPS & FACE EMOJI)
         function renderCardHTML(card, isJoker = false) {
             if (isJoker) {
                 return `<div class="card-top" style="color:var(--neon-green)">JOKER</div>
@@ -1005,10 +1044,10 @@
         window.moveCard = (direction) => {
             if (selectedCardIndices.length !== 1 || !isMyTurn) return;
             let sIndex = selectedCardIndices[0];
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (rawGame) => {
+                let game = sanitizeGame(rawGame);
                 if(game) {
-                    let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
-                    let hand = playersArr[mySlotIndex].hand;
+                    let hand = game.players[mySlotIndex].hand;
                     let targetIndex = (direction === 'left') ? sIndex - 1 : sIndex + 1;
                     if (targetIndex >= 0 && targetIndex < hand.length) {
                         [hand[sIndex], hand[targetIndex]] = [hand[targetIndex], hand[sIndex]];
@@ -1019,13 +1058,13 @@
             });
         };
 
+        // FUNGSI TURUN / MELD KARTU KE MEJA
         window.meldSelectedCards = () => {
             if (selectedCardIndices.length < 3 || !isMyTurn) return;
 
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = snap.val();
-                let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
-                let myHand = playersArr[mySlotIndex].hand;
+                let game = sanitizeGame(snap.val());
+                let myHand = game.players[mySlotIndex].hand;
                 let selectedCards = selectedCardIndices.map(i => myHand[i]);
 
                 if (!isValidSingleGroup(selectedCards, game.jokerRank)) {
@@ -1033,10 +1072,10 @@
                     return;
                 }
 
-                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
+                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (rawGameTx) => {
+                    let gameTx = sanitizeGame(rawGameTx);
                     if(gameTx) {
-                        let playersTxArr = Array.isArray(gameTx.players) ? gameTx.players : Object.values(gameTx.players).filter(p => p !== null);
-                        let pData = playersTxArr[mySlotIndex];
+                        let pData = gameTx.players[mySlotIndex];
                         let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                         let meldCards = [];
                         indicesToRemove.forEach(idx => { meldCards.push(pData.hand.splice(idx, 1)[0]); });
@@ -1058,12 +1097,12 @@
             }
             document.querySelector('.deck-wrapper').style.pointerEvents = 'none'; // cegah double click
             
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (rawGame) => {
+                let game = sanitizeGame(rawGame);
                 if(game && game.deck && game.deck.length > 0) {
-                    let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
                     let drawnCard = game.deck.pop();
-                    if(!playersArr[mySlotIndex].hand) playersArr[mySlotIndex].hand = [];
-                    playersArr[mySlotIndex].hand.push(drawnCard);
+                    if(!game.players[mySlotIndex].hand) game.players[mySlotIndex].hand = [];
+                    game.players[mySlotIndex].hand.push(drawnCard);
                     game.turnPhase = 'DISCARD'; 
                 } else if (game && game.deck && game.deck.length === 0) {
                     game = handleRoundEnd(game, null, []);
@@ -1072,6 +1111,7 @@
             }).then(() => { document.querySelector('.deck-wrapper').style.pointerEvents = 'auto'; });
         };
 
+        // GLOBAL NEMBAK LOGIC
         window.drawFromDiscard = (posStr) => {
             if (!isMyTurn || turnPhase !== 'DRAW') return;
             
@@ -1086,13 +1126,12 @@
             }
 
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = snap.val();
-                let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
-                let targetPlayer = playersArr[actualTargetIdx];
+                let game = sanitizeGame(snap.val());
+                let targetPlayer = game.players[actualTargetIdx];
                 if(!targetPlayer || !targetPlayer.discard || targetPlayer.discard.length === 0) return;
                 
                 let topCard = targetPlayer.discard[targetPlayer.discard.length - 1];
-                let myHand = playersArr[mySlotIndex].hand;
+                let myHand = game.players[mySlotIndex].hand;
                 let selectedCards = selectedCardIndices.map(i => myHand[i]);
                 let testGroup = [...selectedCards, topCard];
 
@@ -1101,11 +1140,11 @@
                     return;
                 }
 
-                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
+                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (rawGameTx) => {
+                    let gameTx = sanitizeGame(rawGameTx);
                     if(gameTx) {
-                        let playersTxArr = Array.isArray(gameTx.players) ? gameTx.players : Object.values(gameTx.players).filter(p => p !== null);
-                        let pData = playersTxArr[mySlotIndex];
-                        let takenCard = playersTxArr[actualTargetIdx].discard.pop();
+                        let pData = gameTx.players[mySlotIndex];
+                        let takenCard = gameTx.players[actualTargetIdx].discard.pop();
                         
                         let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                         let meldCards = [takenCard];
@@ -1116,10 +1155,11 @@
                         if(!pData.knockVictims) pData.knockVictims = [];
                         if(!pData.knockVictims.includes(actualTargetIdx)) pData.knockVictims.push(actualTargetIdx);
 
+                        // EFEK NYAPU
                         let seq = []; let curr = actualTargetIdx;
                         while(curr !== mySlotIndex) { seq.push(curr); curr = (curr + 1) % 4; }
                         for(let i=1; i<seq.length; i++) {
-                            let iterPlayer = playersTxArr[seq[i]];
+                            let iterPlayer = gameTx.players[seq[i]];
                             if(iterPlayer.discard && iterPlayer.discard.length > 0) {
                                 let sweptCard = iterPlayer.discard.pop();
                                 pData.hand.push(sweptCard); 
@@ -1139,12 +1179,12 @@
             let sIndex = selectedCardIndices[0];
             
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = snap.val();
-                let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
-                let myHand = playersArr[mySlotIndex].hand;
-                let myMelds = playersArr[mySlotIndex].melds;
+                let game = sanitizeGame(snap.val());
+                let myHand = game.players[mySlotIndex].hand;
+                let myMelds = game.players[mySlotIndex].melds;
                 let cardToThrow = myHand[sIndex];
                 
+                // VALIDASI ATURAN KARTU AS
                 if (cardToThrow.rank === 'A' && (!myMelds || myMelds.length === 0)) {
                     showAlertModal("PELANGGARAN!", "Kartu AS tidak bisa dibuang! Kamu harus <b>'TURUN'</b> kombinasi kartu terlebih dahulu ke meja dengan menyeleksi 3 kartu sah lalu tekan tombol TURUN biru.");
                     return;
@@ -1152,14 +1192,14 @@
 
                 document.getElementById('btn-buang').disabled = true; // Cegah double klik buang
 
-                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
+                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (rawGameTx) => {
+                    let gameTx = sanitizeGame(rawGameTx);
                     if(gameTx) {
-                        let playersTxArr = Array.isArray(gameTx.players) ? gameTx.players : Object.values(gameTx.players).filter(p => p !== null);
-                        let thrownCard = playersTxArr[mySlotIndex].hand.splice(sIndex, 1)[0];
-                        if(!playersTxArr[mySlotIndex].discard) playersTxArr[mySlotIndex].discard = [];
-                        playersTxArr[mySlotIndex].discard.push(thrownCard);
+                        let thrownCard = gameTx.players[mySlotIndex].hand.splice(sIndex, 1)[0];
+                        if(!gameTx.players[mySlotIndex].discard) gameTx.players[mySlotIndex].discard = [];
+                        gameTx.players[mySlotIndex].discard.push(thrownCard);
                         
-                        playersTxArr[mySlotIndex].knockVictims = [];
+                        gameTx.players[mySlotIndex].knockVictims = [];
                         
                         selectedCardIndices = [];
                         gameTx.turnIndex++; 
@@ -1174,22 +1214,22 @@
             if (!isMyTurn || turnPhase !== 'DISCARD') return;
             
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let playersArr = Array.isArray(snap.val().players) ? snap.val().players : Object.values(snap.val().players).filter(p => p !== null);
-                let pData = playersArr[mySlotIndex];
+                let game = sanitizeGame(snap.val());
+                let pData = game.players[mySlotIndex];
                 let v = pData.knockVictims || [];
-                let victimMsg = v.length > 0 ? `Target Minus -50:<br><span style='color:var(--red-suit); font-size:16px; font-weight:800;'>${v.map(idx => playersArr[idx].name).join(', ')}</span>` : `Semua musuh akan terkena -50 poin.`;
+                let victimMsg = v.length > 0 ? `Target Minus -50:<br><span style='color:var(--red-suit); font-size:16px; font-weight:800;'>${v.map(idx => game.players[idx].name).join(', ')}</span>` : `Semua musuh akan terkena -50 poin.`;
 
                 showConfirmModal("TUTUP PERMAINAN?", "Yakin menekan TUTUP?<br><br><span style='color:var(--gold)'>" + victimMsg + "</span>", () => {
-                    runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                    runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (rawGame) => {
+                        let game = sanitizeGame(rawGame);
                         if(game) {
-                            let playersTxArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
                             if(selectedCardIndices.length === 1) {
                                 let sIndex = selectedCardIndices[0];
-                                let thrownCard = playersTxArr[mySlotIndex].hand.splice(sIndex, 1)[0];
-                                if(!playersTxArr[mySlotIndex].discard) playersTxArr[mySlotIndex].discard = [];
-                                playersTxArr[mySlotIndex].discard.push(thrownCard);
+                                let thrownCard = game.players[mySlotIndex].hand.splice(sIndex, 1)[0];
+                                if(!game.players[mySlotIndex].discard) game.players[mySlotIndex].discard = [];
+                                game.players[mySlotIndex].discard.push(thrownCard);
                             }
-                            game = handleRoundEnd(game, mySlotIndex, playersTxArr[mySlotIndex].knockVictims);
+                            game = handleRoundEnd(game, mySlotIndex, game.players[mySlotIndex].knockVictims);
                         }
                         return game;
                     });
@@ -1202,27 +1242,27 @@
             if(isBotThinking) return; 
             isBotThinking = true;
 
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                let playersArr = game && game.players ? (Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null)) : null;
+            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (rawGame) => {
+                let game = sanitizeGame(rawGame);
                 
-                if(game && playersArr && playersArr[game.turnIndex % 4] && playersArr[game.turnIndex % 4].isBot) {
+                if(game && game.players && game.players[game.turnIndex % 4] && game.players[game.turnIndex % 4].isBot) {
                     let botIdx = game.turnIndex % 4;
                     
                     if(game.deck && game.deck.length > 0) {
                         let drawnCard = game.deck.pop();
-                        if(!playersArr[botIdx].hand) playersArr[botIdx].hand = [];
-                        playersArr[botIdx].hand.push(drawnCard);
+                        if(!game.players[botIdx].hand) game.players[botIdx].hand = [];
+                        game.players[botIdx].hand.push(drawnCard);
                     } else {
                         game = handleRoundEnd(game, null, []); return game;
                     }
 
-                    let hand = playersArr[botIdx].hand;
+                    let hand = game.players[botIdx].hand;
                     let safeIndices = hand.map((c, i) => i).filter(i => hand[i].rank !== 'A' && hand[i].rank !== game.jokerRank);
                     let discardIdx = safeIndices.length > 0 ? safeIndices[Math.floor(Math.random() * safeIndices.length)] : 0;
                     
                     let thrownCard = hand.splice(discardIdx, 1)[0];
-                    if(!playersArr[botIdx].discard) playersArr[botIdx].discard = [];
-                    playersArr[botIdx].discard.push(thrownCard);
+                    if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
+                    game.players[botIdx].discard.push(thrownCard);
 
                     game.turnIndex++; game.turnPhase = 'DRAW';
                 }
