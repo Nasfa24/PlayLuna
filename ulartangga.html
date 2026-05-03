@@ -467,7 +467,7 @@
                 document.getElementById('waiting-msg').classList.remove('hidden');
             }
 
-            onValue(ref(db, `games/${roomId}`), snap => {
+            onValue(ref(db, `games/${roomId}/players`), snap => {
                 if(!snap.exists()) {
                     if(!amIHost && !isSpectator) { 
                         resetLocalData(); alert("Room dibubarkan Host."); 
@@ -476,18 +476,15 @@
                     }
                     return;
                 }
-                const game = snap.val();
-                
                 const list = document.getElementById('player-list-ul'); list.innerHTML = ""; playerList = [];
-                if(game.players) {
-                    Object.values(game.players).forEach(p => { 
-                        playerList.push(p); 
-                        list.innerHTML += `<li style="padding:5px; border-left:4px solid ${p.color}; color:white;">${p.avatar} ${p.name}</li>`; 
-                    });
+                snap.forEach(c => { const p = c.val(); playerList.push(p); list.innerHTML += `<li style="padding:5px; border-left:4px solid ${p.color}; color:white;">${p.avatar} ${p.name}</li>`; });
+            });
+
+            onValue(ref(db, `games/${roomId}`), snap => { 
+                const s = snap.val();
+                if(s && (s.status === "PLAYING" || s.status === "ROUND_ENDED" || s.status === "FINISHED")) {
+                    handleGameStateChange(s); 
                 }
-                
-                // PANGGIL SINKRONISASI UTAMA
-                handleGameStateChange(game);
             });
         }
 
@@ -536,7 +533,7 @@
                 currentRound: 1,
                 maxRounds: maxR,
                 tournamentScores: initScores,
-                initialBoard: generateRandomMap() // RE-GENERATE MAP SAAT MULAI
+                initialBoard: generateRandomMap()
             });
         }
 
@@ -545,7 +542,7 @@
                 if(game) {
                     game.currentRound = (game.currentRound || 1) + 1;
                     game.status = "PLAYING";
-                    game.initialBoard = generateRandomMap(); // BIKIN MAP BARU
+                    game.initialBoard = generateRandomMap();
                     game.boardEffects = {};
                     game.logs = [`🏁 Ronde ${game.currentRound} Dimulai!`];
                     game.turnIndex = 0;
@@ -568,11 +565,16 @@
             update(ref(db, `games/${currentRoomId}`), { status: "FINISHED" });
         }
 
+        // --- LOGIKA VOTING AKHIR GAME ---
         function initiateEndGameVote() {
             runTransaction(ref(db, `games/${currentRoomId}`), (game) => {
                 if(game) {
                     let activeCount = Object.values(game.players).filter(p => !p.isSurrendered && p.position >= 1).length;
-                    game.voteEnd = { active: true, required: Math.ceil(activeCount / 2), votes: {} };
+                    game.voteEnd = {
+                        active: true,
+                        required: Math.ceil(activeCount / 2),
+                        votes: {}
+                    };
                     game.voteEnd.votes[myPlayerId] = true;
                     if(!game.logs) game.logs = [];
                     game.logs.push(`⚠️ Host memulai Voting untuk mengakhiri game!`);
@@ -592,11 +594,14 @@
                     let required = Math.ceil(activeCount / 2);
 
                     for(let v in game.voteEnd.votes) {
-                        if(game.voteEnd.votes[v]) yesCount++; else noCount++;
+                        if(game.voteEnd.votes[v]) yesCount++;
+                        else noCount++;
                     }
 
                     if(yesCount >= required) {
-                        game.status = "FINISHED"; game.winnerName = "VOTING_SELESAI"; game.voteEnd.active = false;
+                        game.status = "FINISHED";
+                        game.winnerName = "VOTING_SELESAI";
+                        game.voteEnd.active = false;
                         if(!game.logs) game.logs = []; game.logs.push(`✅ Voting disetujui. Game Berakhir.`);
                     } else if (noCount > (activeCount - required)) {
                         game.voteEnd.active = false;
@@ -613,7 +618,8 @@
                 if(game) {
                     game.turnIndex = (game.turnIndex || 0) + 1;
                     game.lastTurnTime = Date.now();
-                    if(!game.logs) game.logs = []; game.logs.push(`⚠️ Host melakukan force-skip giliran.`);
+                    if(!game.logs) game.logs = [];
+                    game.logs.push(`⚠️ Host melakukan force-skip giliran.`);
                 }
                 return game;
             });
@@ -681,7 +687,7 @@
                     document.getElementById('round-host-controls').classList.add('hidden');
                     document.getElementById('round-waiting-msg').classList.remove('hidden');
                 }
-                return; // STOP RENDERING GAME BOARD IF ROUND ENDED
+                return;
             } else if (game.status === "FINISHED") { 
                 document.getElementById('screen-game').classList.add('hidden');
                 document.getElementById('screen-round-ended').classList.add('hidden');
@@ -738,7 +744,7 @@
                 }
             } else { voteOverlay.classList.add('hidden'); }
 
-            // RENDER MAP JIKA BERUBAH (SOLUSI BUG MAP)
+            // RENDER MAP JIKA BERUBAH (SOLUSI BUG MAP BELANG)
             if(JSON.stringify(currentMapData) !== JSON.stringify(game.initialBoard)) {
                 currentMapData = game.initialBoard;
                 renderBoard(game.initialBoard || {});
@@ -757,7 +763,7 @@
                 document.getElementById('turn-name').innerText = `${pInfo.avatar} ${pInfo.name}`;
             }
 
-            // MENGHAPUS DELAY 3.5 DETIK YANG LEMOT
+            // EKSEKUSI TANPA DELAY 3.5 DETIK YANG BIKIN LEMOT
             if(!isSpectator) {
                 isMyTurn = (turnPid === myPlayerId);
                 const btn = document.getElementById('btn-roll');
@@ -767,7 +773,6 @@
                 if(game.players[myPlayerId]) renderInventory(game.players[myPlayerId].cards || []);
             }
 
-            // EKSEKUSI ANIMASI DAN RENDER SEGERA
             updateAllTokens(game.players);
             renderBoardEffects(game.boardEffects || {});
             
@@ -883,7 +888,7 @@
                         tileEl.classList.add('stepped-on');
                         setTimeout(() => { if(tileEl) tileEl.classList.remove('stepped-on'); }, 200);
                     }
-                    setTimeout(step, 150); // Kecepatan langkah cukup lambat untuk dilihat
+                    setTimeout(step, 150);
                 } else {
                     localPlayerPositions[pid] = end; 
                 }
@@ -942,10 +947,12 @@
                 let roll1 = Math.ceil(Math.random()*6);
                 let roll2 = Math.ceil(Math.random()*6);
                 
-                if(p.status.FORCE_ROLL) { roll1 = p.status.FORCE_ROLL; roll2 = 0; delete p.status.FORCE_ROLL; logMsg += " ⚡ Dice God!"; }
-                else if(p.status.OVERDRIVE) { roll1 = Math.floor(Math.random()*9)+4; roll2 = 0; delete p.status.OVERDRIVE; logMsg += " 🔥 Overdrive!"; }
+                let isDouble = (roll1 === roll2 && roll1 !== 0); // LOGIKA DADU KEMBAR
+                
+                if(p.status.FORCE_ROLL) { roll1 = p.status.FORCE_ROLL; roll2 = 0; isDouble = false; delete p.status.FORCE_ROLL; logMsg += " ⚡ Dice God!"; }
+                else if(p.status.OVERDRIVE) { roll1 = Math.floor(Math.random()*9)+4; roll2 = 0; isDouble = false; delete p.status.OVERDRIVE; logMsg += " 🔥 Overdrive!"; }
                 else if(p.status.GAMBLER) { 
-                    const gacha = Math.random() > 0.5 ? 15 : -5; roll1 = gacha; roll2 = 0; delete p.status.GAMBLER; logMsg += (gacha>0)?" 🃏 JACKPOT!":" 🃏 ZONK!"; 
+                    const gacha = Math.random() > 0.5 ? 15 : -5; roll1 = gacha; roll2 = 0; isDouble = false; delete p.status.GAMBLER; logMsg += (gacha>0)?" 🃏 JACKPOT!":" 🃏 ZONK!"; 
                 }
 
                 let totalRoll = roll1 + roll2;
@@ -1035,8 +1042,13 @@
 
                 addLog(game, `> ${p.avatar} ${p.name} (Roll ${totalRoll}) ke ${newPos}. ${logMsg}`);
                 
-                if(p.status.DBL_TURN) { delete p.status.DBL_TURN; addLog(game, "🔄 Main lagi!"); }
-                else { game.turnIndex++; }
+                // EVALUASI DADU KEMBAR ATAU KARTU DOUBLE TURN
+                if(p.status.DBL_TURN || isDouble) { 
+                    if(p.status.DBL_TURN) delete p.status.DBL_TURN;
+                    addLog(game, `🔄 DADU KEMBAR / EFEK! ${p.name} main lagi!`); 
+                } else { 
+                    game.turnIndex++; 
+                }
                 
                 game.lastTurnTime = Date.now();
                 return game;
@@ -1069,6 +1081,10 @@
 
             runTransaction(ref(db, `games/${currentRoomId}`), (game) => {
                 if(!game) return;
+                
+                let oldPositions = {};
+                for(let pKey in game.players) oldPositions[pKey] = game.players[pKey].position;
+
                 const me = game.players[myPlayerId];
                 const cid = selectedCardData.id;
                 let msg = `⚡ ${me.avatar} ${me.name} pakai ${selectedCardData.name}`;
@@ -1169,21 +1185,75 @@
                 if(cid === "GAMBLER") me.status.GAMBLER = true;
                 if(cid === "DBL_TURN") me.status.DBL_TURN = true;
 
-                if (me.position === 100) { 
-                    game.status = "ROUND_ENDED"; 
-                    game.roundWinner = me.name; 
+                // EVALUASI EFEK PAPAN & TENDANGAN JIKA ADA YANG BERGESER KARENA KARTU
+                const map = game.initialBoard || {};
+                const fx = game.boardEffects || {};
+                
+                for(let pKey in game.players) {
+                    let pTarget = game.players[pKey];
+                    if(pTarget.isSurrendered) continue;
                     
-                    let activePlayers = [];
-                    for(let x in game.players) { if(!game.players[x].isSurrendered) activePlayers.push(game.players[x]); }
-                    activePlayers.sort((a,b) => b.position - a.position);
-                    
-                    if(!game.tournamentScores) game.tournamentScores = {};
-                    activePlayers.forEach((pl, idx) => {
-                        if(!game.tournamentScores[pl.id]) game.tournamentScores[pl.id] = { name: pl.name, score: 0 };
-                        let pts = 5; 
-                        if(idx === 0) pts = 50; else if(idx === 1) pts = 30; else if(idx === 2) pts = 15;
-                        game.tournamentScores[pl.id].score += pts;
-                    });
+                    if(pTarget.position !== oldPositions[pKey]) {
+                        if (pTarget.position > 100) pTarget.position = 100 - (pTarget.position - 100);
+                        if (pTarget.position < 1) pTarget.position = 1;
+                        
+                        let pos = pTarget.position;
+                        if(pos > 1 && pos < 100) {
+                            if(fx[pos]) {
+                                if(pTarget.status?.SHIELD) { msg += ` (🛡️ ${pTarget.name} tahan efek!)`; }
+                                else {
+                                    if(fx[pos].type === "TRAP") {
+                                        if(pTarget.status?.ANCHOR) { msg += ` (⚓ Tahan Trap!)`; delete pTarget.status.ANCHOR; }
+                                        else { pTarget.position = Math.max(1, pos-5); msg += ` (💣 Kena Ranjau!)`; }
+                                        delete game.boardEffects[pos];
+                                    } else if(fx[pos].type === "WALL") {
+                                        pTarget.position = Math.max(1, pos-1); msg += ` (🧱 Nabrak Tembok!)`;
+                                        delete game.boardEffects[pos];
+                                    } else if(fx[pos].type === "BLACK_HOLE") {
+                                        pTarget.position = pTarget.status?.CHECKPOINT || 1; msg += ` (🕳️ Tersedot!)`;
+                                    }
+                                }
+                            } else if(map[pos]) {
+                                if(map[pos] === "?") {
+                                    const rand = CARD_DB[Math.floor(Math.random()*CARD_DB.length)];
+                                    if(!pTarget.cards) pTarget.cards = []; pTarget.cards.push(rand.id);
+                                    msg += ` (🎴 Dpt Kartu!)`;
+                                } else if(typeof map[pos] === 'number') {
+                                    const isUp = map[pos] > pos;
+                                    if(isUp) {
+                                        pTarget.position = map[pos]; msg += ` (⏫ Naik!)`;
+                                    } else {
+                                        if(pTarget.status?.SHIELD) { msg += ` (🛡️ Tahan Ular!)`; }
+                                        else if(pTarget.status?.ANCHOR) { msg += ` (⚓ Tahan Ular!)`; delete pTarget.status.ANCHOR; }
+                                        else { pTarget.position = map[pos]; msg += ` (🐍 Turun!)`; }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        let finalPos = pTarget.position;
+                        if(finalPos !== 1 && finalPos !== 100) {
+                            for(let otherPid in game.players) {
+                                if(otherPid !== pKey && game.players[otherPid].position === finalPos && !game.players[otherPid].isSurrendered) {
+                                    game.players[otherPid].position = 1;
+                                    msg += ` (⚔️ ${game.players[otherPid].name} Ketendang!)`;
+                                }
+                            }
+                        }
+
+                        if(finalPos === 100) {
+                            game.status = "ROUND_ENDED"; game.roundWinner = pTarget.name; 
+                            let activePlayers = [];
+                            for(let x in game.players) { if(!game.players[x].isSurrendered) activePlayers.push(game.players[x]); }
+                            activePlayers.sort((a,b) => b.position - a.position);
+                            if(!game.tournamentScores) game.tournamentScores = {};
+                            activePlayers.forEach((pl, idx) => {
+                                if(!game.tournamentScores[pl.id]) game.tournamentScores[pl.id] = { name: pl.name, score: 0 };
+                                let pts = 5; if(idx === 0) pts = 50; else if(idx === 1) pts = 30; else if(idx === 2) pts = 15;
+                                game.tournamentScores[pl.id].score += pts;
+                            });
+                        }
+                    }
                 }
 
                 me.cards.splice(selectedCardIdx, 1);
