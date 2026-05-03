@@ -361,6 +361,7 @@
         let turnTimerInterval = null;
         let isMyTurn = false, amIHost = false, isSpectator = false;
         let localPlayerPositions = {}; 
+        let currentMapData = null;
 
         // DAFTARKAN FUNGSI KE WINDOW
         window.createRoom = createRoom; window.joinRoom = joinRoom; window.joinSpectator = joinSpectator;
@@ -435,7 +436,6 @@
             });
         }
 
-        // --- FITUR SPECTATOR ---
         function joinSpectator() {
             const code = document.getElementById('room-code-input').value.trim().toUpperCase();
             if(!code) return showToast("Isi kode room untuk menonton!", true);
@@ -467,7 +467,7 @@
                 document.getElementById('waiting-msg').classList.remove('hidden');
             }
 
-            onValue(ref(db, `games/${roomId}/players`), snap => {
+            onValue(ref(db, `games/${roomId}`), snap => {
                 if(!snap.exists()) {
                     if(!amIHost && !isSpectator) { 
                         resetLocalData(); alert("Room dibubarkan Host."); 
@@ -476,13 +476,18 @@
                     }
                     return;
                 }
+                const game = snap.val();
+                
                 const list = document.getElementById('player-list-ul'); list.innerHTML = ""; playerList = [];
-                snap.forEach(c => { const p = c.val(); playerList.push(p); list.innerHTML += `<li style="padding:5px; border-left:4px solid ${p.color}; color:white;">${p.avatar} ${p.name}</li>`; });
-            });
-
-            onValue(ref(db, `games/${roomId}/status`), snap => { 
-                const s = snap.val();
-                if(s === "PLAYING" || s === "ROUND_ENDED" || s === "FINISHED") initGame(); 
+                if(game.players) {
+                    Object.values(game.players).forEach(p => { 
+                        playerList.push(p); 
+                        list.innerHTML += `<li style="padding:5px; border-left:4px solid ${p.color}; color:white;">${p.avatar} ${p.name}</li>`; 
+                    });
+                }
+                
+                // PANGGIL SINKRONISASI UTAMA
+                handleGameStateChange(game);
             });
         }
 
@@ -499,7 +504,6 @@
             }
         }
 
-        // --- FITUR PANDUAN KARTU ---
         function showCardDictionary() {
             let html = "";
             const typeLabels = { 'c-attack': '🔴 SERANG', 'c-defense': '🟢 BERTAHAN', 'c-trick': '🟣 TRIK', 'c-god': '🟡 DICE GOD' };
@@ -514,7 +518,7 @@
             showInfoModal("PANDUAN KARTU", html);
         }
 
-        // --- FITUR TURNAMEN SESI ---
+        // --- ALUR TURNAMEN ---
         function startGame() {
             if(!amIHost || isSpectator) return;
             if(playerList.length < 2) return showToast("Minimal 2 Pemain untuk mulai!", true);
@@ -531,7 +535,8 @@
                 lastTurnTime: Date.now(),
                 currentRound: 1,
                 maxRounds: maxR,
-                tournamentScores: initScores
+                tournamentScores: initScores,
+                initialBoard: generateRandomMap() // RE-GENERATE MAP SAAT MULAI
             });
         }
 
@@ -540,7 +545,7 @@
                 if(game) {
                     game.currentRound = (game.currentRound || 1) + 1;
                     game.status = "PLAYING";
-                    game.initialBoard = generateRandomMap();
+                    game.initialBoard = generateRandomMap(); // BIKIN MAP BARU
                     game.boardEffects = {};
                     game.logs = [`🏁 Ronde ${game.currentRound} Dimulai!`];
                     game.turnIndex = 0;
@@ -563,16 +568,11 @@
             update(ref(db, `games/${currentRoomId}`), { status: "FINISHED" });
         }
 
-        // --- LOGIKA VOTING AKHIR GAME ---
         function initiateEndGameVote() {
             runTransaction(ref(db, `games/${currentRoomId}`), (game) => {
                 if(game) {
                     let activeCount = Object.values(game.players).filter(p => !p.isSurrendered && p.position >= 1).length;
-                    game.voteEnd = {
-                        active: true,
-                        required: Math.ceil(activeCount / 2),
-                        votes: {}
-                    };
+                    game.voteEnd = { active: true, required: Math.ceil(activeCount / 2), votes: {} };
                     game.voteEnd.votes[myPlayerId] = true;
                     if(!game.logs) game.logs = [];
                     game.logs.push(`⚠️ Host memulai Voting untuk mengakhiri game!`);
@@ -592,14 +592,11 @@
                     let required = Math.ceil(activeCount / 2);
 
                     for(let v in game.voteEnd.votes) {
-                        if(game.voteEnd.votes[v]) yesCount++;
-                        else noCount++;
+                        if(game.voteEnd.votes[v]) yesCount++; else noCount++;
                     }
 
                     if(yesCount >= required) {
-                        game.status = "FINISHED";
-                        game.winnerName = "VOTING_SELESAI";
-                        game.voteEnd.active = false;
+                        game.status = "FINISHED"; game.winnerName = "VOTING_SELESAI"; game.voteEnd.active = false;
                         if(!game.logs) game.logs = []; game.logs.push(`✅ Voting disetujui. Game Berakhir.`);
                     } else if (noCount > (activeCount - required)) {
                         game.voteEnd.active = false;
@@ -616,8 +613,7 @@
                 if(game) {
                     game.turnIndex = (game.turnIndex || 0) + 1;
                     game.lastTurnTime = Date.now();
-                    if(!game.logs) game.logs = [];
-                    game.logs.push(`⚠️ Host melakukan force-skip giliran.`);
+                    if(!game.logs) game.logs = []; game.logs.push(`⚠️ Host melakukan force-skip giliran.`);
                 }
                 return game;
             });
@@ -640,182 +636,159 @@
             });
         }
 
-        // --- SISTEM GAMEPLAY UTAMA ---
-        function initGame() {
-            document.getElementById('screen-lobby').classList.add('hidden');
-            
-            if(amIHost) document.getElementById('host-end-btn').classList.remove('hidden');
+        // --- SISTEM GAMEPLAY UTAMA (SYNC) ---
+        function handleGameStateChange(game) {
+            if(!game || !game.order) return;
 
-            if(isSpectator) {
-                document.getElementById('player-controls').classList.add('hidden');
-                document.getElementById('spectator-controls').classList.remove('hidden');
+            // HANDLE SCREEN VISIBILITY
+            if (game.status === "PLAYING") {
+                document.getElementById('screen-lobby').classList.add('hidden');
+                document.getElementById('screen-round-ended').classList.add('hidden');
+                document.getElementById('screen-winner').classList.add('hidden');
+                document.getElementById('screen-game').classList.remove('hidden');
+                
+                if(amIHost) document.getElementById('host-end-btn').classList.remove('hidden');
+                if(isSpectator) {
+                    document.getElementById('player-controls').classList.add('hidden');
+                    document.getElementById('spectator-controls').classList.remove('hidden');
+                }
+            } else if (game.status === "ROUND_ENDED") {
+                document.getElementById('screen-game').classList.add('hidden');
+                document.getElementById('screen-round-ended').classList.remove('hidden');
+                document.getElementById('round-winner-text').innerText = `🏁 ${game.roundWinner} Menang Ronde Ini!`;
+                
+                let scores = Object.values(game.tournamentScores || {}); 
+                scores.sort((a,b) => b.score - a.score);
+                let html = "";
+                scores.forEach((s, i) => {
+                    let rank = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `<b>${i+1}.</b>`;
+                    html += `<div class="lb-row"><span style="color:white;">${rank} ${s.name}</span><span style="color:var(--gold); font-weight:bold;">${s.score} LP</span></div>`;
+                });
+                document.getElementById('round-leaderboard').innerHTML = html;
+                
+                if(amIHost && !isSpectator) {
+                    document.getElementById('round-host-controls').classList.remove('hidden');
+                    document.getElementById('round-waiting-msg').classList.add('hidden');
+                    if(game.currentRound >= game.maxRounds) {
+                        document.getElementById('btn-next-round').classList.add('hidden');
+                        document.getElementById('btn-finish-tourney').classList.remove('hidden');
+                    } else {
+                        document.getElementById('btn-next-round').classList.remove('hidden');
+                        document.getElementById('btn-finish-tourney').classList.add('hidden');
+                        document.getElementById('btn-next-round').innerText = `MULAI RONDE ${game.currentRound + 1}`;
+                    }
+                } else {
+                    document.getElementById('round-host-controls').classList.add('hidden');
+                    document.getElementById('round-waiting-msg').classList.remove('hidden');
+                }
+                return; // STOP RENDERING GAME BOARD IF ROUND ENDED
+            } else if (game.status === "FINISHED") { 
+                document.getElementById('screen-game').classList.add('hidden');
+                document.getElementById('screen-round-ended').classList.add('hidden');
+                document.getElementById('screen-winner').classList.remove('hidden'); 
+                
+                const titleEl = document.getElementById('winner-title');
+                const nameEl = document.getElementById('winner-name-text');
+                const finalLb = document.getElementById('final-leaderboard');
+
+                if(game.winnerName === "HOST_FORCE_END" || game.winnerName === "VOTING_SELESAI") {
+                    titleEl.innerText = "TURNAMEN SELESAI"; titleEl.style.color = "#ff4757"; 
+                    nameEl.innerText = game.winnerName === "VOTING_SELESAI" ? "VOTING PEMAIN" : "DIBATALKAN HOST"; 
+                    nameEl.style.fontSize = "1.5rem";
+                    
+                    let scores = Object.values(game.tournamentScores || {});
+                    if(scores.length > 0) {
+                        scores.sort((a,b) => b.score - a.score);
+                        let html = "";
+                        scores.forEach((s, i) => {
+                            let rank = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `<b>${i+1}.</b>`;
+                            html += `<div class="lb-row"><span style="color:white;">${rank} ${s.name}</span><span style="color:var(--gold); font-weight:bold;">${s.score} LP</span></div>`;
+                        });
+                        finalLb.innerHTML = html; finalLb.classList.remove('hidden');
+                    } else { finalLb.classList.add('hidden'); }
+                } else {
+                    let scores = Object.values(game.tournamentScores || {});
+                    scores.sort((a,b) => b.score - a.score);
+                    let grandWinner = scores.length > 0 ? scores[0].name : "TIDAK ADA";
+                    
+                    titleEl.innerText = "🏆 JUARA UMUM 🏆"; titleEl.style.color = "#fdcb6e";
+                    nameEl.innerText = grandWinner;
+
+                    let html = "";
+                    scores.forEach((s, i) => {
+                        let rank = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `<b>${i+1}.</b>`;
+                        html += `<div class="lb-row"><span style="color:white;">${rank} ${s.name}</span><span style="color:var(--gold); font-weight:bold;">${s.score} LP</span></div>`;
+                    });
+                    finalLb.innerHTML = html;
+                }
+                return;
             }
 
-            get(ref(db, `games/${currentRoomId}`)).then(snap => { renderBoard(snap.val().initialBoard || {}); });
-
-            onValue(ref(db, `games/${currentRoomId}`), snap => {
-                const game = snap.val();
-                if(!game || !game.order) return;
+            // HANDLE VOTING UI
+            const voteOverlay = document.getElementById('vote-modal-overlay');
+            if(game.voteEnd && game.voteEnd.active) {
+                voteOverlay.classList.remove('hidden');
+                let yesCount = 0; for(let v in game.voteEnd.votes) if(game.voteEnd.votes[v]) yesCount++;
+                document.getElementById('vote-status-text').innerText = `Setuju: ${yesCount} / ${game.voteEnd.required} (Dibutuhkan)`;
                 
-                // LOGIKA UI VOTING
-                const voteOverlay = document.getElementById('vote-modal-overlay');
-                if(game.voteEnd && game.voteEnd.active) {
-                    voteOverlay.classList.remove('hidden');
-                    
-                    let yesCount = 0;
-                    for(let v in game.voteEnd.votes) if(game.voteEnd.votes[v]) yesCount++;
-                    
-                    document.getElementById('vote-status-text').innerText = `Setuju: ${yesCount} / ${game.voteEnd.required} (Dibutuhkan)`;
-                    
-                    if(game.voteEnd.votes[myPlayerId] !== undefined || isSpectator || game.players[myPlayerId]?.isSurrendered) {
-                        document.getElementById('vote-action-buttons').classList.add('hidden');
-                    } else {
-                        document.getElementById('vote-action-buttons').classList.remove('hidden');
-                    }
+                if(game.voteEnd.votes[myPlayerId] !== undefined || isSpectator || game.players[myPlayerId]?.isSurrendered) {
+                    document.getElementById('vote-action-buttons').classList.add('hidden');
                 } else {
-                    voteOverlay.classList.add('hidden');
+                    document.getElementById('vote-action-buttons').classList.remove('hidden');
                 }
+            } else { voteOverlay.classList.add('hidden'); }
 
-                if(game.status === "FINISHED") { 
-                    document.getElementById('screen-game').classList.add('hidden');
-                    document.getElementById('screen-round-ended').classList.add('hidden');
-                    document.getElementById('screen-winner').classList.remove('hidden'); 
-                    
-                    const titleEl = document.getElementById('winner-title');
-                    const nameEl = document.getElementById('winner-name-text');
-                    const finalLb = document.getElementById('final-leaderboard');
+            // RENDER MAP JIKA BERUBAH (SOLUSI BUG MAP)
+            if(JSON.stringify(currentMapData) !== JSON.stringify(game.initialBoard)) {
+                currentMapData = game.initialBoard;
+                renderBoard(game.initialBoard || {});
+            }
 
-                    if(game.winnerName === "HOST_FORCE_END" || game.winnerName === "VOTING_SELESAI") {
-                        titleEl.innerText = "TURNAMEN SELESAI"; titleEl.style.color = "#ff4757"; 
-                        nameEl.innerText = game.winnerName === "VOTING_SELESAI" ? "VOTING PEMAIN" : "DIBATALKAN HOST"; 
-                        nameEl.style.fontSize = "1.5rem";
-                        
-                        let scores = Object.values(game.tournamentScores || {});
-                        if(scores.length > 0) {
-                            scores.sort((a,b) => b.score - a.score);
-                            let html = "";
-                            scores.forEach((s, i) => {
-                                let rank = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `<b>${i+1}.</b>`;
-                                html += `<div class="lb-row"><span style="color:white;">${rank} ${s.name}</span><span style="color:var(--gold); font-weight:bold;">${s.score} LP</span></div>`;
-                            });
-                            finalLb.innerHTML = html;
-                            finalLb.classList.remove('hidden');
-                        } else {
-                            finalLb.classList.add('hidden');
-                        }
-                    } else {
-                        let scores = Object.values(game.tournamentScores || {});
-                        scores.sort((a,b) => b.score - a.score);
-                        let grandWinner = scores.length > 0 ? scores[0].name : "TIDAK ADA";
-                        
-                        titleEl.innerText = "🏆 JUARA UMUM 🏆"; titleEl.style.color = "#fdcb6e";
-                        nameEl.innerText = grandWinner;
+            // UPDATE UI GAME INFO
+            if(game.lastDice) {
+                document.getElementById('dice-1').innerText = game.lastDice[0];
+                document.getElementById('dice-2').innerText = game.lastDice[1];
+            }
+            document.getElementById('round-info').innerText = `RONDE: ${game.currentRound || 1} / ${game.maxRounds || 1}`;
 
-                        let html = "";
-                        scores.forEach((s, i) => {
-                            let rank = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `<b>${i+1}.</b>`;
-                            html += `<div class="lb-row"><span style="color:white;">${rank} ${s.name}</span><span style="color:var(--gold); font-weight:bold;">${s.score} LP</span></div>`;
-                        });
-                        finalLb.innerHTML = html;
-                    }
-                    return; 
-                }
+            const turnPid = game.order[(game.turnIndex || 0) % Math.max(1, game.order.length)];
+            if(turnPid && game.players[turnPid]) {
+                const pInfo = game.players[turnPid];
+                document.getElementById('turn-name').innerText = `${pInfo.avatar} ${pInfo.name}`;
+            }
 
-                if(game.status === "ROUND_ENDED") {
-                    showCardSplash("KEMENANGAN!", "🏆");
-                    
-                    setTimeout(() => {
-                        document.getElementById('screen-game').classList.add('hidden');
-                        document.getElementById('screen-round-ended').classList.remove('hidden');
-                        document.getElementById('round-winner-text').innerText = `🏁 ${game.roundWinner} Menang Ronde Ini!`;
-                        
-                        let scores = Object.values(game.tournamentScores || {}); 
-                        scores.sort((a,b) => b.score - a.score);
-                        let html = "";
-                        scores.forEach((s, i) => {
-                            let rank = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : `<b>${i+1}.</b>`;
-                            html += `<div class="lb-row"><span style="color:white;">${rank} ${s.name}</span><span style="color:var(--gold); font-weight:bold;">${s.score} LP</span></div>`;
-                        });
-                        document.getElementById('round-leaderboard').innerHTML = html;
-                        
-                        if(amIHost && !isSpectator) {
-                            document.getElementById('round-host-controls').classList.remove('hidden');
-                            document.getElementById('round-waiting-msg').classList.add('hidden');
-                            if(game.currentRound >= game.maxRounds) {
-                                document.getElementById('btn-next-round').classList.add('hidden');
-                                document.getElementById('btn-finish-tourney').classList.remove('hidden');
-                            } else {
-                                document.getElementById('btn-next-round').classList.remove('hidden');
-                                document.getElementById('btn-finish-tourney').classList.add('hidden');
-                                document.getElementById('btn-next-round').innerText = `MULAI RONDE ${game.currentRound + 1}`;
-                            }
-                        } else {
-                            document.getElementById('round-host-controls').classList.add('hidden');
-                            document.getElementById('round-waiting-msg').classList.remove('hidden');
-                        }
-                    }, 3000); 
-                    return; 
-                } else {
-                    document.getElementById('screen-round-ended').classList.add('hidden');
-                    document.getElementById('screen-game').classList.remove('hidden');
-                }
+            // MENGHAPUS DELAY 3.5 DETIK YANG LEMOT
+            if(!isSpectator) {
+                isMyTurn = (turnPid === myPlayerId);
+                const btn = document.getElementById('btn-roll');
+                btn.disabled = !isMyTurn; 
+                btn.className = isMyTurn ? "btn-green" : "btn-disabled";
+                btn.innerText = isMyTurn ? "🎲 KOCOK DADU" : "⏳ MENUNGGU...";
+                if(game.players[myPlayerId]) renderInventory(game.players[myPlayerId].cards || []);
+            }
 
-                if(game.lastDice) {
-                    document.getElementById('dice-1').innerText = game.lastDice[0];
-                    document.getElementById('dice-2').innerText = game.lastDice[1];
-                }
+            // EKSEKUSI ANIMASI DAN RENDER SEGERA
+            updateAllTokens(game.players);
+            renderBoardEffects(game.boardEffects || {});
+            
+            const logHtml = (game.logs || []).slice(-5).join("<br>");
+            if(!isSpectator) document.getElementById('game-log').innerHTML = logHtml;
+            else document.getElementById('spec-game-log').innerHTML = logHtml; 
 
-                document.getElementById('round-info').innerText = `RONDE: ${game.currentRound || 1} / ${game.maxRounds || 1}`;
-
-                const turnPid = game.order[(game.turnIndex || 0) % Math.max(1, game.order.length)];
-                if(turnPid) {
-                    const pInfo = game.players[turnPid];
-                    document.getElementById('turn-name').innerText = pInfo ? `${pInfo.avatar} ${pInfo.name}` : "...";
-                }
+            // TIMER SYSTEM
+            if(turnTimerInterval) clearInterval(turnTimerInterval);
+            turnTimerInterval = setInterval(() => {
+                const timeElapsed = Math.floor((Date.now() - (game.lastTurnTime || Date.now()))/1000);
+                const timeLeft = Math.max(0, 15 - timeElapsed);
                 
-                const isNewUpdate = (Date.now() - (game.lastTurnTime || 0)) < 4000;
-                const delayTime = isNewUpdate ? 3500 : 0; 
+                document.getElementById('timer-bar').style.width = `${(timeLeft/15)*100}%`;
+                document.getElementById('timer-text').innerText = `${timeLeft}s`;
                 
-                if(!isSpectator) {
-                    isMyTurn = (turnPid === myPlayerId);
-                    const btn = document.getElementById('btn-roll');
-                    btn.disabled = true; btn.className = "btn-disabled"; btn.innerText = "⏳ SINKRONISASI...";
-                    if(game.players[myPlayerId]) renderInventory(game.players[myPlayerId].cards || []);
+                if(timeLeft === 0 && !isSpectator) { 
+                    if (amIHost) { clearInterval(turnTimerInterval); executeRoll(true); } 
+                    else if (timeElapsed >= 18) { clearInterval(turnTimerInterval); executeRoll(true); }
                 }
-
-                setTimeout(() => {
-                    updateAllTokens(game.players);
-                    renderBoardEffects(game.boardEffects || {});
-                    
-                    const logHtml = (game.logs || []).slice(-5).join("<br>");
-                    if(!isSpectator) {
-                        document.getElementById('game-log').innerHTML = logHtml;
-                        const btn = document.getElementById('btn-roll');
-                        btn.disabled = !isMyTurn; 
-                        btn.className = isMyTurn ? "btn-green" : "btn-disabled";
-                        btn.innerText = isMyTurn ? "🎲 KOCOK DADU" : "⏳ MENUNGGU...";
-                    } else {
-                        document.getElementById('spec-game-log').innerHTML = logHtml; 
-                    }
-                }, delayTime);
-
-                if(turnTimerInterval) clearInterval(turnTimerInterval);
-                turnTimerInterval = setInterval(() => {
-                    const timeElapsed = Math.floor((Date.now() - (game.lastTurnTime || Date.now()))/1000);
-                    const timeLeft = Math.max(0, 15 - timeElapsed);
-                    
-                    document.getElementById('timer-bar').style.width = `${(timeLeft/15)*100}%`;
-                    document.getElementById('timer-text').innerText = `${timeLeft}s`;
-                    
-                    if(timeLeft === 0 && !isSpectator) { 
-                        if (amIHost) {
-                            clearInterval(turnTimerInterval); executeRoll(true); 
-                        } else if (timeElapsed >= 18) {
-                            clearInterval(turnTimerInterval); executeRoll(true);
-                        }
-                    }
-                }, 1000);
-            });
+            }, 1000);
         }
 
         // --- RENDER VISUAL ---
@@ -910,7 +883,7 @@
                         tileEl.classList.add('stepped-on');
                         setTimeout(() => { if(tileEl) tileEl.classList.remove('stepped-on'); }, 200);
                     }
-                    setTimeout(step, 150); 
+                    setTimeout(step, 150); // Kecepatan langkah cukup lambat untuk dilihat
                 } else {
                     localPlayerPositions[pid] = end; 
                 }
