@@ -10,8 +10,9 @@
         :root {
             --bg-dark: #0f172a; --bg-light: #1e293b; --gold: #f59e0b;
             --gold-glow: 0 0 15px rgba(245, 158, 11, 0.5);
+            --red-suit: #ef4444; --black-suit: #111827; 
             --neon-green: #10b981; --green-glow: 0 0 15px rgba(16, 185, 129, 0.5);
-            --panel-bg: rgba(15, 23, 42, 0.95);
+            --panel-bg: rgba(30, 41, 59, 0.9);
             --blue: #3b82f6;
             
             /* 4-Color Deck System */
@@ -22,7 +23,9 @@
         }
 
         body {
-            margin: 0; padding: 0; background: radial-gradient(circle at center, var(--bg-light) 0%, var(--bg-dark) 100%);
+            margin: 0; padding: 0; 
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at center, var(--bg-light) 0%, var(--bg-dark) 100%);
             font-family: 'Poppins', sans-serif; color: white; height: 100vh; width: 100vw;
             display: flex; flex-direction: column; overflow: hidden;
             user-select: none; -webkit-user-select: none; touch-action: manipulation;
@@ -38,48 +41,48 @@
         }
         .panel {
             background: var(--panel-bg); padding: 25px; border-radius: 20px; 
-            border: 1px solid rgba(255,255,255,0.1); text-align: center; width: 85%; max-width: 350px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6); max-height: 90vh; overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1); text-align: center; width: 85%; max-width: 340px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;
         }
         input, select {
-            width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(0,0,0,0.4); color: white; text-align: center; font-family: 'Poppins'; 
+            width: 100%; padding: 12px; margin: 8px 0; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.3); color: white; text-align: center; font-family: 'Poppins'; 
             font-weight: 600; box-sizing: border-box; font-size: 14px; outline: none; transition: 0.3s;
         }
         input:focus { border-color: var(--gold); box-shadow: var(--gold-glow); }
         
         .btn {
-            width: 100%; padding: 14px; margin: 8px 0; border: none; border-radius: 12px;
+            width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 12px;
             font-weight: 800; font-family: 'Poppins'; cursor: pointer; transition: 0.2s; 
-            font-size: 13px; letter-spacing: 1px; text-transform: uppercase;
+            font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
         }
         .btn:active { transform: scale(0.96); }
-        .btn-gold { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; }
-        .btn-red { background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; }
-        .btn-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
-        .btn-green { background: linear-gradient(135deg, #10b981, #047857); color: #fff; }
+        .btn-gold { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
+        .btn-red { background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
+        .btn-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); }
+        .btn-green { background: linear-gradient(135deg, #10b981, #047857); color: #fff; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
 
         /* MODAL KHUSUS */
         #custom-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); z-index: 9000;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9000;
             display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;
         }
         .custom-modal {
-            background: var(--panel-bg); width: 100%; max-width: 380px;
+            background: var(--panel-bg); width: 100%; max-width: 360px;
             padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center;
             box-shadow: 0 20px 50px rgba(0,0,0,0.7); max-height: 90vh; overflow-y: auto;
         }
-        #modal-title { margin-top: 0; color: var(--gold); font-size: 1.4rem; font-weight: 800; margin-bottom: 10px; }
-        #modal-text { font-size: 0.95rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 25px; text-align: center; }
+        #modal-title { margin-top: 0; color: var(--gold); font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; }
+        #modal-text { font-size: 0.9rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 25px; text-align: center; }
         .modal-actions { display: flex; gap: 10px; justify-content: center; }
         .modal-actions .btn { flex: 1; margin: 0; }
 
         /* UI SHOWDOWN CARDS */
         .showdown-player { background: rgba(0,0,0,0.4); padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); }
-        .showdown-name { font-weight: bold; color: white; font-size: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;}
-        .showdown-cards { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;}
-        .showdown-group { display: flex; padding: 4px; border: 1px dashed var(--neon-green); border-radius: 8px; background: rgba(16, 185, 129, 0.1); }
+        .showdown-name { font-weight: bold; color: white; font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        .showdown-cards { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;}
+        .showdown-group { display: flex; padding: 3px; border: 1px dashed var(--neon-green); border-radius: 6px; background: rgba(16, 185, 129, 0.1); }
         .showdown-hand { display: flex; gap: 3px; }
 
         #game-ui { display: flex; flex-direction: column; height: 100%; width: 100%; position: relative; }
@@ -99,7 +102,7 @@
             padding: 6px 12px; border-radius: 20px; border: 1px solid var(--neon-green); width: 100%; text-align: center;
         }
 
-        /* GRID TATA LETAK MEJA - ABSOLUTE CENTERED */
+        /* TATA LETAK MEJA - PORTRAIT OPTIMIZED */
         .table-container {
             flex: 1; position: relative; width: 100%; max-width: 600px; margin: 0 auto; 
             margin-top: 60px;
@@ -117,24 +120,24 @@
         .avatar {
             width: 45px; height: 45px; background: rgba(30,41,59,0.9); border: 2px solid #475569;
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 5; transition: 0.3s;
+            font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 5; transition: 0.3s;
         }
         .active-turn .avatar { box-shadow: var(--gold-glow); border-color: var(--gold); transform: scale(1.1); }
         .player-name {
-            background: rgba(0,0,0,0.9); padding: 4px 10px; border-radius: 10px;
+            background: rgba(0,0,0,0.8); padding: 3px 10px; border-radius: 10px;
             font-size: 10px; font-weight: 600; margin-top: -8px; z-index: 6; border: 1px solid #475569; white-space: nowrap;
         }
 
         /* AREA MELDS (KARTU TURUN) */
-        .melds-area { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 8px; z-index: 4; }
+        .melds-area { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; margin-top: 6px; z-index: 4; }
         .meld-group { display: flex; }
-        .meld-group .mini-card:not(:first-child) { margin-left: -15px; }
+        .meld-group .mini-card:not(:first-child) { margin-left: -12px; }
 
         /* KARTU KECIL (MELD/SHOWDOWN) */
         .mini-card {
-            width: 35px; height: 50px; font-size: 14px; background: #f8fafc; border-radius: 5px;
+            width: 28px; height: 40px; font-size: 12px; background: #f8fafc; border-radius: 4px;
             color: var(--black-suit); display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border: 1px solid #cbd5e1; font-weight: 800; line-height: 1; font-family: 'Rye', serif; box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            border: 1px solid #cbd5e1; font-weight: 800; line-height: 1; font-family: 'Rye', serif; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         .c-heart { color: var(--suit-heart); }
         .c-diamond { color: var(--suit-diamond); }
@@ -142,10 +145,10 @@
         .c-spade { color: var(--suit-spade); }
         .mini-card.face-card { background: linear-gradient(135deg, #fff 0%, #fde047 100%); }
 
-        /* LAPAK BUANGAN & DECK TENGAH */
+        /* LAPAK BUANGAN */
         .discard-pile {
-            width: 60px; height: 85px; border: 2px dashed rgba(255,255,255,0.3);
-            border-radius: 8px; margin: 5px; position: relative;
+            width: 50px; height: 70px; border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 8px; margin: 8px; position: relative;
             display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2);
             cursor: pointer; z-index: 5;
         }
@@ -153,47 +156,48 @@
         .deck-wrapper { position: relative; cursor: pointer; transition: 0.2s; }
         .deck-wrapper:active { transform: scale(0.9); }
         .deck-pile {
-            width: 65px; height: 95px; background: repeating-linear-gradient(45deg, #1e293b, #1e293b 5px, #334155 5px, #334155 10px);
+            width: 55px; height: 80px; background: repeating-linear-gradient(45deg, #1e293b, #1e293b 5px, #334155 5px, #334155 10px);
             border-radius: 8px; border: 2px solid white; box-shadow: -3px 3px 0 #cbd5e1, -6px 6px 0 #64748b;
-            display: flex; align-items: center; justify-content: center; font-family: 'Rye', serif; color: white; font-size: 16px;
+            display: flex; align-items: center; justify-content: center; font-family: 'Rye', serif; color: white; font-size: 14px;
         }
-        .deck-count { position: absolute; bottom: -25px; width: 100%; text-align: center; font-size: 13px; font-weight: 800; color: #94a3b8; text-shadow: 0 2px 4px black; }
+        .deck-count { position: absolute; bottom: -22px; width: 100%; text-align: center; font-size: 12px; font-weight: 800; color: #94a3b8; text-shadow: 0 2px 4px black; }
 
-        /* KARTU VISUAL UTAMA (SUPER JUMBO & RENGGANG) */
+        /* KARTU VISUAL UTAMA (TANGAN JUMBO) */
         .playing-card {
-            width: 75px; height: 110px; background: #ffffff; border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.7); position: absolute;
+            width: 70px; height: 100px; background: #ffffff; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6); position: absolute;
             display: flex; flex-direction: column; justify-content: space-between;
-            padding: 5px; box-sizing: border-box; font-family: 'Rye', serif;
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
-            transform-origin: bottom center; cursor: pointer; border: 1px solid #94a3b8; color: var(--black-suit);
+            padding: 4px; box-sizing: border-box; font-family: 'Rye', serif;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            transform-origin: bottom center; cursor: pointer; border: 1px solid #cbd5e1; color: var(--black-suit);
         }
-        .card-top { font-size: 16px; line-height: 1; font-weight: 900; text-align: left; }
-        .card-center { font-size: 42px; text-align: center; margin-top: -6px; } 
-        .card-bottom { font-size: 16px; line-height: 1; font-weight: 900; text-align: left; transform: rotate(180deg); }
+        .card-top { font-size: 13px; line-height: 1; font-weight: 900; }
+        .card-center { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .card-bottom { font-size: 13px; line-height: 1; font-weight: 900; transform: rotate(180deg); }
         .card-fresh { box-shadow: var(--green-glow); border: 3px solid var(--neon-green); z-index: 10; } 
         
+        /* Tema Kartu Kasta (Visual Kontras) */
         .playing-card.face-card { background: linear-gradient(135deg, #ffffff 0%, #fde047 100%); border: 2px solid #f59e0b; }
         .playing-card.joker-card { background: linear-gradient(135deg, #ffffff 0%, #a7f3d0 100%); border: 3px solid var(--neon-green); }
 
         /* UI TANGAN PEMAIN & SKOR */
-        .my-hand-container { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; margin-top: 10px; }
+        .my-hand-container { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; margin-top: auto; padding-bottom: 20px;}
         .score-display {
-            background: rgba(15,23,42,0.9); border: 1px solid #475569; padding: 6px 20px; border-radius: 20px;
-            font-size: 12px; font-weight: 600; margin-bottom: 25px; color: #cbd5e1; display: flex; gap: 15px; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            background: rgba(15,23,42,0.9); border: 1px solid #475569; padding: 6px 18px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; margin-bottom: 30px; color: #cbd5e1; display: flex; gap: 15px; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .score-display span { color: var(--gold); font-size: 15px; font-weight: 800; }
+        .score-display span { color: var(--gold); font-size: 14px; font-weight: 800; }
 
-        /* ACTION BUTTONS */
+        /* ACTION BUTTONS (FLOATING) */
         .action-buttons {
-            display: flex; gap: 10px; position: absolute; top: -60px;
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(5px); padding: 10px 15px; border-radius: 30px;
+            display: flex; gap: 8px; position: absolute; top: -50px;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(5px); padding: 8px 12px; border-radius: 25px;
             border: 1px solid rgba(255,255,255,0.2); opacity: 0; pointer-events: none; transform: translateY(10px); transition: 0.3s; z-index: 200; box-shadow: 0 10px 25px rgba(0,0,0,0.6);
         }
         .action-buttons.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
         .btn-action { 
             background: rgba(255, 255, 255, 0.2); color: white; border: none; padding: 10px 16px; 
-            border-radius: 12px; font-weight: 800; font-size: 12px; cursor: pointer; transition: 0.2s; text-transform: uppercase;
+            border-radius: 12px; font-weight: 800; font-size: 11px; cursor: pointer; transition: 0.2s; text-transform: uppercase;
         }
         .btn-turun { background: var(--blue) !important; color: white !important; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
         .btn-buang { background: var(--red-suit) !important; color: white !important; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
@@ -202,9 +206,9 @@
         .my-hand { display: flex; justify-content: center; width: 100%; height: 110px; position: relative; }
         .my-hand .playing-card { position: absolute; margin-left: 0; }
         
-        .my-hand .playing-card.selected { transform: translateY(-35px) scale(1.1) rotate(0deg) !important; z-index: 100 !important; border: 3px solid var(--gold) !important; box-shadow: var(--gold-glow); }
+        /* Merapatkan Kartu Tangan agar pas di Portrait */
+        .my-hand .playing-card.selected { transform: translateY(-30px) scale(1.15) rotate(0deg) !important; z-index: 100 !important; border: 3px solid var(--gold) !important; box-shadow: var(--gold-glow); }
         .my-hand .paired { border: 3px solid var(--neon-green); box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.4); }
-
     </style>
 </head>
 <body>
@@ -278,19 +282,19 @@
             </div>
 
             <div id="slot-right" class="player-area player-right">
+                <div class="discard-pile" id="discard-right" onclick="drawFromDiscard('right')"></div>
                 <div class="avatar-container">
                     <div class="avatar" id="ava-right">👽</div><div class="player-name" id="name-right">Bot 3</div>
                     <div class="melds-area" id="melds-right"></div>
                 </div>
-                <div class="discard-pile" id="discard-right" onclick="drawFromDiscard('right')"></div>
             </div>
 
             <div class="player-bottom-wrapper">
-                <div style="display:flex; justify-content:space-between; width:100%; max-width: 500px; padding:0 20px; box-sizing:border-box; align-items:flex-end; margin-bottom:15px;">
+                <div style="display:flex; justify-content:space-between; width:100%; max-width: 500px; padding:0 20px; box-sizing:border-box; align-items:flex-end; margin-bottom:10px;">
                     <div class="discard-pile" id="discard-bottom" style="margin:0;"></div>
                     <div class="avatar-container">
                         <div class="melds-area" id="melds-bottom" style="margin-bottom:8px;"></div>
-                        <div class="avatar" style="font-size: 26px;">😎</div>
+                        <div class="avatar" style="font-size: 24px;">😎</div>
                         <div class="player-name" id="my-name">Kamu</div>
                     </div>
                 </div>
@@ -609,9 +613,23 @@
                             if((game.globalScores[p.id]||0) < lowestScore) { lowestScore = game.globalScores[p.id]; turnIdx = i; }
                         });
                         
-                        setupDeckAndDeal(game);
+                        // JAMINAN DECK BARU TERBUAT
+                        let deck = [];
+                        for (let suit of SUITS) {
+                            for (let rank of RANKS) { deck.push({ suit: suit, rank: rank, color: (suit === '♥' || suit === '♦') ? 'red' : 'black' }); }
+                        }
+                        for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+                        let jokerCard = deck.pop(); game.jokerRank = jokerCard.rank; deck.push(jokerCard); 
+                        for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+
+                        game.players.forEach(p => { p.hand = []; p.discard = []; p.melds = []; p.knockVictims = []; });
+                        for(let i=0; i<7; i++) { for(let p=0; p<4; p++) { game.players[p].hand.push(deck.pop()); } }
+                        
+                        game.deck = deck;
                         game.turnIndex = turnIdx;
-                        game.readyList = []; game.readyCount = 0;
+                        game.turnPhase = 'DRAW'; 
+                        game.readyList = []; 
+                        game.readyCount = 0;
                         game.status = "PLAYING";
                     }
                 }
@@ -673,9 +691,11 @@
             localStorage.setItem("luna_global_name", myName);
             myPlayerId = "p_" + Date.now();
             const roomId = Math.random().toString(36).substring(2,6).toUpperCase();
+            const pData = { id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [] };
+            
             set(ref(db, `remi_rooms/${roomId}`), {
                 status: "LOBBY", host: myPlayerId,
-                players: [{ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [] }]
+                players: [pData]
             }).then(() => {
                 localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", roomId);
                 enterLobby(roomId, true);
@@ -686,19 +706,31 @@
             myName = document.getElementById('input-nama').value.trim();
             const code = document.getElementById('input-kode').value.trim().toUpperCase();
             if (!myName || !code) return showAlertModal("PERHATIAN", "Lengkapi nama dan kode room!");
-            get(ref(db, `remi_rooms/${code}`)).then(snap => {
-                if (snap.exists() && snap.val().status === "LOBBY") {
-                    const roomData = snap.val();
-                    if(roomData.players.length >= 4) return showAlertModal("MAAF", "Room Penuh!");
+            
+            runTransaction(ref(db, `remi_rooms/${code}`), (game) => {
+                if(game && game.status === "LOBBY") {
+                    let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
+                    if(playersArr.length >= 4) return; // Full
+                    
                     myPlayerId = "p_" + Date.now();
-                    localStorage.setItem("luna_global_name", myName);
-                    let updatedPlayers = roomData.players || [];
-                    updatedPlayers.push({ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [] });
-                    update(ref(db, `remi_rooms/${code}`), { players: updatedPlayers }).then(() => {
-                        localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", code);
+                    playersArr.push({ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [] });
+                    game.players = playersArr;
+                }
+                return game;
+            }).then(({committed, snapshot}) => {
+                if(committed) {
+                    const game = snapshot.val();
+                    if(game.players.some(p => p.id === myPlayerId)) {
+                        localStorage.setItem("luna_global_name", myName);
+                        localStorage.setItem("remi_pid", myPlayerId); 
+                        localStorage.setItem("remi_room", code);
                         enterLobby(code, false);
-                    });
-                } else showAlertModal("GAGAL", "Room tidak tersedia atau sudah mulai!");
+                    } else {
+                        showAlertModal("MAAF", "Room Penuh!");
+                    }
+                } else {
+                    showAlertModal("GAGAL", "Room tidak tersedia atau sudah mulai!");
+                }
             });
         };
 
@@ -717,7 +749,8 @@
                 
                 const list = document.getElementById('player-list'); list.innerHTML = "";
                 if(game.players) {
-                    game.players.forEach((p, idx) => {
+                    let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
+                    playersArr.forEach((p, idx) => {
                         list.innerHTML += `<li style="padding:8px 0; font-weight:600; color:#cbd5e1; border-bottom:1px solid rgba(255,255,255,0.1);">${idx+1}. ${p.name} ${p.id === game.host ? '👑' : ''}</li>`;
                     });
                 }
@@ -738,37 +771,51 @@
             });
         }
 
-        window.confirmLeaveRoom = () => { showConfirmModal("KELUAR?", "Keluar dari room ini?", () => { resetLocalData(); }); };
+        window.confirmLeaveRoom = () => { 
+            showConfirmModal("KELUAR?", "Keluar dari room ini?", () => { 
+                if(amIHost) {
+                    remove(ref(db, `remi_rooms/${currentRoomId}`)).then(() => { resetLocalData(); });
+                } else {
+                    runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                        if(game && game.players) {
+                            let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
+                            game.players = playersArr.filter(p => p.id !== myPlayerId);
+                        }
+                        return game;
+                    }).then(() => { resetLocalData(); });
+                }
+            }); 
+        };
+
         window.confirmStartGame = () => { showConfirmModal("MULAI?", "Semua slot kosong akan otomatis diisi Bot.", executeStartGame); };
-
-        function setupDeckAndDeal(game) {
-            let deck = [];
-            for (let suit of SUITS) {
-                for (let rank of RANKS) { deck.push({ suit: suit, rank: rank, color: (suit === '♥' || suit === '♦') ? 'red' : 'black' }); }
-            }
-            for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
-
-            let jokerCard = deck.pop(); game.jokerRank = jokerCard.rank; deck.push(jokerCard); 
-            for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
-
-            game.players.forEach(p => { p.hand = []; p.discard = []; p.melds = []; p.knockVictims = []; });
-
-            for(let i=0; i<7; i++) { for(let p=0; p<4; p++) { game.players[p].hand.push(deck.pop()); } }
-            game.deck = deck;
-        }
 
         function executeStartGame() {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                if (game) {
+                if (game && game.status === "LOBBY") {
                     game.targetScore = parseInt(document.getElementById('target-score').value) || 250;
                     game.globalScores = {};
+                    
+                    let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
                     let botsAdded = 0;
-                    while(game.players.length < 4) {
-                        game.players.push({ id: `bot_${botsAdded}`, name: BOT_NAMES[botsAdded], isBot: true, hand: [], discard: [], melds: [], knockVictims:[] });
+                    while(playersArr.length < 4) {
+                        playersArr.push({ id: `bot_${botsAdded}`, name: BOT_NAMES[botsAdded], isBot: true, hand: [], discard: [], melds: [], knockVictims:[] });
                         botsAdded++;
                     }
+                    game.players = playersArr;
                     game.players.forEach(p => { game.globalScores[p.id] = 0; });
-                    setupDeckAndDeal(game);
+                    
+                    // JAMINAN DECK DIBUAT SAAT TRANSAKSI
+                    let deck = [];
+                    for (let suit of SUITS) {
+                        for (let rank of RANKS) { deck.push({ suit: suit, rank: rank, color: (suit === '♥' || suit === '♦') ? 'red' : 'black' }); }
+                    }
+                    for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+                    let jokerCard = deck.pop(); game.jokerRank = jokerCard.rank; deck.push(jokerCard); 
+                    for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+
+                    game.players.forEach(p => { p.hand = []; p.discard = []; p.melds = []; p.knockVictims = []; });
+                    for(let i=0; i<7; i++) { for(let p=0; p<4; p++) { game.players[p].hand.push(deck.pop()); } }
+                    game.deck = deck;
                     
                     game.turnIndex = 0;
                     game.turnPhase = 'DRAW'; 
@@ -780,21 +827,35 @@
 
         // --- RENDERING IN-GAME ---
         function startGameUI(game) {
+            // GUARD ANTI-CRASH: Jangan render jika data gagal diproses Firebase
+            if(!game || !game.players || !game.deck || !game.jokerRank) return;
+
+            // Pastikan format array pemain aman
+            let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
+            mySlotIndex = playersArr.findIndex(p => p.id === myPlayerId);
+            
+            // Jika pemain tidak terdaftar, lemparkan keluar
+            if(mySlotIndex === -1) {
+                showAlertModal("ERROR", "Data kamu tidak ditemukan di Room ini.", resetLocalData);
+                return;
+            }
+
             document.getElementById('screen-menu').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
             document.getElementById('custom-modal-overlay').classList.add('hidden');
 
             currentJokerRank = game.jokerRank;
             document.getElementById('joker-display').innerText = `🃏 JOKER: ${game.jokerRank}`;
-            document.getElementById('deck-count').innerText = game.deck ? game.deck.length : 0;
+            document.getElementById('deck-count').innerText = game.deck.length;
 
-            mySlotIndex = game.players.findIndex(p => p.id === myPlayerId);
             isMyTurn = (game.turnIndex % 4 === mySlotIndex);
             turnPhase = game.turnPhase;
 
             if(amIHost) { document.getElementById('btn-end-match').style.display = 'block'; }
 
-            const activePlayer = game.players[game.turnIndex % 4];
+            const activePlayer = playersArr[game.turnIndex % 4];
+            if(!activePlayer) return; // Guard 
+
             if (isMyTurn) {
                 document.getElementById('turn-display').innerText = turnPhase === 'DRAW' ? "Giliranmu! Ambil Kartu." : "Giliranmu! Buang 1 Kartu.";
                 document.getElementById('turn-display').style.color = "var(--neon-green)";
@@ -804,14 +865,16 @@
                 document.getElementById('turn-display').innerText = `Giliran ${activePlayer.name}...`;
                 document.getElementById('turn-display').style.color = "var(--gold)";
                 document.getElementById('turn-display').style.borderColor = "var(--gold)";
-                // Jangan reset selectedCardIndices agar pilihan tidak hilang saat timer orang lain berjalan
+                selectedCardIndices = []; 
             }
 
             const positions = ['bottom', 'left', 'top', 'right'];
             for(let i=0; i<4; i++) {
                 let pIndex = (mySlotIndex + i) % 4; 
                 let pos = positions[i];
-                let pData = game.players[pIndex];
+                let pData = playersArr[pIndex];
+
+                if(!pData) continue; // Guard
 
                 if(pos !== 'bottom') { document.getElementById(`name-${pos}`).innerText = pData.name; } 
                 else { document.getElementById(`my-name`).innerText = pData.name; }
@@ -844,8 +907,8 @@
                 }
             }
 
-            let myHand = game.players[mySlotIndex].hand || [];
-            let myMelds = game.players[mySlotIndex].melds || [];
+            let myHand = playersArr[mySlotIndex].hand || [];
+            let myMelds = playersArr[mySlotIndex].melds || [];
             let handInfo = evaluateHand(myHand, myMelds, game.jokerRank);
             
             document.getElementById('my-score-val').innerText = handInfo.score;
@@ -869,7 +932,6 @@
                 
                 let offset = index - centerIndex;
                 if (!isSelected) {
-                    // Margin direnggangkan menjadi 25px per offset agar sangat mudah disentuh jari
                     cardElement.style.transform = `translateX(${offset * 25}px) translateY(${Math.abs(offset) * 2}px) rotate(${offset * 3}deg)`;
                     if(isJoker && !isPaired) cardElement.style.border = "2px solid var(--gold)";
                 } else {
@@ -907,7 +969,6 @@
             if(amIHost && activePlayer.isBot) { setTimeout(() => { playBotTurn(game); }, 1500); }
         }
 
-        // FUNGSI RENDER VISUAL KARTU (PIPS & FACE EMOJI)
         function renderCardHTML(card, isJoker = false) {
             if (isJoker) {
                 return `<div class="card-top" style="color:var(--neon-green)">JOKER</div>
@@ -946,7 +1007,8 @@
             let sIndex = selectedCardIndices[0];
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                 if(game) {
-                    let hand = game.players[mySlotIndex].hand;
+                    let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
+                    let hand = playersArr[mySlotIndex].hand;
                     let targetIndex = (direction === 'left') ? sIndex - 1 : sIndex + 1;
                     if (targetIndex >= 0 && targetIndex < hand.length) {
                         [hand[sIndex], hand[targetIndex]] = [hand[targetIndex], hand[sIndex]];
@@ -957,13 +1019,13 @@
             });
         };
 
-        // FUNGSI TURUN / MELD KARTU KE MEJA
         window.meldSelectedCards = () => {
             if (selectedCardIndices.length < 3 || !isMyTurn) return;
 
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
                 let game = snap.val();
-                let myHand = game.players[mySlotIndex].hand;
+                let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
+                let myHand = playersArr[mySlotIndex].hand;
                 let selectedCards = selectedCardIndices.map(i => myHand[i]);
 
                 if (!isValidSingleGroup(selectedCards, game.jokerRank)) {
@@ -973,7 +1035,8 @@
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
                     if(gameTx) {
-                        let pData = gameTx.players[mySlotIndex];
+                        let playersTxArr = Array.isArray(gameTx.players) ? gameTx.players : Object.values(gameTx.players).filter(p => p !== null);
+                        let pData = playersTxArr[mySlotIndex];
                         let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                         let meldCards = [];
                         indicesToRemove.forEach(idx => { meldCards.push(pData.hand.splice(idx, 1)[0]); });
@@ -993,19 +1056,22 @@
                 if (isMyTurn) showAlertModal("PERHATIAN", "Pilih kartumu lalu buang.");
                 return;
             }
+            document.querySelector('.deck-wrapper').style.pointerEvents = 'none'; // cegah double click
+            
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                 if(game && game.deck && game.deck.length > 0) {
+                    let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
                     let drawnCard = game.deck.pop();
-                    game.players[mySlotIndex].hand.push(drawnCard);
+                    if(!playersArr[mySlotIndex].hand) playersArr[mySlotIndex].hand = [];
+                    playersArr[mySlotIndex].hand.push(drawnCard);
                     game.turnPhase = 'DISCARD'; 
-                } else if (game) {
+                } else if (game && game.deck && game.deck.length === 0) {
                     game = handleRoundEnd(game, null, []);
                 }
                 return game;
-            });
+            }).then(() => { document.querySelector('.deck-wrapper').style.pointerEvents = 'auto'; });
         };
 
-        // GLOBAL NEMBAK LOGIC
         window.drawFromDiscard = (posStr) => {
             if (!isMyTurn || turnPhase !== 'DRAW') return;
             
@@ -1021,11 +1087,12 @@
 
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
                 let game = snap.val();
-                let targetPlayer = game.players[actualTargetIdx];
+                let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
+                let targetPlayer = playersArr[actualTargetIdx];
                 if(!targetPlayer || !targetPlayer.discard || targetPlayer.discard.length === 0) return;
                 
                 let topCard = targetPlayer.discard[targetPlayer.discard.length - 1];
-                let myHand = game.players[mySlotIndex].hand;
+                let myHand = playersArr[mySlotIndex].hand;
                 let selectedCards = selectedCardIndices.map(i => myHand[i]);
                 let testGroup = [...selectedCards, topCard];
 
@@ -1036,8 +1103,9 @@
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
                     if(gameTx) {
-                        let pData = gameTx.players[mySlotIndex];
-                        let takenCard = gameTx.players[actualTargetIdx].discard.pop();
+                        let playersTxArr = Array.isArray(gameTx.players) ? gameTx.players : Object.values(gameTx.players).filter(p => p !== null);
+                        let pData = playersTxArr[mySlotIndex];
+                        let takenCard = playersTxArr[actualTargetIdx].discard.pop();
                         
                         let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                         let meldCards = [takenCard];
@@ -1051,7 +1119,7 @@
                         let seq = []; let curr = actualTargetIdx;
                         while(curr !== mySlotIndex) { seq.push(curr); curr = (curr + 1) % 4; }
                         for(let i=1; i<seq.length; i++) {
-                            let iterPlayer = gameTx.players[seq[i]];
+                            let iterPlayer = playersTxArr[seq[i]];
                             if(iterPlayer.discard && iterPlayer.discard.length > 0) {
                                 let sweptCard = iterPlayer.discard.pop();
                                 pData.hand.push(sweptCard); 
@@ -1072,23 +1140,26 @@
             
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
                 let game = snap.val();
-                let myHand = game.players[mySlotIndex].hand;
-                let myMelds = game.players[mySlotIndex].melds;
+                let playersArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
+                let myHand = playersArr[mySlotIndex].hand;
+                let myMelds = playersArr[mySlotIndex].melds;
                 let cardToThrow = myHand[sIndex];
                 
-                // VALIDASI ATURAN KARTU AS
                 if (cardToThrow.rank === 'A' && (!myMelds || myMelds.length === 0)) {
                     showAlertModal("PELANGGARAN!", "Kartu AS tidak bisa dibuang! Kamu harus <b>'TURUN'</b> kombinasi kartu terlebih dahulu ke meja dengan menyeleksi 3 kartu sah lalu tekan tombol TURUN biru.");
                     return;
                 }
 
+                document.getElementById('btn-buang').disabled = true; // Cegah double klik buang
+
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
                     if(gameTx) {
-                        let thrownCard = gameTx.players[mySlotIndex].hand.splice(sIndex, 1)[0];
-                        if(!gameTx.players[mySlotIndex].discard) gameTx.players[mySlotIndex].discard = [];
-                        gameTx.players[mySlotIndex].discard.push(thrownCard);
+                        let playersTxArr = Array.isArray(gameTx.players) ? gameTx.players : Object.values(gameTx.players).filter(p => p !== null);
+                        let thrownCard = playersTxArr[mySlotIndex].hand.splice(sIndex, 1)[0];
+                        if(!playersTxArr[mySlotIndex].discard) playersTxArr[mySlotIndex].discard = [];
+                        playersTxArr[mySlotIndex].discard.push(thrownCard);
                         
-                        gameTx.players[mySlotIndex].knockVictims = [];
+                        playersTxArr[mySlotIndex].knockVictims = [];
                         
                         selectedCardIndices = [];
                         gameTx.turnIndex++; 
@@ -1103,20 +1174,22 @@
             if (!isMyTurn || turnPhase !== 'DISCARD') return;
             
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let pData = snap.val().players[mySlotIndex];
+                let playersArr = Array.isArray(snap.val().players) ? snap.val().players : Object.values(snap.val().players).filter(p => p !== null);
+                let pData = playersArr[mySlotIndex];
                 let v = pData.knockVictims || [];
-                let victimMsg = v.length > 0 ? `Target Minus -50:<br><span style='color:var(--red-suit); font-size:16px; font-weight:800;'>${v.map(idx => snap.val().players[idx].name).join(', ')}</span>` : `Semua musuh akan terkena -50 poin.`;
+                let victimMsg = v.length > 0 ? `Target Minus -50:<br><span style='color:var(--red-suit); font-size:16px; font-weight:800;'>${v.map(idx => playersArr[idx].name).join(', ')}</span>` : `Semua musuh akan terkena -50 poin.`;
 
                 showConfirmModal("TUTUP PERMAINAN?", "Yakin menekan TUTUP?<br><br><span style='color:var(--gold)'>" + victimMsg + "</span>", () => {
                     runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                         if(game) {
+                            let playersTxArr = Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null);
                             if(selectedCardIndices.length === 1) {
                                 let sIndex = selectedCardIndices[0];
-                                let thrownCard = game.players[mySlotIndex].hand.splice(sIndex, 1)[0];
-                                if(!game.players[mySlotIndex].discard) game.players[mySlotIndex].discard = [];
-                                game.players[mySlotIndex].discard.push(thrownCard);
+                                let thrownCard = playersTxArr[mySlotIndex].hand.splice(sIndex, 1)[0];
+                                if(!playersTxArr[mySlotIndex].discard) playersTxArr[mySlotIndex].discard = [];
+                                playersTxArr[mySlotIndex].discard.push(thrownCard);
                             }
-                            game = handleRoundEnd(game, mySlotIndex, game.players[mySlotIndex].knockVictims);
+                            game = handleRoundEnd(game, mySlotIndex, playersTxArr[mySlotIndex].knockVictims);
                         }
                         return game;
                     });
@@ -1130,24 +1203,26 @@
             isBotThinking = true;
 
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                if(game && game.players[game.turnIndex % 4].isBot) {
+                let playersArr = game && game.players ? (Array.isArray(game.players) ? game.players : Object.values(game.players).filter(p => p !== null)) : null;
+                
+                if(game && playersArr && playersArr[game.turnIndex % 4] && playersArr[game.turnIndex % 4].isBot) {
                     let botIdx = game.turnIndex % 4;
                     
                     if(game.deck && game.deck.length > 0) {
                         let drawnCard = game.deck.pop();
-                        if(!game.players[botIdx].hand) game.players[botIdx].hand = [];
-                        game.players[botIdx].hand.push(drawnCard);
+                        if(!playersArr[botIdx].hand) playersArr[botIdx].hand = [];
+                        playersArr[botIdx].hand.push(drawnCard);
                     } else {
                         game = handleRoundEnd(game, null, []); return game;
                     }
 
-                    let hand = game.players[botIdx].hand;
+                    let hand = playersArr[botIdx].hand;
                     let safeIndices = hand.map((c, i) => i).filter(i => hand[i].rank !== 'A' && hand[i].rank !== game.jokerRank);
                     let discardIdx = safeIndices.length > 0 ? safeIndices[Math.floor(Math.random() * safeIndices.length)] : 0;
                     
                     let thrownCard = hand.splice(discardIdx, 1)[0];
-                    if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
-                    game.players[botIdx].discard.push(thrownCard);
+                    if(!playersArr[botIdx].discard) playersArr[botIdx].discard = [];
+                    playersArr[botIdx].discard.push(thrownCard);
 
                     game.turnIndex++; game.turnPhase = 'DRAW';
                 }
