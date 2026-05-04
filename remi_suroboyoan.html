@@ -12,7 +12,7 @@
             --gold-glow: 0 0 15px rgba(245, 158, 11, 0.5);
             --red-suit: #ef4444; --black-suit: #111827; 
             --neon-green: #10b981; --green-glow: 0 0 15px rgba(16, 185, 129, 0.5);
-            --panel-bg: rgba(30, 41, 59, 0.95);
+            --panel-bg: rgba(30, 41, 59, 0.9);
             --blue: #3b82f6;
             
             /* 4-Color Deck System */
@@ -24,8 +24,7 @@
 
         body {
             margin: 0; padding: 0; 
-            background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at center, var(--bg-light) 0%, var(--bg-dark) 100%);
+            background: radial-gradient(circle at center, var(--bg-light) 0%, var(--bg-dark) 100%);
             font-family: 'Poppins', sans-serif; color: white; height: 100vh; width: 100vw;
             display: flex; flex-direction: column; overflow: hidden;
             user-select: none; -webkit-user-select: none; touch-action: manipulation;
@@ -41,8 +40,8 @@
         }
         .panel {
             background: var(--panel-bg); padding: 25px; border-radius: 20px; 
-            border: 1px solid rgba(255,255,255,0.1); text-align: center; width: 85%; max-width: 350px; 
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6); max-height: 90vh; overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1); text-align: center; width: 85%; max-width: 340px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;
         }
         input, select {
             width: 100%; padding: 12px; margin: 8px 0; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);
@@ -54,7 +53,7 @@
         .btn {
             width: 100%; padding: 12px; margin: 6px 0; border: none; border-radius: 12px;
             font-weight: 800; font-family: 'Poppins'; cursor: pointer; transition: 0.2s; 
-            font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+            font-size: 12px; letter-spacing: 1px;
         }
         .btn:active { transform: scale(0.96); }
         .btn-gold { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
@@ -69,7 +68,7 @@
             display: flex; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;
         }
         .custom-modal {
-            background: var(--panel-bg); width: 100%; max-width: 380px;
+            background: var(--panel-bg); width: 100%; max-width: 360px;
             padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center;
             box-shadow: 0 20px 50px rgba(0,0,0,0.7); max-height: 90vh; overflow-y: auto;
         }
@@ -81,8 +80,8 @@
         /* UI SHOWDOWN CARDS */
         .showdown-player { background: rgba(0,0,0,0.4); padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); }
         .showdown-name { font-weight: bold; color: white; font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
-        .showdown-cards { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;}
-        .showdown-group { display: flex; padding: 4px; border: 1px dashed var(--neon-green); border-radius: 6px; background: rgba(16, 185, 129, 0.1); }
+        .showdown-cards { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;}
+        .showdown-group { display: flex; padding: 3px; border: 1px dashed var(--neon-green); border-radius: 6px; background: rgba(16, 185, 129, 0.1); }
         .showdown-hand { display: flex; gap: 3px; }
 
         #game-ui { display: flex; flex-direction: column; height: 100%; width: 100%; position: relative; }
@@ -102,7 +101,7 @@
             padding: 6px 12px; border-radius: 20px; border: 1px solid var(--neon-green); width: 100%; text-align: center;
         }
 
-        /* TATA LETAK MEJA - ABSOLUTE CENTERED UNTUK PORTRAIT */
+        /* TATA LETAK MEJA - ABSOLUTE CENTERED */
         .table-container {
             flex: 1; position: relative; width: 100%; max-width: 600px; margin: 0 auto; 
             margin-top: 60px;
@@ -135,9 +134,9 @@
 
         /* KARTU KECIL (MELD/SHOWDOWN) */
         .mini-card {
-            width: 32px; height: 46px; font-size: 13px; background: #f8fafc; border-radius: 4px;
+            width: 32px; height: 46px; font-size: 13px; background: #f8fafc; border-radius: 5px;
             color: var(--black-suit); display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border: 1px solid #cbd5e1; font-weight: 800; line-height: 1; font-family: 'Rye', serif; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            border: 1px solid #cbd5e1; font-weight: 800; line-height: 1; font-family: 'Rye', serif; box-shadow: 0 2px 5px rgba(0,0,0,0.4);
         }
         .c-heart { color: var(--suit-heart); }
         .c-diamond { color: var(--suit-diamond); }
@@ -145,10 +144,10 @@
         .c-spade { color: var(--suit-spade); }
         .mini-card.face-card { background: linear-gradient(135deg, #fff 0%, #fde047 100%); }
 
-        /* LAPAK BUANGAN & SISA KARTU - DIPERBESAR */
+        /* LAPAK BUANGAN */
         .discard-pile {
-            width: 60px; height: 85px; border: 2px dashed rgba(255,255,255,0.2);
-            border-radius: 8px; margin: 8px; position: relative;
+            width: 60px; height: 85px; border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 8px; margin: 5px; position: relative;
             display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2);
             cursor: pointer; z-index: 5;
         }
@@ -160,43 +159,44 @@
             border-radius: 8px; border: 2px solid white; box-shadow: -3px 3px 0 #cbd5e1, -6px 6px 0 #64748b;
             display: flex; align-items: center; justify-content: center; font-family: 'Rye', serif; color: white; font-size: 16px;
         }
-        .deck-count { position: absolute; bottom: -20px; width: 100%; text-align: center; font-size: 13px; font-weight: 800; color: #94a3b8; text-shadow: 0 2px 4px black; }
+        .deck-count { position: absolute; bottom: -25px; width: 100%; text-align: center; font-size: 13px; font-weight: 800; color: #94a3b8; text-shadow: 0 2px 4px black; }
 
-        /* KARTU VISUAL UTAMA (TANGAN JUMBO & RENGGANG) */
+        /* KARTU VISUAL UTAMA (TANGAN JUMBO) */
         .playing-card {
             width: 75px; height: 110px; background: #ffffff; border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.6); position: absolute;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.7); position: absolute;
             display: flex; flex-direction: column; justify-content: space-between;
-            padding: 4px; box-sizing: border-box; font-family: 'Rye', serif;
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
-            transform-origin: bottom center; cursor: pointer; border: 1px solid #cbd5e1; color: var(--black-suit);
+            padding: 5px; box-sizing: border-box; font-family: 'Rye', serif;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            transform-origin: bottom center; cursor: pointer; border: 1px solid #94a3b8; color: var(--black-suit);
         }
         .card-top { font-size: 15px; line-height: 1; font-weight: 900; text-align: left; }
         .card-center { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .card-bottom { font-size: 15px; line-height: 1; font-weight: 900; text-align: left; transform: rotate(180deg); }
         .card-fresh { box-shadow: var(--green-glow); border: 3px solid var(--neon-green); z-index: 10; } 
         
+        /* Tema Kartu Kasta (Visual Kontras) */
         .playing-card.face-card { background: linear-gradient(135deg, #ffffff 0%, #fef08a 100%); border: 2px solid #f59e0b; }
         .playing-card.joker-card { background: linear-gradient(135deg, #ffffff 0%, #a7f3d0 100%); border: 3px solid var(--neon-green); }
 
         /* UI TANGAN PEMAIN & SKOR */
         .my-hand-container { display: flex; flex-direction: column; align-items: center; width: 100%; position: relative; margin-top: auto; padding-bottom: 20px;}
         .score-display {
-            background: rgba(15,23,42,0.9); border: 1px solid #475569; padding: 6px 18px; border-radius: 20px;
+            background: rgba(15,23,42,0.9); border: 1px solid #475569; padding: 6px 20px; border-radius: 20px;
             font-size: 12px; font-weight: 600; margin-bottom: 30px; color: #cbd5e1; display: flex; gap: 15px; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
         .score-display span { color: var(--gold); font-size: 15px; font-weight: 800; }
 
-        /* ACTION BUTTONS (FLOATING) */
+        /* ACTION BUTTONS */
         .action-buttons {
-            display: flex; gap: 8px; position: absolute; top: -55px;
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(5px); padding: 8px 15px; border-radius: 25px;
+            display: flex; gap: 8px; position: absolute; top: -60px;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(5px); padding: 8px 12px; border-radius: 25px;
             border: 1px solid rgba(255,255,255,0.2); opacity: 0; pointer-events: none; transform: translateY(10px); transition: 0.3s; z-index: 200; box-shadow: 0 10px 25px rgba(0,0,0,0.6);
         }
         .action-buttons.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
         .btn-action { 
             background: rgba(255, 255, 255, 0.2); color: white; border: none; padding: 10px 16px; 
-            border-radius: 12px; font-weight: 800; font-size: 12px; cursor: pointer; transition: 0.2s; text-transform: uppercase;
+            border-radius: 12px; font-weight: 800; font-size: 11px; cursor: pointer; transition: 0.2s; text-transform: uppercase;
         }
         .btn-turun { background: var(--blue) !important; color: white !important; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
         .btn-buang { background: var(--red-suit) !important; color: white !important; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
@@ -208,6 +208,12 @@
         /* Merapatkan Kartu Tangan Tapi Renggang Jelas */
         .my-hand .playing-card.selected { transform: translateY(-35px) scale(1.1) rotate(0deg) !important; z-index: 100 !important; border: 3px solid var(--gold) !important; box-shadow: var(--gold-glow); }
         .my-hand .paired { border: 3px solid var(--neon-green); box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.4); }
+
+        @media screen and (max-height: 650px) {
+            .table-container { padding-top: 55px; }
+            .score-display { margin-bottom: 15px; }
+            .action-buttons { top: -50px; }
+        }
     </style>
 </head>
 <body>
@@ -281,11 +287,11 @@
             </div>
 
             <div id="slot-right" class="player-area player-right">
-                <div class="discard-pile" id="discard-right" onclick="drawFromDiscard('right')"></div>
                 <div class="avatar-container">
                     <div class="avatar" id="ava-right">👽</div><div class="player-name" id="name-right">Bot 3</div>
                     <div class="melds-area" id="melds-right"></div>
                 </div>
+                <div class="discard-pile" id="discard-right" onclick="drawFromDiscard('right')"></div>
             </div>
 
             <div class="player-bottom-wrapper">
@@ -693,6 +699,7 @@
             runTransaction(ref(db, `remi_rooms/${code}`), (game) => {
                 if(game && game.status === "LOBBY") {
                     if(game.players.length >= 4) return; // Full
+                    
                     myPlayerId = "p_" + Date.now();
                     game.players.push({ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [] });
                 }
@@ -810,8 +817,8 @@
             if(!game || !game.players || !game.deck || !game.jokerRank) return;
 
             mySlotIndex = game.players.findIndex(p => p.id === myPlayerId);
-            if(mySlotIndex === -1) return;
-
+            if(mySlotIndex === -1) return; // Mencegah crash jika user tidak terdaftar
+            
             document.getElementById('screen-menu').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
             document.getElementById('custom-modal-overlay').classList.add('hidden');
@@ -826,7 +833,7 @@
             if(amIHost) { document.getElementById('btn-end-match').style.display = 'block'; }
 
             const activePlayer = game.players[game.turnIndex % 4];
-            if(!activePlayer) return; 
+            if(!activePlayer) return;
 
             if (isMyTurn) {
                 document.getElementById('turn-display').innerText = turnPhase === 'DRAW' ? "Giliranmu! Ambil Kartu." : "Giliranmu! Buang 1 Kartu.";
@@ -846,7 +853,7 @@
                 let pos = positions[i];
                 let pData = game.players[pIndex];
 
-                if(!pData) continue; 
+                if(!pData) continue;
 
                 if(pos !== 'bottom') { document.getElementById(`name-${pos}`).innerText = pData.name; } 
                 else { document.getElementById(`my-name`).innerText = pData.name; }
@@ -867,11 +874,9 @@
                     meldsDiv.innerHTML = "";
                     if(pData.melds) {
                         pData.melds.forEach(group => {
-                            if(!group) return;
                             let groupDiv = document.createElement('div');
                             groupDiv.className = 'meld-group';
                             group.forEach((c) => {
-                                if(!c) return;
                                 let fClass = ['J','Q','K'].includes(c.rank) ? 'face-card' : '';
                                 groupDiv.innerHTML += `<div class="mini-card ${getSuitClass(c.suit)} ${fClass}">${c.rank}<br><span style="font-size:11px;">${c.suit}</span></div>`;
                             });
@@ -894,7 +899,6 @@
             let centerIndex = (myHand.length - 1) / 2;
 
             myHand.forEach((card, index) => {
-                if(!card) return;
                 let isJoker = (card.rank === game.jokerRank);
                 let isSelected = selectedCardIndices.includes(index);
                 let isPaired = handInfo.groupedIndices.has(index);
@@ -907,6 +911,7 @@
                 
                 let offset = index - centerIndex;
                 if (!isSelected) {
+                    // Margin lebih renggang untuk layar HP
                     cardElement.style.transform = `translateX(${offset * 25}px) translateY(${Math.abs(offset) * 2}px) rotate(${offset * 3}deg)`;
                     if(isJoker && !isPaired) cardElement.style.border = "2px solid var(--gold)";
                 } else {
@@ -994,6 +999,7 @@
             });
         };
 
+        // FUNGSI TURUN / MELD KARTU KE MEJA
         window.meldSelectedCards = () => {
             if (selectedCardIndices.length < 3 || !isMyTurn) return;
 
@@ -1044,6 +1050,7 @@
             }).then(() => { document.querySelector('.deck-wrapper').style.pointerEvents = 'auto'; });
         };
 
+        // GLOBAL NEMBAK LOGIC
         window.drawFromDiscard = (posStr) => {
             if (!isMyTurn || turnPhase !== 'DRAW') return;
             
@@ -1114,8 +1121,9 @@
                 let myMelds = game.players[mySlotIndex].melds;
                 let cardToThrow = myHand[sIndex];
                 
+                // VALIDASI ATURAN KARTU AS
                 if (cardToThrow.rank === 'A' && (!myMelds || myMelds.length === 0)) {
-                    showAlertModal("PELANGGARAN!", "Kartu AS tidak bisa dibuang! Kamu harus <b>'TURUN'</b> kombinasi kartu terlebih dahulu ke meja dengan memilih 3 kartu sah lalu tekan tombol TURUN biru.");
+                    showAlertModal("PELANGGARAN!", "Kartu AS tidak bisa dibuang! Kamu harus <b>'TURUN'</b> kombinasi kartu terlebih dahulu ke meja dengan menyeleksi 3 kartu sah lalu tekan tombol TURUN biru.");
                     return;
                 }
 
