@@ -324,6 +324,57 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // --- VARIABEL GLOBAL ---
+        let myName = localStorage.getItem("luna_global_name") || localStorage.getItem("ut_name") || "";
+        let myPlayerId = localStorage.getItem("remi_pid");
+        let currentRoomId = localStorage.getItem("remi_room");
+        let amIHost = false; 
+        let mySlotIndex = -1; 
+        let selectedCardIndices = []; 
+        let isMyTurn = false;
+        let turnPhase = ""; 
+        let currentJokerRank = "";
+
+        const BOT_NAMES = ["Bot Joni 🤖", "Bot Siti 👾", "Bot Anam 👽"];
+        const SUITS = ['♥', '♦', '♠', '♣'];
+        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+        // --- 🛡️ FIREWALL MUTLAK LUKAS (ANTI FIREBASE QUIRK) ---
+        function sanitizeGameData(data) {
+            if (!data) return data;
+
+            // Helper untuk memaksa data menjadi Array murni
+            const forceArray = (val) => {
+                if (!val) return [];
+                if (Array.isArray(val)) return val;
+                return Object.values(val);
+            };
+
+            // 1. Sanitasi Objek Players
+            if (data.players) {
+                let playersArr = forceArray(data.players);
+                data.players = playersArr.map(p => {
+                    if (!p) return p;
+                    // Paksa semua tumpukan kartu menjadi Array
+                    p.hand = forceArray(p.hand);
+                    p.discard = forceArray(p.discard);
+                    p.knockVictims = forceArray(p.knockVictims);
+                    
+                    // Melds adalah Array 2D (Array di dalam Array), sanitasi dua lapis
+                    let rawMelds = forceArray(p.melds);
+                    p.melds = rawMelds.map(m => forceArray(m));
+                    
+                    return p;
+                });
+            }
+
+            // 2. Sanitasi Variabel Global Latar Belakang
+            data.deck = forceArray(data.deck);
+            data.readyList = forceArray(data.readyList);
+
+            return data;
+        }
+
         // --- SISTEM MODAL KUSTOM ---
         window.showAlertModal = function(title, htmlContent, buttons = []) {
             const overlay = document.getElementById('custom-modal-overlay');
@@ -657,6 +708,7 @@
 
         window.setPlayerReady = () => {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                game = sanitizeGameData(game);
                 if(game) {
                     if(!game.readyList) game.readyList = [];
                     if(!game.readyList.includes(myPlayerId)) {
@@ -684,6 +736,7 @@
         window.forceEndMatch = () => {
             showConfirmModal("AKHIRI TURNAMEN?", "Selesaikan turnamen sekarang dan lihat siapa juaranya?", () => {
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                    game = sanitizeGameData(game);
                     if(game) {
                         let maxScore = -9999; let winner = "";
                         for (let pid in game.globalScores) {
@@ -697,27 +750,13 @@
             });
         };
 
-        // --- VARIABEL GLOBAL ---
-        let myName = localStorage.getItem("luna_global_name") || localStorage.getItem("ut_name") || "";
-        let myPlayerId = localStorage.getItem("remi_pid");
-        let currentRoomId = localStorage.getItem("remi_room");
-        let amIHost = false; 
-        let mySlotIndex = -1; 
-        let selectedCardIndices = []; 
-        let isMyTurn = false;
-        let turnPhase = ""; 
-        let currentJokerRank = "";
-
-        const BOT_NAMES = ["Bot Joni 🤖", "Bot Siti 👾", "Bot Anam 👽"];
-        const SUITS = ['♥', '♦', '♠', '♣'];
-        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-
         window.onload = () => {
             if (myName) document.getElementById('input-nama').value = myName;
             if (currentRoomId && myPlayerId) {
                 get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                    if (snap.exists() && snap.val().status !== "ENDED") {
-                        enterLobby(currentRoomId, snap.val().host === myPlayerId);
+                    let gameData = sanitizeGameData(snap.val());
+                    if (snap.exists() && gameData && gameData.status !== "ENDED") {
+                        enterLobby(currentRoomId, gameData.host === myPlayerId);
                     } else resetLocalData();
                 }).catch(() => resetLocalData());
             }
@@ -750,7 +789,7 @@
             if (!myName || !code) return showAlertModal("PERHATIAN", "Lengkapi nama dan kode room!");
             get(ref(db, `remi_rooms/${code}`)).then(snap => {
                 if (snap.exists() && snap.val().status === "LOBBY") {
-                    const roomData = snap.val();
+                    const roomData = sanitizeGameData(snap.val());
                     if(roomData.players.length >= 4) return showAlertModal("MAAF", "Room Penuh!");
                     myPlayerId = "p_" + Date.now();
                     localStorage.setItem("luna_global_name", myName);
@@ -775,7 +814,7 @@
 
             onValue(ref(db, `remi_rooms/${roomId}`), snap => {
                 if(!snap.exists()) { resetLocalData(); return; }
-                const game = snap.val();
+                const game = sanitizeGameData(snap.val());
                 
                 const list = document.getElementById('player-list'); list.innerHTML = "";
                 if(game.players) {
@@ -821,6 +860,7 @@
 
         function executeStartGame() {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                game = sanitizeGameData(game);
                 if (game) {
                     game.targetScore = parseInt(document.getElementById('target-score').value) || 250;
                     game.globalScores = {};
@@ -1007,22 +1047,23 @@
         window.selectCard = (index) => {
             let pos = selectedCardIndices.indexOf(index);
             if (pos > -1) selectedCardIndices.splice(pos, 1); else selectedCardIndices.push(index);
-            get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => startGameUI(snap.val())); 
+            get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => startGameUI(sanitizeGameData(snap.val()))); 
         };
 
         window.moveCard = (direction) => {
             if (selectedCardIndices.length !== 1 || !isMyTurn) return;
             let sIndex = selectedCardIndices[0];
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                if(game) {
-                    let hand = game.players[mySlotIndex].hand;
+            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
+                gameTx = sanitizeGameData(gameTx);
+                if(gameTx) {
+                    let hand = gameTx.players[mySlotIndex].hand;
                     let targetIndex = (direction === 'left') ? sIndex - 1 : sIndex + 1;
                     if (targetIndex >= 0 && targetIndex < hand.length) {
                         [hand[sIndex], hand[targetIndex]] = [hand[targetIndex], hand[sIndex]];
                         selectedCardIndices = [targetIndex]; 
                     }
                 }
-                return game;
+                return gameTx;
             });
         };
 
@@ -1030,7 +1071,7 @@
             if (!isMyTurn || selectedCardIndices.length < 3) return;
 
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = snap.val();
+                let game = sanitizeGameData(snap.val());
                 let myHand = game.players[mySlotIndex].hand;
                 let selectedCards = selectedCardIndices.map(i => myHand[i]);
 
@@ -1040,6 +1081,7 @@
                 }
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
+                    gameTx = sanitizeGameData(gameTx);
                     if(gameTx) {
                         let pData = gameTx.players[mySlotIndex];
                         let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
@@ -1063,6 +1105,7 @@
                 return;
             }
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                game = sanitizeGameData(game);
                 if(game && game.deck && game.deck.length > 0) {
                     let drawnCard = game.deck.pop();
                     game.players[mySlotIndex].hand.push(drawnCard);
@@ -1088,7 +1131,7 @@
             }
 
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = snap.val();
+                let game = sanitizeGameData(snap.val());
                 let targetPlayer = game.players[actualTargetIdx];
                 if(!targetPlayer || !targetPlayer.discard || targetPlayer.discard.length === 0) return;
                 
@@ -1103,6 +1146,7 @@
                 }
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
+                    gameTx = sanitizeGameData(gameTx);
                     if(gameTx) {
                         let pData = gameTx.players[mySlotIndex];
                         let takenCard = gameTx.players[actualTargetIdx].discard.pop();
@@ -1139,7 +1183,7 @@
             let sIndex = selectedCardIndices[0];
             
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = snap.val();
+                let game = sanitizeGameData(snap.val());
                 let myHand = game.players[mySlotIndex].hand;
                 let myMelds = game.players[mySlotIndex].melds;
                 let cardToThrow = myHand[sIndex];
@@ -1150,6 +1194,7 @@
                 }
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
+                    gameTx = sanitizeGameData(gameTx);
                     if(gameTx) {
                         let thrownCard = gameTx.players[mySlotIndex].hand.splice(sIndex, 1)[0];
                         if(!gameTx.players[mySlotIndex].discard) gameTx.players[mySlotIndex].discard = [];
@@ -1170,22 +1215,24 @@
             if (!isMyTurn || turnPhase !== 'DISCARD') return;
             
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let pData = snap.val().players[mySlotIndex];
+                let game = sanitizeGameData(snap.val());
+                let pData = game.players[mySlotIndex];
                 let v = pData.knockVictims || [];
-                let victimMsg = v.length > 0 ? `Target Minus -50:<br><span style='color:var(--red-suit)'>${v.map(idx => snap.val().players[idx].name).join(', ')}</span>` : `Semua musuh akan terkena -50 poin.`;
+                let victimMsg = v.length > 0 ? `Target Minus -50:<br><span style='color:var(--red-suit)'>${v.map(idx => game.players[idx].name).join(', ')}</span>` : `Semua musuh akan terkena -50 poin.`;
 
                 showConfirmModal("TUTUP PERMAINAN?", "Yakin menekan TUTUP?<br><br><span style='color:var(--gold)'>" + victimMsg + "</span>", () => {
-                    runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                        if(game) {
+                    runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
+                        gameTx = sanitizeGameData(gameTx);
+                        if(gameTx) {
                             if(selectedCardIndices.length === 1) {
                                 let sIndex = selectedCardIndices[0];
-                                let thrownCard = game.players[mySlotIndex].hand.splice(sIndex, 1)[0];
-                                if(!game.players[mySlotIndex].discard) game.players[mySlotIndex].discard = [];
-                                game.players[mySlotIndex].discard.push(thrownCard);
+                                let thrownCard = gameTx.players[mySlotIndex].hand.splice(sIndex, 1)[0];
+                                if(!gameTx.players[mySlotIndex].discard) gameTx.players[mySlotIndex].discard = [];
+                                gameTx.players[mySlotIndex].discard.push(thrownCard);
                             }
-                            game = handleRoundEnd(game, mySlotIndex, game.players[mySlotIndex].knockVictims);
+                            gameTx = handleRoundEnd(gameTx, mySlotIndex, gameTx.players[mySlotIndex].knockVictims);
                         }
-                        return game;
+                        return gameTx;
                     });
                 });
             });
@@ -1197,6 +1244,7 @@
             isBotThinking = true;
 
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                game = sanitizeGameData(game);
                 if(game && game.players[game.turnIndex % 4].isBot) {
                     let botIdx = game.turnIndex % 4;
                     
