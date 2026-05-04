@@ -97,6 +97,16 @@
             padding: 6px 12px; border-radius: 20px; border: 1px solid var(--neon-green); width: 100%; text-align: center;
         }
 
+        /* LEADERBOARD & DIRECTION */
+        .leaderboard-panel {
+            position: absolute; top: 60px; right: 10px; background: rgba(15,23,42,0.8);
+            border: 1px solid var(--gold); border-radius: 10px; padding: 8px; z-index: 8;
+            font-size: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: none; min-width: 110px;
+        }
+        .leaderboard-title { color: var(--gold); font-weight: 800; text-align: center; margin-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 3px; }
+        .leaderboard-item { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 3px; }
+        .dir-indicator { font-size: 22px; color: var(--neon-green); text-shadow: var(--green-glow); position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); font-weight: 900;}
+
         /* TATA LETAK MEJA */
         .game-table {
             flex: 1; position: relative; display: grid;
@@ -132,7 +142,6 @@
             border: 1px solid #cbd5e1; font-weight: 800; line-height: 1; font-family: 'Rye', serif; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         .mini-card.c-red { color: var(--red-suit); }
-        /* KELAS MANTAN JOKER MINI */
         .mini-card.fallen { opacity: 0.85; filter: grayscale(30%); background: #e2e8f0; }
 
         .discard-pile {
@@ -141,8 +150,8 @@
             display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2);
             cursor: pointer; z-index: 5;
         }
-        .center-area { grid-row: 2; grid-column: 2; display: flex; align-items: center; justify-content: center; margin-top: -10px; }
-        .deck-wrapper { position: relative; cursor: pointer; transition: 0.2s; }
+        .center-area { grid-row: 2; grid-column: 2; display: flex; align-items: center; justify-content: center; margin-top: -10px; position:relative; }
+        .deck-wrapper { position: relative; cursor: pointer; transition: 0.2s; z-index: 10;}
         .deck-wrapper:active { transform: scale(0.9); }
         .deck-pile {
             width: 65px; height: 95px; background: repeating-linear-gradient(45deg, #1e293b, #1e293b 5px, #334155 5px, #334155 10px);
@@ -166,7 +175,6 @@
         .card-bottom { font-size: 15px; line-height: 0.9; transform: rotate(180deg); font-weight: 900; }
         .card-red { color: var(--red-suit); }
         .card-fresh { box-shadow: var(--green-glow); border: 2px solid var(--neon-green); z-index: 10; } 
-        /* VISUAL THE FALLEN JOKER */
         .playing-card.fallen { opacity: 0.85; filter: grayscale(20%); background: #e2e8f0; }
 
         .card-center.pips-container { 
@@ -258,6 +266,12 @@
             <div id="turn-display" class="status-info" style="flex:1;">Menunggu...</div>
         </div>
 
+        <!-- LEADERBOARD PANEL -->
+        <div id="leaderboard" class="leaderboard-panel">
+            <div class="leaderboard-title">KLASEMEN</div>
+            <div id="lb-content"></div>
+        </div>
+
         <div class="game-table">
             <div id="slot-top" class="player-area player-top">
                 <div class="avatar-container">
@@ -279,6 +293,7 @@
                 <div class="deck-wrapper" onclick="drawFromDeck()">
                     <div class="deck-pile">LUNA</div>
                     <div id="deck-count" class="deck-count">0</div>
+                    <div id="dir-indicator" class="dir-indicator">↻</div>
                 </div>
             </div>
 
@@ -368,37 +383,39 @@
             ]);
         };
 
-        // --- VALIDASI KARTU: Mengabaikan Fallen Joker ---
+        // --- ALGORITMA PENILAIAN ---
+        function getCardPoints(rank, isJoker) {
+            if (isJoker) return 25; 
+            if (rank === 'A') return 15;
+            if (['J', 'Q', 'K'].includes(rank)) return 10;
+            return 5;
+        }
+
+        // --- VALIDASI KARTU: Tris Joker Murni DILARANG ---
         function isValidSingleGroup(cards, jokerRank) {
             if (cards.length < 3) return false;
-            // Joker yang dihitung hanya Joker murni, bukan Fallen Joker
             let jokers = cards.filter(c => c.rank === jokerRank && !c.isFallen);
             let normals = cards.filter(c => c.rank !== jokerRank || c.isFallen);
+
+            // Tris Joker Murni tidak sah, wajib ada minimal 1 induk kartu normal
+            if (normals.length === 0) return false; 
 
             if (normals.every(c => c.rank === 'A')) {
                 return (normals.length + jokers.length >= 3);
             }
 
-            if (jokers.length >= 2 && cards.length === 3) {
-                if (normals.length === 1 && !['J','Q','K','A'].includes(normals[0].rank)) return true;
-                if (normals.length === 0) return true; 
-                return false;
-            }
-
-            if (normals.length === 0) return true; 
-
             let suit = normals[0].suit;
             if (!normals.every(c => c.suit === suit)) return false;
 
-            let isFaces = normals.every(c => ['J','Q','K'].includes(c.rank));
-            let isNumbers = normals.every(c => !['J','Q','K','A'].includes(c.rank));
+            let isFaces = normals.every(c => ['J','Q','K'].includes(c.rank)); 
+            let isNumbers = normals.every(c => !['J','Q','K','A'].includes(c.rank)); 
 
             if (!isFaces && !isNumbers) return false;
 
             if (isFaces) {
                 let present = normals.map(c => c.rank);
                 let missing = 3 - present.length;
-                if (new Set(present).size !== present.length) return false; // Anti kembar rank di straight
+                if (new Set(present).size !== present.length) return false;
                 return missing === jokers.length;
             }
 
@@ -415,7 +432,7 @@
             return false;
         }
 
-        // --- ALGORITMA EVALUASI: Kasta, Capping, dan True Shape ---
+        // --- ALGORITMA EVALUASI: Kasta & Capping ---
         function evaluateHand(handCards, melds, jokerRank) {
             let score = 0; let groupedIndices = new Set();
             let jokers = []; let nonJokers = [];
@@ -435,7 +452,6 @@
             const SUITS = ['♥', '♦', '♠', '♣'];
             let usedJokers = 0;
 
-            // Grouping: Tris AS dengan Joker dukungan
             let aces = nonJokers.filter(c => c.rank === 'A' && !groupedIndices.has(c.index));
             let missingAces = Math.max(0, 3 - aces.length);
             if (aces.length > 0 && missingAces <= (jokers.length - usedJokers)) {
@@ -450,7 +466,6 @@
                 usedJokers += missingAces;
             }
 
-            // Grouping: Face Cards (Gambar) dengan sambungan Joker
             SUITS.forEach(suit => {
                 let hasJ = nonJokers.find(c => c.suit === suit && c.rank === 'J' && !groupedIndices.has(c.index));
                 let hasQ = nonJokers.find(c => c.suit === suit && c.rank === 'Q' && !groupedIndices.has(c.index));
@@ -476,7 +491,6 @@
                 }
             });
 
-            // Grouping: Seri Angka
             SUITS.forEach(suit => {
                 let nums = nonJokers.filter(c => c.suit === suit && c.val >= 2 && c.val <= 10).sort((a, b) => a.val - b.val);
                 if(nums.length === 0) return;
@@ -517,63 +531,41 @@
                 }
             });
 
-            // Sisa Joker menjadi Tris Joker Murni
-            let spareJokersCount = jokers.length - usedJokers;
-            if (spareJokersCount >= 3) {
-                let g = [];
-                for(let k=0; k < spareJokersCount; k++) {
-                    let jIdx = jokers[usedJokers + k];
-                    groupedIndices.add(jIdx);
-                    g.push(handCards[jIdx]);
-                }
-                formedGroups.push(g);
-                usedJokers += spareJokersCount;
-            } else {
-                // Pasangkan sisa maksimal 2 joker ke angka receh
-                while ((jokers.length - usedJokers) >= 2) {
-                    let freeCard = nonJokers.find(c => !groupedIndices.has(c.index) && c.val >= 2 && c.val <= 10);
-                    if (freeCard) { 
-                        groupedIndices.add(freeCard.index); 
-                        let g = [handCards[freeCard.index]];
-                        for(let k=0; k<2; k++) {
-                            let jIdx = jokers[usedJokers + k];
-                            groupedIndices.add(jIdx);
-                            g.push(handCards[jIdx]);
-                        }
-                        formedGroups.push(g);
-                        usedJokers += 2; 
-                    } else { break; }
-                }
+            // Sisa Joker wajib menempel ke normal card karena Murni dilarang
+            while ((jokers.length - usedJokers) >= 2) {
+                let freeCard = nonJokers.find(c => !groupedIndices.has(c.index)); 
+                if (freeCard) { 
+                    groupedIndices.add(freeCard.index); 
+                    let g = [handCards[freeCard.index]];
+                    for(let k=0; k<2; k++) {
+                        let jIdx = jokers[usedJokers + k];
+                        groupedIndices.add(jIdx);
+                        g.push(handCards[jIdx]);
+                    }
+                    formedGroups.push(g);
+                    usedJokers += 2; 
+                } else { break; }
             }
 
-            // --- SISTEM SCORING KASTA BARU ---
             function scoreGroup(groupCards) {
                 let normals = groupCards.filter(c => c.rank !== jokerRank || c.isFallen);
+                if (normals.length === 0) return 0; // Fallback matematis
 
-                // TRIS JOKER MURNI (True Shape Mimicry)
-                if (normals.length === 0) { 
-                    if (jokerRank === 'A') return groupCards.length * 15;
-                    if (['J','Q','K'].includes(jokerRank)) return groupCards.length * 10;
-                    return groupCards.length * 5; 
-                }
-
-                // TRIS AS/NORMAL
                 let isTris = normals.every(c => c.rank === normals[0].rank);
                 if (isTris) {
                     let rank = normals[0].rank;
-                    let val = (rank === 'A') ? 15 : (['J','Q','K','10'].includes(rank) ? 10 : 5);
+                    let val = (rank === 'A') ? 15 : (['J','Q','K'].includes(rank) ? 10 : 5);
                     return groupCards.length * val; 
                 }
 
-                // SERI/STRAIGHT (Capping di +10)
-                let hasGambar = normals.some(c => ['J','Q','K','10'].includes(c.rank));
+                let hasGambar = normals.some(c => ['J','Q','K'].includes(c.rank));
                 let valPerJoker = hasGambar ? 10 : 5; 
 
                 let grpScore = 0;
                 normals.forEach(c => {
                     if (c.rank === 'A') grpScore += 15;
-                    else if (['J','Q','K','10'].includes(c.rank)) grpScore += 10;
-                    else grpScore += 5;
+                    else if (['J','Q','K'].includes(c.rank)) grpScore += 10;
+                    else grpScore += 5; 
                 });
                 let jokersCount = groupCards.length - normals.length;
                 grpScore += (jokersCount * valPerJoker);
@@ -583,14 +575,12 @@
             if (melds) melds.forEach(g => score += scoreGroup(g));
             formedGroups.forEach(g => score += scoreGroup(g));
 
-            // PENGHITUNGAN PENALTI MATI DI TANGAN (Deadwood)
             handCards.forEach((c, i) => {
                 if (!groupedIndices.has(i)) {
-                    // Cek jika Joker Murni vs Fallen Joker
                     if (c.rank === jokerRank && !c.isFallen) score -= 25; 
                     else if (c.rank === 'A') score -= 15;
-                    else if (['J','Q','K','10'].includes(c.rank)) score -= 10;
-                    else score -= 5; // Fallen Joker dihukum normal -5 di sini!
+                    else if (['J','Q','K'].includes(c.rank)) score -= 10; 
+                    else score -= 5; 
                 }
             });
 
@@ -601,27 +591,59 @@
             return { score, hasValidGroup, isAllPaired, groupedIndices };
         }
 
-        // --- SISTEM SHOWDOWN & RONDE ---
+        // --- SISTEM SHOWDOWN: SCALING KNOCK & TARGET PENALTY ---
         function handleRoundEnd(game, knockerIdx, victims) {
             if (!game.globalScores) game.globalScores = {};
+            
+            let baseKnockValue = 0;
+            let knockMsg = "";
+
+            if (knockerIdx !== null) {
+                let knocker = game.players[knockerIdx];
+                let knockCard = knocker.discard[knocker.discard.length - 1];
+                
+                let isTrueJoker = (knockCard.rank === game.jokerRank && !knockCard.isFallen);
+                if (isTrueJoker) { baseKnockValue = 250; }
+                else if (knockCard.rank === 'A') { baseKnockValue = 150; }
+                else if (['J', 'Q', 'K'].includes(knockCard.rank)) { baseKnockValue = 100; }
+                else { baseKnockValue = 50; } 
+                
+                knockMsg = `🎉 ${knocker.name} MENUTUP DENGAN KARTU ${isTrueJoker ? 'JOKER' : knockCard.rank}!`;
+            } else {
+                knockMsg = "⚠️ STOK KARTU HABIS! SKOR NORMAL DITERAPKAN!";
+            }
             
             game.players.forEach((p, idx) => {
                 if (game.globalScores[p.id] === undefined) game.globalScores[p.id] = 0;
                 let handInfo = evaluateHand(p.hand || [], p.melds || [], game.jokerRank);
-                let rScore = handInfo.score;
+                let rScore = handInfo.score; 
                 
-                // Distribusi Penalti -50 secara menumpuk (Stacking Penalty)
-                if (knockerIdx !== null && idx !== knockerIdx) {
-                    if(!victims || victims.length === 0) { rScore -= 50; } 
-                    else if (victims.includes(idx)) { rScore -= 50; } 
+                if (knockerIdx !== null) {
+                    if (idx === knockerIdx) {
+                        rScore += baseKnockValue; // Bonus penutup Flat
+                    } else {
+                        if (!victims || victims.length === 0) {
+                            // Tutup Murni: Musuh aman dari denda, hanya hitung tangan.
+                        } else if (victims.includes(idx)) {
+                            // Nembak Multi-Kill: Korban merana denda bertumpuk hitungan kartu matinya
+                            rScore -= baseKnockValue;
+                        }
+                    }
                 }
                 
                 game.globalScores[p.id] += rScore;
                 p.lastRoundScore = rScore; 
             });
             
+            // ROTASI U-TURN (REVERSE) JIKA ADA YANG MENUTUP
+            if (knockerIdx !== null) {
+                game.playDirection = (game.playDirection || 1) * -1;
+            } else {
+                game.playDirection = game.playDirection || 1;
+            }
+
             game.status = "ROUND_ENDED";
-            game.roundReason = knockerIdx !== null ? `🎉 ${game.players[knockerIdx].name} MENUTUP PERMAINAN!` : "⚠️ STOK KARTU HABIS!";
+            game.roundReason = knockMsg;
             game.readyCount = 0; 
             game.readyList = [];
 
@@ -637,7 +659,7 @@
         function renderShowdown(game) {
             let html = `<div style="text-align:center; font-size:14px; margin-bottom:15px; color:var(--neon-green); font-weight:800;">${game.roundReason}</div>`;
             
-            let sortedPlayers = [...game.players].sort((a,b) => (a.lastRoundScore||0) - (b.lastRoundScore||0));
+            let sortedPlayers = [...game.players].sort((a,b) => (b.lastRoundScore||0) - (a.lastRoundScore||0)); 
             
             sortedPlayers.forEach(p => {
                 let colorClass = (p.lastRoundScore||0) < 0 ? 'score-minus' : 'score-plus';
@@ -694,13 +716,15 @@
                     
                     let humanCount = game.players.filter(p => !p.isBot).length;
                     if(game.readyCount >= humanCount) {
-                        let lowestScore = Infinity; let turnIdx = 0;
+                        // KASTA TERBAWAH JALAN DULUAN
+                        let lowestScore = Infinity; let startingIdx = 0;
                         game.players.forEach((p, i) => {
-                            if((game.globalScores[p.id]||0) < lowestScore) { lowestScore = game.globalScores[p.id]; turnIdx = i; }
+                            if((game.globalScores[p.id]||0) < lowestScore) { lowestScore = game.globalScores[p.id]; startingIdx = i; }
                         });
                         
                         setupDeckAndDeal(game);
-                        game.turnIndex = turnIdx;
+                        game.currentTurnSlot = startingIdx; 
+                        game.playDirection = game.playDirection || 1;
                         game.readyList = []; game.readyCount = 0;
                         game.status = "PLAYING";
                     }
@@ -764,7 +788,8 @@
             const roomId = Math.random().toString(36).substring(2,6).toUpperCase();
             set(ref(db, `remi_rooms/${roomId}`), {
                 status: "LOBBY", host: myPlayerId,
-                players: [{ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [] }]
+                players: [{ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [], hasDrawnFromDeck: false }],
+                playDirection: 1, currentTurnSlot: 0
             }).then(() => {
                 localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", roomId);
                 enterLobby(roomId, true);
@@ -782,7 +807,7 @@
                     myPlayerId = "p_" + Date.now();
                     localStorage.setItem("luna_global_name", myName);
                     let updatedPlayers = roomData.players || [];
-                    updatedPlayers.push({ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [] });
+                    updatedPlayers.push({ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [], hasDrawnFromDeck: false });
                     update(ref(db, `remi_rooms/${code}`), { players: updatedPlayers }).then(() => {
                         localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", code);
                         enterLobby(code, false);
@@ -840,10 +865,22 @@
             let jokerCard = deck.pop(); game.jokerRank = jokerCard.rank; deck.push(jokerCard); 
             for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
 
-            game.players.forEach(p => { p.hand = []; p.discard = []; p.melds = []; p.knockVictims = []; });
+            game.players.forEach(p => { p.hand = []; p.discard = []; p.melds = []; p.knockVictims = []; p.hasDrawnFromDeck = false; });
 
             for(let i=0; i<7; i++) { for(let p=0; p<4; p++) { game.players[p].hand.push(deck.pop()); } }
+            
+            // KUTUKAN 4 DEWA (4 JOKERS PENALTY)
+            game.players.forEach(p => {
+                let jokerCount = p.hand.filter(c => c.rank === game.jokerRank).length;
+                if (jokerCount === 4) {
+                    if(!game.globalScores) game.globalScores = {};
+                    if(game.globalScores[p.id] === undefined) game.globalScores[p.id] = 0;
+                    game.globalScores[p.id] -= 250;
+                }
+            });
+
             game.deck = deck;
+            game.turnPhase = 'DRAW';
         }
 
         function executeStartGame() {
@@ -853,14 +890,14 @@
                     game.globalScores = {};
                     let botsAdded = 0;
                     while(game.players.length < 4) {
-                        game.players.push({ id: `bot_${botsAdded}`, name: BOT_NAMES[botsAdded], isBot: true, hand: [], discard: [], melds: [], knockVictims:[] });
+                        game.players.push({ id: `bot_${botsAdded}`, name: BOT_NAMES[botsAdded], isBot: true, hand: [], discard: [], melds: [], knockVictims:[], hasDrawnFromDeck: false });
                         botsAdded++;
                     }
                     game.players.forEach(p => { game.globalScores[p.id] = 0; });
+                    game.playDirection = 1;
+                    game.currentTurnSlot = 0;
                     setupDeckAndDeal(game);
                     
-                    game.turnIndex = 0;
-                    game.turnPhase = 'DRAW'; 
                     game.status = "PLAYING";
                 }
                 return game;
@@ -912,14 +949,28 @@
             currentJokerRank = game.jokerRank;
             document.getElementById('joker-display').innerText = `🃏 JOKER: ${game.jokerRank}`;
             document.getElementById('deck-count').innerText = game.deck ? game.deck.length : 0;
+            
+            // INDIKATOR ARAH (REVERSE UI)
+            document.getElementById('dir-indicator').innerText = (game.playDirection === 1) ? "↻" : "↺";
+
+            // LEADERBOARD RENDER
+            if (game.globalScores) {
+                let sortedLb = [...game.players].sort((a,b) => (game.globalScores[b.id]||0) - (game.globalScores[a.id]||0));
+                let lbHtml = "";
+                sortedLb.forEach((p, i) => {
+                    let color = (game.globalScores[p.id]||0) < 0 ? 'var(--red-suit)' : 'var(--neon-green)';
+                    lbHtml += `<div class="leaderboard-item"><span>${i+1}. ${p.name.substring(0,8)}</span><span style="color:${color}; font-weight:bold;">${game.globalScores[p.id]||0}</span></div>`;
+                });
+                document.getElementById('lb-content').innerHTML = lbHtml;
+            }
 
             mySlotIndex = game.players.findIndex(p => p.id === myPlayerId);
-            isMyTurn = (game.turnIndex % 4 === mySlotIndex);
+            isMyTurn = (game.currentTurnSlot === mySlotIndex);
             turnPhase = game.turnPhase;
 
             if(amIHost) { document.getElementById('btn-end-match').style.display = 'block'; }
 
-            const activePlayer = game.players[game.turnIndex % 4];
+            const activePlayer = game.players[game.currentTurnSlot];
             if (isMyTurn) {
                 document.getElementById('turn-display').innerText = turnPhase === 'DRAW' ? "Giliranmu! Ambil Kartu." : "Giliranmu! Buang 1 Kartu.";
                 document.getElementById('turn-display').style.color = "var(--neon-green)";
@@ -942,7 +993,7 @@
                 else { document.getElementById(`my-name`).innerText = pData.name; }
 
                 let areaDiv = document.getElementById(`slot-${pos}`);
-                if((game.turnIndex % 4) === pIndex) areaDiv.classList.add('active-turn'); else areaDiv.classList.remove('active-turn');
+                if(game.currentTurnSlot === pIndex) areaDiv.classList.add('active-turn'); else areaDiv.classList.remove('active-turn');
 
                 const discardDiv = document.getElementById(`discard-${pos}`);
                 discardDiv.innerHTML = "";
@@ -1008,9 +1059,23 @@
                 myHandDiv.appendChild(cardElement);
             });
 
+            // --- BUG FIXED: LOGIKA SIMULASI TUTUP MURNI MANUSIA ---
             const btnTutup = document.getElementById('btn-tutup-game');
-            if(handInfo.isAllPaired && isMyTurn && turnPhase === 'DISCARD') btnTutup.style.display = 'block';
-            else btnTutup.style.display = 'none';
+            let canTutup = false;
+
+            if (isMyTurn && turnPhase === 'DISCARD' && selectedCardIndices.length === 1) {
+                // X-Ray Simulasi: Jika kartu yang diseleksi dibuang, apakah sisa tangannya 100% jadi?
+                let testHand = [...myHand];
+                testHand.splice(selectedCardIndices[0], 1); 
+                let testInfo = evaluateHand(testHand, myMelds, game.jokerRank);
+                
+                if (testInfo.isAllPaired) {
+                    canTutup = true;
+                }
+            }
+
+            btnTutup.style.display = canTutup ? 'block' : 'none';
+            // --------------------------------------------------------
 
             const actionBtns = document.getElementById('action-buttons');
             const btnGeserL = document.getElementById('btn-geser-kiri');
@@ -1094,24 +1159,37 @@
         };
 
         window.drawFromDeck = () => {
-            if (!isMyTurn || turnPhase !== 'DRAW') {
-                if (isMyTurn) showAlertModal("PERHATIAN", "Pilih kartumu lalu buang.");
-                return;
-            }
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                if(game && game.deck && game.deck.length > 0) {
-                    let drawnCard = game.deck.pop();
-                    game.players[mySlotIndex].hand.push(drawnCard);
-                    game.turnPhase = 'DISCARD'; 
-                } else if (game) {
-                    game = handleRoundEnd(game, null, []);
+            if (!isMyTurn) return;
+            get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
+                let game = snap.val();
+                let pData = game.players[mySlotIndex];
+                
+                if (turnPhase !== 'DRAW') {
+                    showAlertModal("PERHATIAN", "Kamu sudah mengambil kartu. Silakan buang 1 kartu.");
+                    return;
                 }
-                return game;
+                
+                if (pData.knockVictims && pData.knockVictims.length > 0) {
+                    showAlertModal("TIDAK BISA", "Kamu sudah menembak kartu musuh! Silakan buang kartu untuk mengakhiri giliran.");
+                    return;
+                }
+
+                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
+                    if(gameTx && gameTx.deck && gameTx.deck.length > 0) {
+                        let drawnCard = gameTx.deck.pop();
+                        gameTx.players[mySlotIndex].hand.push(drawnCard);
+                        gameTx.players[mySlotIndex].hasDrawnFromDeck = true; 
+                        gameTx.turnPhase = 'DISCARD'; 
+                    } else if (gameTx) {
+                        gameTx = handleRoundEnd(gameTx, null, []);
+                    }
+                    return gameTx;
+                });
             });
         };
 
         window.drawFromDiscard = (posStr) => {
-            if (!isMyTurn || turnPhase !== 'DRAW') return;
+            if (!isMyTurn) return;
             
             let targetPIndex = ['bottom', 'left', 'top', 'right'].indexOf(posStr);
             let actualTargetIdx = (mySlotIndex + targetPIndex) % 4;
@@ -1125,11 +1203,18 @@
 
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
                 let game = snap.val();
+                let pData = game.players[mySlotIndex];
+                
+                if (turnPhase === 'DISCARD' && pData.hasDrawnFromDeck) {
+                    showAlertModal("TIDAK BISA", "Kamu sudah mengambil kartu dari LUNA. Silakan buang kartu untuk mengakhiri giliran.");
+                    return;
+                }
+
                 let targetPlayer = game.players[actualTargetIdx];
                 if(!targetPlayer || !targetPlayer.discard || targetPlayer.discard.length === 0) return;
                 
                 let topCard = targetPlayer.discard[targetPlayer.discard.length - 1];
-                let myHand = game.players[mySlotIndex].hand;
+                let myHand = pData.hand;
                 let selectedCards = selectedCardIndices.map(i => myHand[i]);
                 let testGroup = [...selectedCards, topCard];
 
@@ -1140,29 +1225,46 @@
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
                     if(gameTx) {
-                        let pData = gameTx.players[mySlotIndex];
-                        let takenCard = gameTx.players[actualTargetIdx].discard.pop();
+                        let txPData = gameTx.players[mySlotIndex];
+                        if (gameTx.turnPhase === 'DISCARD' && txPData.hasDrawnFromDeck) return gameTx; 
                         
+                        let tPlayer = gameTx.players[actualTargetIdx];
+                        if(!tPlayer || !tPlayer.discard || tPlayer.discard.length === 0) return gameTx;
+
+                        let takenCard = tPlayer.discard.pop();
                         let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
-                        let meldCards = [takenCard];
-                        indicesToRemove.forEach(idx => { meldCards.push(pData.hand.splice(idx, 1)[0]); });
+                        let baseMeld = [takenCard];
+                        indicesToRemove.forEach(idx => { baseMeld.push(txPData.hand.splice(idx, 1)[0]); });
 
-                        if(!pData.melds) pData.melds = []; pData.melds.push(meldCards);
-                        
-                        if(!pData.knockVictims) pData.knockVictims = [];
-                        if(!pData.knockVictims.includes(actualTargetIdx)) pData.knockVictims.push(actualTargetIdx);
+                        if(!txPData.knockVictims) txPData.knockVictims = [];
+                        if(!txPData.knockVictims.includes(actualTargetIdx)) txPData.knockVictims.push(actualTargetIdx);
 
-                        let seq = []; let curr = actualTargetIdx;
-                        while(curr !== mySlotIndex) { seq.push(curr); curr = (curr + 1) % 4; }
-                        for(let i=1; i<seq.length; i++) {
-                            let iterPlayer = gameTx.players[seq[i]];
+                        let dir = gameTx.playDirection || 1;
+                        let curr = actualTargetIdx;
+                        let sweptToHand = [];
+
+                        while (curr !== mySlotIndex) {
+                            curr = (curr + dir + 4) % 4;
+                            if (curr === mySlotIndex) break; 
+                            
+                            let iterPlayer = gameTx.players[curr];
                             if(iterPlayer.discard && iterPlayer.discard.length > 0) {
                                 let sweptCard = iterPlayer.discard.pop();
-                                pData.hand.push(sweptCard);
+                                
+                                let testMagnet = [...baseMeld, sweptCard];
+                                if (isValidSingleGroup(testMagnet, gameTx.jokerRank)) {
+                                    baseMeld.push(sweptCard); 
+                                } else {
+                                    sweptToHand.push(sweptCard); 
+                                }
                             }
                         }
 
-                        gameTx.turnPhase = 'DISCARD';
+                        if(!txPData.melds) txPData.melds = []; 
+                        txPData.melds.push(baseMeld);
+                        txPData.hand.push(...sweptToHand);
+
+                        gameTx.turnPhase = 'DISCARD'; 
                         selectedCardIndices = [];
                     }
                     return gameTx;
@@ -1170,7 +1272,6 @@
             });
         }
 
-        // --- EKSEKUSI HUKUMAN INSTAN (-250 POIN & FALLEN JOKER) ---
         window.discardSelectedCard = () => {
             if (selectedCardIndices.length !== 1 || !isMyTurn || turnPhase !== 'DISCARD') return;
             let sIndex = selectedCardIndices[0];
@@ -1190,13 +1291,12 @@
                     if(gameTx) {
                         let thrownCard = gameTx.players[mySlotIndex].hand.splice(sIndex, 1)[0];
                         
-                        // CEK JIKA YANG DIBUANG ADALAH JOKER MURNI (PENALTY -250!)
                         let isTrueJoker = (thrownCard.rank === gameTx.jokerRank && !thrownCard.isFallen);
                         if (isTrueJoker) {
-                            thrownCard.isFallen = true; // Transformasi jadi Fallen Joker
+                            thrownCard.isFallen = true; 
                             if(!gameTx.globalScores) gameTx.globalScores = {};
                             if(gameTx.globalScores[gameTx.players[mySlotIndex].id] === undefined) gameTx.globalScores[gameTx.players[mySlotIndex].id] = 0;
-                            // POTONG LANGSUNG DETIK ITU JUGA
+                            // HUKUMAN SALAH PENCET: -250 POIN INSTAN
                             gameTx.globalScores[gameTx.players[mySlotIndex].id] -= 250;
                         }
 
@@ -1204,8 +1304,17 @@
                         gameTx.players[mySlotIndex].discard.push(thrownCard);
                         
                         gameTx.players[mySlotIndex].knockVictims = [];
+                        gameTx.players[mySlotIndex].hasDrawnFromDeck = false;
+
                         selectedCardIndices = [];
-                        gameTx.turnIndex++; 
+                        
+                        let dir = gameTx.playDirection || 1;
+                        gameTx.currentTurnSlot = (gameTx.currentTurnSlot + dir + 4) % 4;
+                        
+                        let nextIdx = gameTx.currentTurnSlot;
+                        gameTx.players[nextIdx].knockVictims = [];
+                        gameTx.players[nextIdx].hasDrawnFromDeck = false;
+
                         gameTx.turnPhase = 'DRAW'; 
                     }
                     return gameTx;
@@ -1219,23 +1328,34 @@
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
                 let pData = snap.val().players[mySlotIndex];
                 let v = pData.knockVictims || [];
-                let victimMsg = v.length > 0 ? `Target Minus -50:<br><span style='color:var(--red-suit)'>${v.map(idx => snap.val().players[idx].name).join(', ')}</span>` : `Semua musuh akan terkena -50 poin.`;
+                
+                let sIndex = selectedCardIndices[0];
+                let cardToThrow = pData.hand[sIndex];
+                let isTrueJoker = (cardToThrow.rank === snap.val().jokerRank && !cardToThrow.isFallen);
+                
+                let baseKnockValue = 50;
+                if (isTrueJoker) baseKnockValue = 250;
+                else if (cardToThrow.rank === 'A') baseKnockValue = 150;
+                else if (['J', 'Q', 'K'].includes(cardToThrow.rank)) baseKnockValue = 100;
 
-                showConfirmModal("TUTUP PERMAINAN?", "Yakin menekan TUTUP?<br><br><span style='color:var(--gold)'>" + victimMsg + "</span>", () => {
+                let victimMsg = "";
+                if (v.length > 0) {
+                    victimMsg = `Target Tembak (Denda -${baseKnockValue}):<br><span style='color:var(--red-suit)'>${v.map(idx => snap.val().players[idx].name).join(', ')}</span><br><br>Bonus Penutupmu: +${baseKnockValue}`;
+                } else {
+                    victimMsg = `TUTUP MURNI (SIHIR PUTIH)!<br>Musuh aman dari denda, tapi kamu akan memanen Bonus +${baseKnockValue} Poin!`;
+                }
+
+                showConfirmModal("TUTUP PERMAINAN?", "Yakin mengakhiri ronde?<br><br><span style='color:var(--gold)'>" + victimMsg + "</span>", () => {
                     runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                         if(game) {
                             if(selectedCardIndices.length === 1) {
-                                let sIndex = selectedCardIndices[0];
-                                let thrownCard = game.players[mySlotIndex].hand.splice(sIndex, 1)[0];
+                                let tIndex = selectedCardIndices[0];
+                                let thrownCard = game.players[mySlotIndex].hand.splice(tIndex, 1)[0];
 
-                                // Cek Penalti -250 dan status Fallen Joker saat tutup pakai Joker
-                                let isTrueJoker = (thrownCard.rank === game.jokerRank && !thrownCard.isFallen);
-                                if (isTrueJoker) {
-                                    thrownCard.isFallen = true;
-                                    if(!game.globalScores) game.globalScores = {};
-                                    if(game.globalScores[game.players[mySlotIndex].id] === undefined) game.globalScores[game.players[mySlotIndex].id] = 0;
-                                    game.globalScores[game.players[mySlotIndex].id] -= 250;
-                                }
+                                let isJoker = (thrownCard.rank === game.jokerRank && !thrownCard.isFallen);
+                                if (isJoker) { 
+                                    thrownCard.isFallen = true; 
+                                } 
 
                                 if(!game.players[mySlotIndex].discard) game.players[mySlotIndex].discard = [];
                                 game.players[mySlotIndex].discard.push(thrownCard);
@@ -1248,14 +1368,15 @@
             });
         };
 
+        // --- BOT LUNA AI IQ 276 (THE CARD COUNTER & KILLER) ---
         let isBotThinking = false;
         function playBotTurn(gameData) {
             if(isBotThinking) return; 
             isBotThinking = true;
 
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                if(game && game.players[game.turnIndex % 4].isBot) {
-                    let botIdx = game.turnIndex % 4;
+                if(game && game.players[game.currentTurnSlot].isBot) {
+                    let botIdx = game.currentTurnSlot;
                     
                     if(game.deck && game.deck.length > 0) {
                         let drawnCard = game.deck.pop();
@@ -1266,12 +1387,91 @@
                     }
 
                     let hand = game.players[botIdx].hand;
-                    let safeIndices = hand.map((c, i) => i).filter(i => hand[i].rank !== 'A' && hand[i].rank !== game.jokerRank);
-                    let discardIdx = safeIndices.length > 0 ? safeIndices[Math.floor(Math.random() * safeIndices.length)] : 0;
+                    let handInfo = evaluateHand(hand, game.players[botIdx].melds, game.jokerRank);
                     
+                    // --- HYPER AGGRESSIVE KILLER INSTINCT ---
+                    // Cek apakah dengan membuang 1 kartu, sisanya 100% jadi (Bisa Tutup)
+                    let bestDiscardIdx = -1;
+                    let isClosing = false;
+
+                    for(let i=0; i<hand.length; i++) {
+                        let testHand = [...hand];
+                        testHand.splice(i, 1);
+                        let testInfo = evaluateHand(testHand, game.players[botIdx].melds, game.jokerRank);
+                        if(testInfo.isAllPaired) {
+                            bestDiscardIdx = i;
+                            isClosing = true;
+                            break;
+                        }
+                    }
+
+                    if(isClosing) {
+                        let thrownCard = hand.splice(bestDiscardIdx, 1)[0];
+                        if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
+                        game.players[botIdx].discard.push(thrownCard);
+                        game = handleRoundEnd(game, botIdx, game.players[botIdx].knockVictims);
+                        return game;
+                    }
+
+                    // --- IQ 276 LOGIC: EVALUASI DEADWOOD & PRIORITAS BUANG (Opsi A) ---
+                    let deadwoodIndices = [];
+                    for(let i=0; i<hand.length; i++) {
+                        if (!handInfo.groupedIndices.has(i)) deadwoodIndices.push(i);
+                    }
+
+                    if(deadwoodIndices.length === 0) deadwoodIndices = [0];
+
+                    // 1. Ice Breaker Scanner
+                    let isEliteRevealed = false;
+                    game.players.forEach(p => {
+                        if(p.discard) {
+                            p.discard.forEach(c => {
+                                if(['J','Q','K','A', game.jokerRank].includes(c.rank)) isEliteRevealed = true;
+                            });
+                        }
+                    });
+
+                    // 2. Classify Deadwoods
+                    let safeCards = []; // 2,3,9,10
+                    let dangerCards = []; // 4,5,6,7,8
+                    let eliteCards = []; // J,Q,K
+                    let aceCards = []; // A
+                    let jokerCards = []; // Joker murni
+
+                    deadwoodIndices.forEach(idx => {
+                        let c = hand[idx];
+                        if (c.rank === game.jokerRank && !c.isFallen) jokerCards.push(idx);
+                        else if (c.rank === 'A') aceCards.push(idx);
+                        else if (['J','Q','K'].includes(c.rank)) eliteCards.push(idx);
+                        else if (['4','5','6','7','8'].includes(c.rank)) dangerCards.push(idx);
+                        else safeCards.push(idx);
+                    });
+
+                    // 3. 15% Human Baiting & Opsi A Damage Control
+                    let discardIdx = -1;
+                    let doBait = Math.random() < 0.15;
+
+                    if(safeCards.length > 0) {
+                        discardIdx = safeCards[Math.floor(Math.random() * safeCards.length)]; // Buang aman atau umpan
+                    } else if (!isEliteRevealed) {
+                        // Elite belum pecah, harus TAHAN Elite. Buang bahaya.
+                        if (dangerCards.length > 0) discardIdx = dangerCards[0];
+                        else if (eliteCards.length > 0) discardIdx = eliteCards[0]; // Terpaksa Pecah Telur
+                        else if (aceCards.length > 0 && game.players[botIdx].melds && game.players[botIdx].melds.length > 0) discardIdx = aceCards[0];
+                        else if (jokerCards.length > 0) discardIdx = jokerCards[0];
+                    } else {
+                        // THE DEAD END SCENARIO (Damage Control - Option A)
+                        // Penalti terkecil duluan: Rawan < Elite < AS < Joker
+                        if (dangerCards.length > 0) discardIdx = dangerCards[Math.floor(Math.random() * dangerCards.length)];
+                        else if (eliteCards.length > 0) discardIdx = eliteCards[Math.floor(Math.random() * eliteCards.length)];
+                        else if (aceCards.length > 0 && game.players[botIdx].melds && game.players[botIdx].melds.length > 0) discardIdx = aceCards[Math.floor(Math.random() * aceCards.length)];
+                        else if (jokerCards.length > 0) discardIdx = jokerCards[0];
+                    }
+
+                    if(discardIdx === -1) discardIdx = deadwoodIndices[0]; // Fallback terakhir
+
                     let thrownCard = hand.splice(discardIdx, 1)[0];
 
-                    // Terapkan penalti ke Bot jika (sengaja/tidak) buang Joker
                     let isTrueJoker = (thrownCard.rank === game.jokerRank && !thrownCard.isFallen);
                     if (isTrueJoker) {
                         thrownCard.isFallen = true;
@@ -1283,7 +1483,17 @@
                     if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
                     game.players[botIdx].discard.push(thrownCard);
 
-                    game.turnIndex++; game.turnPhase = 'DRAW';
+                    game.players[botIdx].knockVictims = [];
+                    game.players[botIdx].hasDrawnFromDeck = false;
+
+                    let dir = game.playDirection || 1;
+                    game.currentTurnSlot = (game.currentTurnSlot + dir + 4) % 4;
+                    
+                    let nextIdx = game.currentTurnSlot;
+                    game.players[nextIdx].knockVictims = [];
+                    game.players[nextIdx].hasDrawnFromDeck = false;
+                    
+                    game.turnPhase = 'DRAW';
                 }
                 return game;
             }).then(() => { isBotThinking = false; });
