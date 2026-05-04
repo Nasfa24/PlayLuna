@@ -324,57 +324,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- VARIABEL GLOBAL ---
-        let myName = localStorage.getItem("luna_global_name") || localStorage.getItem("ut_name") || "";
-        let myPlayerId = localStorage.getItem("remi_pid");
-        let currentRoomId = localStorage.getItem("remi_room");
-        let amIHost = false; 
-        let mySlotIndex = -1; 
-        let selectedCardIndices = []; 
-        let isMyTurn = false;
-        let turnPhase = ""; 
-        let currentJokerRank = "";
-
-        const BOT_NAMES = ["Bot Joni 🤖", "Bot Siti 👾", "Bot Anam 👽"];
-        const SUITS = ['♥', '♦', '♠', '♣'];
-        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-
-        // --- 🛡️ FIREWALL MUTLAK LUKAS (ANTI FIREBASE QUIRK) ---
-        function sanitizeGameData(data) {
-            if (!data) return data;
-
-            // Helper untuk memaksa data menjadi Array murni
-            const forceArray = (val) => {
-                if (!val) return [];
-                if (Array.isArray(val)) return val;
-                return Object.values(val);
-            };
-
-            // 1. Sanitasi Objek Players
-            if (data.players) {
-                let playersArr = forceArray(data.players);
-                data.players = playersArr.map(p => {
-                    if (!p) return p;
-                    // Paksa semua tumpukan kartu menjadi Array
-                    p.hand = forceArray(p.hand);
-                    p.discard = forceArray(p.discard);
-                    p.knockVictims = forceArray(p.knockVictims);
-                    
-                    // Melds adalah Array 2D (Array di dalam Array), sanitasi dua lapis
-                    let rawMelds = forceArray(p.melds);
-                    p.melds = rawMelds.map(m => forceArray(m));
-                    
-                    return p;
-                });
-            }
-
-            // 2. Sanitasi Variabel Global Latar Belakang
-            data.deck = forceArray(data.deck);
-            data.readyList = forceArray(data.readyList);
-
-            return data;
-        }
-
         // --- SISTEM MODAL KUSTOM ---
         window.showAlertModal = function(title, htmlContent, buttons = []) {
             const overlay = document.getElementById('custom-modal-overlay');
@@ -405,125 +354,71 @@
             ]);
         };
 
-        // --- ALGORITMA PENILAIAN & NILAI MUTLAK BARU ---
-        // 1. Standardisasi Nilai Mutlak (AS=15, Gambar=10, Angka=5)
-        function getCardBaseValue(rank) {
+        // --- ALGORITMA PENILAIAN (Ketat Joker) ---
+        function getCardPoints(rank, isJoker) {
+            if (isJoker) return 25;
             if (rank === 'A') return 15;
-            if (['K', 'Q', 'J'].includes(rank)) return 10;
+            if (['K', 'Q', 'J', '10'].includes(rank)) return 10;
             return 5;
         }
 
-        // --- 2. LOGIKA MIMICRY (JOKER BUNGLON) ---
-        // Menghitung skor dari sebuah grup (melds) dengan deteksi wujud Joker
-        function scoreGroup(cards, jokerRank) {
-            let normals = cards.filter(c => c.rank !== jokerRank);
-            let joks = cards.filter(c => c.rank === jokerRank);
-            
-            // Jika grup isinya JOKER SEMUA (Tris Joker) -> +5 Poin per Joker (Nilai asli)
-            if (normals.length === 0) {
-                return joks.reduce((sum, j) => sum + getCardBaseValue(j.rank), 0);
-            }
-
-            let isTris = normals.every(c => c.rank === normals[0].rank);
-            if (isTris) {
-                // Joker menyamar mengikuti nilai Kartu Tris yang disandarinya
-                let rankVal = getCardBaseValue(normals[0].rank);
-                return cards.length * rankVal;
-            }
-
-            // Jika Sequence (Seri)
-            function getSeqVal(r) {
-                if(r==='A') return 1; if(r==='J') return 11; if(r==='Q') return 12; if(r==='K') return 13; return parseInt(r);
-            }
-            function getRankFromVal(v) {
-                if(v===1) return 'A'; if(v===11) return 'J'; if(v===12) return 'Q'; if(v===13) return 'K'; 
-                return v.toString(); // Fallback untuk angka
-            }
-
-            normals.sort((a,b) => getSeqVal(a.rank) - getSeqVal(b.rank));
-            
-            let totalScore = 0;
-            // Poin kartu normal
-            normals.forEach(c => totalScore += getCardBaseValue(c.rank));
-
-            let minVal = getSeqVal(normals[0].rank);
-            let maxVal = getSeqVal(normals[normals.length-1].rank);
-            let actualVals = normals.map(c => getSeqVal(c.rank));
-            
-            let filledJokers = 0;
-            // Joker menambal di tengah (contoh: J - Joker - K, Joker jadi Q)
-            for (let v = minVal + 1; v < maxVal; v++) {
-                if (!actualVals.includes(v)) {
-                    totalScore += getCardBaseValue(getRankFromVal(v));
-                    filledJokers++;
-                }
-            }
-            
-            // Joker menambal di ujung (contoh: J - Q - Joker, Joker jadi K)
-            let remainingJokers = joks.length - filledJokers;
-            let rightVal = maxVal + 1;
-            let leftVal = minVal - 1;
-            
-            for (let i = 0; i < remainingJokers; i++) {
-                if (rightVal <= 13) {
-                    totalScore += getCardBaseValue(getRankFromVal(rightVal));
-                    rightVal++;
-                } else if (leftVal >= 1) {
-                    totalScore += getCardBaseValue(getRankFromVal(leftVal));
-                    leftVal--;
-                }
-            }
-
-            return totalScore;
-        }
-
-        // --- 3. VALIDASI KETAT (STRICT VALIDATION) ---
         function isValidSingleGroup(cards, jokerRank) {
             if (cards.length < 3) return false;
             let jokers = cards.filter(c => c.rank === jokerRank);
             let normals = cards.filter(c => c.rank !== jokerRank);
 
-            if (normals.length === 0) return true; // Tris Joker SAH
-
-            let isTris = normals.every(c => c.rank === normals[0].rank);
-            if (isTris) {
-                // ATURAN KETAT: J, Q, K TIDAK BOLEH TRIS KEMBAR BEDA KEMBANG
-                if (['J', 'Q', 'K'].includes(normals[0].rank)) return false; 
-                return true; // Angka dan AS boleh Tris kembar
+            if (normals.every(c => c.rank === 'A')) {
+                if (jokers.length > 0 && jokerRank !== 'A') return false; 
+                return true;
             }
 
-            // Aturan Seri: Kembang harus sama
+            if (jokers.length >= 2 && cards.length === 3) {
+                if (normals.length === 1 && !['J','Q','K','A'].includes(normals[0].rank)) return true;
+                if (normals.length === 0) return true; 
+                return false;
+            }
+
+            if (normals.length === 0) return true; 
+
             let suit = normals[0].suit;
             if (!normals.every(c => c.suit === suit)) return false;
 
-            function getSeqVal(r) {
-                if(r==='A') return 1; if(r==='J') return 11; if(r==='Q') return 12; if(r==='K') return 13; return parseInt(r);
+            let isFaces = normals.every(c => ['J','Q','K'].includes(c.rank));
+            let isNumbers = normals.every(c => !['J','Q','K','A'].includes(c.rank));
+
+            if (!isFaces && !isNumbers) return false;
+
+            if (isFaces) {
+                if (jokers.length > 0) return false; 
+                let req = ['J','Q','K'];
+                let present = normals.map(c => c.rank);
+                let missing = req.filter(r => !present.includes(r)).length;
+                return missing === 0;
             }
 
-            let vals = normals.map(c => getSeqVal(c.rank)).sort((a,b)=>a-b);
-            let needed = 0;
-            for(let i=0; i<vals.length-1; i++) {
-                let diff = vals[i+1] - vals[i];
-                if (diff === 0) return false; // Kembang sama tapi angka dobel = DITOLAK
-                needed += (diff - 1);
+            if (isNumbers) {
+                let vals = normals.map(c => parseInt(c.rank)).sort((a,b)=>a-b);
+                let needed = 0;
+                for(let i=0; i<vals.length-1; i++) {
+                    let diff = vals[i+1] - vals[i];
+                    if (diff === 0) return false; 
+                    needed += (diff - 1);
+                }
+                return needed <= jokers.length;
             }
-            // Joker Fleksibel untuk menutup lubang seri J, Q, K (atau angka)
-            return needed <= jokers.length;
+            return false;
         }
 
         function evaluateHand(handCards, melds, jokerRank) {
-            let score = 0; 
-            let groupedIndices = new Set();
-            let jokers = []; 
-            let nonJokers = [];
+            let score = 0; let groupedIndices = new Set();
+            let jokers = []; let nonJokers = [];
 
-            // 1. Eksekusi Poin Meld Positif dengan Logika Joker Bunglon
             if (melds) {
-                melds.forEach(group => { score += scoreGroup(group, jokerRank); });
+                melds.forEach(group => { group.forEach(c => { score += getCardPoints(c.rank, c.rank === jokerRank); }); });
             }
 
             handCards.forEach((c, i) => {
-                if (c.rank === jokerRank) jokers.push({ index: i, card: c });
+                if (c.rank === jokerRank) jokers.push(i);
                 else nonJokers.push({ ...c, index: i, val: getNumVal(c.rank) });
             });
 
@@ -532,98 +427,67 @@
                 if (rank === 'J') return 11; if (rank === 'Q') return 12; if (rank === 'K') return 13;
                 return parseInt(rank);
             }
-            function getRankFromVal(v) {
-                if(v===1) return 'A'; if(v===11) return 'J'; if(v===12) return 'Q'; if(v===13) return 'K'; return v.toString();
-            }
 
-            let usedJokers = new Set();
-            let virtualMelds = []; 
-
-            // Cek Tris Valid (Hanya Angka & AS, mematuhi Aturan Strict)
-            let trisRanks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // 11, 12, 13 (J,Q,K) sengaja dilarang!
-            for (let val of trisRanks) {
-                let rankStr = getRankFromVal(val);
-                let cardsOfRank = nonJokers.filter(c => c.rank === rankStr && !groupedIndices.has(c.index));
-                
-                if (cardsOfRank.length >= 3) {
-                    cardsOfRank.forEach(c => groupedIndices.add(c.index));
-                    virtualMelds.push(cardsOfRank.map(c => c.card));
-                } else if (cardsOfRank.length === 2 && jokers.length - usedJokers.size >= 1) {
-                    cardsOfRank.forEach(c => groupedIndices.add(c.index));
-                    let freeJoker = jokers.find(j => !usedJokers.has(j.index));
-                    usedJokers.add(freeJoker.index);
-                    groupedIndices.add(freeJoker.index);
-                    virtualMelds.push([...cardsOfRank.map(c=>c.card), freeJoker.card]);
-                }
-            }
-
-            // Cek Seri/Sequence (Termasuk J, Q, K dengan bantuan Joker)
             const SUITS = ['♥', '♦', '♠', '♣'];
+            let usedJokers = 0;
+
+            let aces = nonJokers.filter(c => c.rank === 'A');
+            if (aces.length >= 3) { aces.forEach(c => groupedIndices.add(c.index)); }
+
             SUITS.forEach(suit => {
-                let suitCards = nonJokers.filter(c => c.suit === suit && !groupedIndices.has(c.index)).sort((a, b) => a.val - b.val);
-                if(suitCards.length === 0) return;
+                let faces = nonJokers.filter(c => c.suit === suit && c.val >= 11);
+                let hasJ = faces.find(c => c.rank === 'J' && !groupedIndices.has(c.index));
+                let hasQ = faces.find(c => c.rank === 'Q' && !groupedIndices.has(c.index));
+                let hasK = faces.find(c => c.rank === 'K' && !groupedIndices.has(c.index));
+                
+                let missing = 0; let group = [];
+                if (hasJ) group.push(hasJ.index); else missing++;
+                if (hasQ) group.push(hasQ.index); else missing++;
+                if (hasK) group.push(hasK.index); else missing++;
+                if (missing === 0) { group.forEach(idx => groupedIndices.add(idx)); } 
+            });
+
+            SUITS.forEach(suit => {
+                let nums = nonJokers.filter(c => c.suit === suit && c.val >= 2 && c.val <= 10).sort((a, b) => a.val - b.val);
+                if(nums.length === 0) return;
 
                 let usedInThisSuit = new Set();
-                for (let i = 0; i < suitCards.length; i++) {
-                    if (usedInThisSuit.has(suitCards[i].index)) continue;
-                    let currentRun = [suitCards[i]];
-                    let neededJokersForRun = 0;
-                    let lastVal = suitCards[i].val;
+                for (let i = 0; i < nums.length; i++) {
+                    if (usedInThisSuit.has(nums[i].index)) continue;
+                    let currentRun = [nums[i].index];
+                    let currentJokersNeeded = 0;
+                    let lastVal = nums[i].val;
 
-                    for (let j = i + 1; j < suitCards.length; j++) {
-                        if (usedInThisSuit.has(suitCards[j].index)) continue;
-                        let diff = suitCards[j].val - lastVal;
+                    for (let j = i + 1; j < nums.length; j++) {
+                        if (usedInThisSuit.has(nums[j].index)) continue;
+                        let diff = nums[j].val - lastVal;
                         if (diff === 0) continue; 
-                        if (diff === 1) { 
-                            currentRun.push(suitCards[j]); lastVal = suitCards[j].val; 
-                        } else if (diff - 1 <= (jokers.length - usedJokers.size - neededJokersForRun)) {
-                            neededJokersForRun += (diff - 1); 
-                            currentRun.push(suitCards[j]); lastVal = suitCards[j].val;
+                        if (diff === 1) { currentRun.push(nums[j].index); lastVal = nums[j].val; } 
+                        else if (diff - 1 <= (jokers.length - usedJokers - currentJokersNeeded)) {
+                            currentJokersNeeded += (diff - 1); currentRun.push(nums[j].index); lastVal = nums[j].val;
                         } else { break; }
                     }
                     
-                    let totalLength = currentRun.length + neededJokersForRun;
+                    let totalLength = currentRun.length + currentJokersNeeded;
                     let extraJokersNeeded = Math.max(0, 3 - totalLength);
 
-                    if (neededJokersForRun + extraJokersNeeded <= (jokers.length - usedJokers.size)) {
-                        let meld = currentRun.map(c => c.card);
-                        currentRun.forEach(c => { groupedIndices.add(c.index); usedInThisSuit.add(c.index); });
-                        
-                        let totalJokersToUse = neededJokersForRun + extraJokersNeeded;
-                        for(let k=0; k<totalJokersToUse; k++) {
-                            let freeJoker = jokers.find(j => !usedJokers.has(j.index));
-                            usedJokers.add(freeJoker.index);
-                            groupedIndices.add(freeJoker.index);
-                            meld.push(freeJoker.card);
-                        }
-                        virtualMelds.push(meld);
+                    if (currentJokersNeeded + extraJokersNeeded <= (jokers.length - usedJokers)) {
+                        currentRun.forEach(idx => { groupedIndices.add(idx); usedInThisSuit.add(idx); });
+                        usedJokers += (currentJokersNeeded + extraJokersNeeded);
                     }
                 }
             });
 
-            // Cek Tris Joker Mandiri
-            let freeJokers = jokers.filter(j => !usedJokers.has(j.index));
-            if (freeJokers.length >= 3) {
-                let meld = [];
-                freeJokers.forEach(j => {
-                    usedJokers.add(j.index);
-                    groupedIndices.add(j.index);
-                    meld.push(j.card);
-                });
-                virtualMelds.push(meld);
+            while ((jokers.length - usedJokers) >= 2) {
+                let freeCard = nonJokers.find(c => !groupedIndices.has(c.index) && c.val >= 2 && c.val <= 10);
+                if (freeCard) { groupedIndices.add(freeCard.index); usedJokers += 2; } else { break; }
             }
 
-            // Eksekusi Poin dari Grup Virtual di Tangan
-            virtualMelds.forEach(group => {
-                score += scoreGroup(group, jokerRank);
-            });
+            for (let i = 0; i < usedJokers; i++) { if(i < jokers.length) groupedIndices.add(jokers[i]); }
 
-            // --- 4. EKSEKUSI KARTU MATI (DEADWOOD PENALTY) ---
-            // Kartu yang gantung akan dikurangi murni berdasarkan Nilai Mutlak wujud aslinya!
             handCards.forEach((c, i) => {
-                if (!groupedIndices.has(i)) {
-                    score -= getCardBaseValue(c.rank); // Eksekusi mutlak (Joker yg mati akan memakan -5, K akan memakan -10)
-                }
+                let pts = getCardPoints(c.rank, c.rank === jokerRank);
+                if (groupedIndices.has(i)) score += pts; else score -= pts;
             });
 
             let hasValidGroup = groupedIndices.size > 0;
@@ -642,9 +506,10 @@
                 let handInfo = evaluateHand(p.hand || [], p.melds || [], game.jokerRank);
                 let rScore = handInfo.score;
                 
+                // Distribusi Penalti -50 Spesifik Korban
                 if (knockerIdx !== null && idx !== knockerIdx) {
-                    if(!victims || victims.length === 0) { rScore -= 50; } 
-                    else if (victims.includes(idx)) { rScore -= 50; } 
+                    if(!victims || victims.length === 0) { rScore -= 50; } // Tutup normal
+                    else if (victims.includes(idx)) { rScore -= 50; } // Korban nembak
                 }
                 
                 game.globalScores[p.id] += rScore;
@@ -708,7 +573,6 @@
 
         window.setPlayerReady = () => {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                game = sanitizeGameData(game);
                 if(game) {
                     if(!game.readyList) game.readyList = [];
                     if(!game.readyList.includes(myPlayerId)) {
@@ -718,6 +582,7 @@
                     
                     let humanCount = game.players.filter(p => !p.isBot).length;
                     if(game.readyCount >= humanCount) {
+                        // GILIRAN BERIKUTNYA DARI YANG PALING MINUS
                         let lowestScore = Infinity; let turnIdx = 0;
                         game.players.forEach((p, i) => {
                             if((game.globalScores[p.id]||0) < lowestScore) { lowestScore = game.globalScores[p.id]; turnIdx = i; }
@@ -736,7 +601,6 @@
         window.forceEndMatch = () => {
             showConfirmModal("AKHIRI TURNAMEN?", "Selesaikan turnamen sekarang dan lihat siapa juaranya?", () => {
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                    game = sanitizeGameData(game);
                     if(game) {
                         let maxScore = -9999; let winner = "";
                         for (let pid in game.globalScores) {
@@ -750,13 +614,28 @@
             });
         };
 
+        // --- VARIABEL GLOBAL ---
+        let myName = localStorage.getItem("luna_global_name") || localStorage.getItem("ut_name") || "";
+        let myPlayerId = localStorage.getItem("remi_pid");
+        let currentRoomId = localStorage.getItem("remi_room");
+        let amIHost = false; 
+        let mySlotIndex = -1; 
+        let selectedCardIndices = []; 
+        let isMyTurn = false;
+        let turnPhase = ""; 
+        let currentJokerRank = "";
+
+        const BOT_NAMES = ["Bot Joni 🤖", "Bot Siti 👾", "Bot Anam 👽"];
+        const SUITS = ['♥', '♦', '♠', '♣'];
+        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+        // --- INISIALISASI ---
         window.onload = () => {
             if (myName) document.getElementById('input-nama').value = myName;
             if (currentRoomId && myPlayerId) {
                 get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                    let gameData = sanitizeGameData(snap.val());
-                    if (snap.exists() && gameData && gameData.status !== "ENDED") {
-                        enterLobby(currentRoomId, gameData.host === myPlayerId);
+                    if (snap.exists() && snap.val().status !== "ENDED") {
+                        enterLobby(currentRoomId, snap.val().host === myPlayerId);
                     } else resetLocalData();
                 }).catch(() => resetLocalData());
             }
@@ -789,7 +668,7 @@
             if (!myName || !code) return showAlertModal("PERHATIAN", "Lengkapi nama dan kode room!");
             get(ref(db, `remi_rooms/${code}`)).then(snap => {
                 if (snap.exists() && snap.val().status === "LOBBY") {
-                    const roomData = sanitizeGameData(snap.val());
+                    const roomData = snap.val();
                     if(roomData.players.length >= 4) return showAlertModal("MAAF", "Room Penuh!");
                     myPlayerId = "p_" + Date.now();
                     localStorage.setItem("luna_global_name", myName);
@@ -814,7 +693,7 @@
 
             onValue(ref(db, `remi_rooms/${roomId}`), snap => {
                 if(!snap.exists()) { resetLocalData(); return; }
-                const game = sanitizeGameData(snap.val());
+                const game = snap.val();
                 
                 const list = document.getElementById('player-list'); list.innerHTML = "";
                 if(game.players) {
@@ -860,7 +739,6 @@
 
         function executeStartGame() {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                game = sanitizeGameData(game);
                 if (game) {
                     game.targetScore = parseInt(document.getElementById('target-score').value) || 250;
                     game.globalScores = {};
@@ -880,33 +758,24 @@
             });
         }
 
+        // --- RENDERING KARTU DENGAN VISUAL KASTA (GAMBAR & ANGKA) ---
         function renderCardHTML(card, isJoker = false) {
-            let jokerText = isJoker ? `<div style="font-size: 12px; font-weight:900; letter-spacing:1px; margin-top:5px; font-family:'Poppins'; color:var(--gold); position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); z-index:5; text-shadow: 0 0 4px rgba(0,0,0,0.9);">JOKER</div>` : '';
+            let jokerText = isJoker ? `<div style="font-size: 10px; margin-top:5px; font-family:'Poppins'; color:var(--gold);">JOKER</div>` : '';
             let centerContent = '';
 
             if (['J', 'Q', 'K'].includes(card.rank)) {
+                // Kartu Gambar (Emoji yang aman di semua HP tanpa load image)
                 let face = card.rank === 'K' ? '🤴' : (card.rank === 'Q' ? '👸' : '💂');
-                centerContent = `<div style="font-size: 42px; line-height:1;">${face}</div>`;
+                centerContent = `<div style="font-size: 38px;">${face}</div>`;
             } else if (card.rank === 'A') {
-                centerContent = `<div style="font-size: 50px; line-height:1;">${card.suit}</div>`;
+                // Kartu AS (Simbol Besar)
+                centerContent = `<div style="font-size: 48px;">${card.suit}</div>`;
             } else {
-                let p = `<span style="display:block; font-size:15px; line-height:1; font-family:'Poppins', sans-serif;">${card.suit}</span>`;
-                let pd = `<span style="display:block; font-size:15px; line-height:1; font-family:'Poppins', sans-serif; transform:rotate(180deg);">${card.suit}</span>`;
-                
-                let c2 = `<div style="display:flex; flex-direction:column; justify-content:space-between; height:100%;">${p}${pd}</div>`;
-                let c3 = `<div style="display:flex; flex-direction:column; justify-content:space-between; height:100%;">${p}${p}${pd}</div>`;
-                let c4 = `<div style="display:flex; flex-direction:column; justify-content:space-between; height:100%;">${p}${p}${pd}${pd}</div>`;
-
-                let r = card.rank;
-                if(r==='2') centerContent = `<div style="display:flex; flex-direction:column; justify-content:space-between; height:100%; width:100%; align-items:center; padding: 2px 0; box-sizing:border-box;">${p}${pd}</div>`;
-                if(r==='3') centerContent = `<div style="display:flex; flex-direction:column; justify-content:space-between; height:100%; width:100%; align-items:center; padding: 2px 0; box-sizing:border-box;">${p} <div style="display:flex; align-items:center;">${p}</div> ${pd}</div>`;
-                if(r==='4') centerContent = `<div style="display:flex; justify-content:space-between; width:100%; height:100%; padding: 2px 10px; box-sizing:border-box;">${c2}${c2}</div>`;
-                if(r==='5') centerContent = `<div style="display:flex; justify-content:space-between; width:100%; height:100%; padding: 2px 10px; box-sizing:border-box; position:relative;">${c2}<div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">${p}</div>${c2}</div>`;
-                if(r==='6') centerContent = `<div style="display:flex; justify-content:space-between; width:100%; height:100%; padding: 2px 10px; box-sizing:border-box;">${c3}${c3}</div>`;
-                if(r==='7') centerContent = `<div style="display:flex; justify-content:space-between; width:100%; height:100%; padding: 2px 10px; box-sizing:border-box; position:relative;">${c3}<div style="position:absolute; top:25%; left:50%; transform:translate(-50%, -50%);">${p}</div>${c3}</div>`;
-                if(r==='8') centerContent = `<div style="display:flex; justify-content:space-between; width:100%; height:100%; padding: 2px 10px; box-sizing:border-box; position:relative;">${c3}<div style="position:absolute; top:25%; left:50%; transform:translate(-50%, -50%);">${p}</div><div style="position:absolute; bottom:25%; left:50%; transform:translate(-50%, 50%);">${pd}</div>${c3}</div>`;
-                if(r==='9') centerContent = `<div style="display:flex; justify-content:space-between; width:100%; height:100%; padding: 2px 10px; box-sizing:border-box; position:relative;">${c4}<div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">${p}</div>${c4}</div>`;
-                if(r==='10') centerContent = `<div style="display:flex; justify-content:space-between; width:100%; height:100%; padding: 2px 10px; box-sizing:border-box; position:relative;">${c4}<div style="position:absolute; top:18%; left:50%; transform:translate(-50%, -50%);">${p}</div><div style="position:absolute; bottom:18%; left:50%; transform:translate(-50%, 50%);">${pd}</div>${c4}</div>`;
+                // Kartu Angka (Render simbol sebanyak nilainya)
+                let count = parseInt(card.rank);
+                let pips = Array(count).fill(card.suit).join('');
+                let fontSize = count > 6 ? '16px' : '22px'; // Perkecil font jika angkanya besar agar muat
+                centerContent = `<div style="font-size:${fontSize}; display:flex; flex-wrap:wrap; justify-content:center; align-items:center; line-height:1; text-align:center; padding: 2px;">${pips}</div>`;
             }
 
             return `<div class="card-top">${card.rank}<br>${card.suit}</div>
@@ -914,6 +783,7 @@
                     <div class="card-bottom">${card.rank}<br>${card.suit}</div>`;
         }
 
+        // --- RENDERING IN-GAME ---
         function startGameUI(game) {
             document.getElementById('screen-menu').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
@@ -1001,6 +871,7 @@
                 
                 let offset = index - centerIndex;
                 if (!isSelected) {
+                    // Margin direnggangkan menjadi offset * 26 agar jauh lebih mudah di-tap
                     cardElement.style.transform = `translateX(${offset * 26}px) translateY(${Math.abs(offset) * 2}px) rotate(${offset * 4}deg)`;
                     if(isJoker && !isPaired) cardElement.style.border = "2px solid var(--gold)";
                 } else {
@@ -1022,11 +893,12 @@
             const btnBuang = document.getElementById('btn-buang');
             const btnTurun = document.getElementById('btn-turun');
 
-            btnTurun.style.display = 'none'; 
+            btnTurun.style.display = 'none'; // Reset state
 
             if(selectedCardIndices.length > 0 && isMyTurn) { 
                 actionBtns.classList.add('active'); 
                 
+                // Cek Validasi Tombol Turun
                 if(selectedCardIndices.length >= 3) {
                     let selectedCards = selectedCardIndices.map(i => myHand[i]);
                     if(isValidSingleGroup(selectedCards, game.jokerRank)) {
@@ -1047,31 +919,31 @@
         window.selectCard = (index) => {
             let pos = selectedCardIndices.indexOf(index);
             if (pos > -1) selectedCardIndices.splice(pos, 1); else selectedCardIndices.push(index);
-            get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => startGameUI(sanitizeGameData(snap.val()))); 
+            get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => startGameUI(snap.val())); 
         };
 
         window.moveCard = (direction) => {
             if (selectedCardIndices.length !== 1 || !isMyTurn) return;
             let sIndex = selectedCardIndices[0];
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
-                gameTx = sanitizeGameData(gameTx);
-                if(gameTx) {
-                    let hand = gameTx.players[mySlotIndex].hand;
+            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                if(game) {
+                    let hand = game.players[mySlotIndex].hand;
                     let targetIndex = (direction === 'left') ? sIndex - 1 : sIndex + 1;
                     if (targetIndex >= 0 && targetIndex < hand.length) {
                         [hand[sIndex], hand[targetIndex]] = [hand[targetIndex], hand[sIndex]];
                         selectedCardIndices = [targetIndex]; 
                     }
                 }
-                return gameTx;
+                return game;
             });
         };
 
+        // --- FUNGSI BARU: TURUN KARTU ---
         window.turunCards = () => {
             if (!isMyTurn || selectedCardIndices.length < 3) return;
 
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = sanitizeGameData(snap.val());
+                let game = snap.val();
                 let myHand = game.players[mySlotIndex].hand;
                 let selectedCards = selectedCardIndices.map(i => myHand[i]);
 
@@ -1081,12 +953,12 @@
                 }
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
-                    gameTx = sanitizeGameData(gameTx);
                     if(gameTx) {
                         let pData = gameTx.players[mySlotIndex];
                         let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                         let meldCards = [];
                         
+                        // Pindahkan kartu dari tangan ke meja (melds)
                         indicesToRemove.forEach(idx => { meldCards.push(pData.hand.splice(idx, 1)[0]); });
 
                         if(!pData.melds) pData.melds = [];
@@ -1105,7 +977,6 @@
                 return;
             }
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                game = sanitizeGameData(game);
                 if(game && game.deck && game.deck.length > 0) {
                     let drawnCard = game.deck.pop();
                     game.players[mySlotIndex].hand.push(drawnCard);
@@ -1131,7 +1002,7 @@
             }
 
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = sanitizeGameData(snap.val());
+                let game = snap.val();
                 let targetPlayer = game.players[actualTargetIdx];
                 if(!targetPlayer || !targetPlayer.discard || targetPlayer.discard.length === 0) return;
                 
@@ -1146,7 +1017,6 @@
                 }
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
-                    gameTx = sanitizeGameData(gameTx);
                     if(gameTx) {
                         let pData = gameTx.players[mySlotIndex];
                         let takenCard = gameTx.players[actualTargetIdx].discard.pop();
@@ -1160,6 +1030,7 @@
                         if(!pData.knockVictims) pData.knockVictims = [];
                         if(!pData.knockVictims.includes(actualTargetIdx)) pData.knockVictims.push(actualTargetIdx);
 
+                        // EFEK NYAPU
                         let seq = []; let curr = actualTargetIdx;
                         while(curr !== mySlotIndex) { seq.push(curr); curr = (curr + 1) % 4; }
                         for(let i=1; i<seq.length; i++) {
@@ -1183,18 +1054,18 @@
             let sIndex = selectedCardIndices[0];
             
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = sanitizeGameData(snap.val());
+                let game = snap.val();
                 let myHand = game.players[mySlotIndex].hand;
                 let myMelds = game.players[mySlotIndex].melds;
                 let cardToThrow = myHand[sIndex];
                 
+                // HUKUM AS DIPERKETAT: Wajib punya grup terturun di meja!
                 if (cardToThrow.rank === 'A' && (!myMelds || myMelds.length === 0)) {
                     showAlertModal("HUKUM KARTU AS!", "Kamu HARUS punya minimal 1 grup kartu yang sudah diturunkan di meja sebelum bisa membuang kartu AS. Mejamu masih kosong!");
                     return;
                 }
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
-                    gameTx = sanitizeGameData(gameTx);
                     if(gameTx) {
                         let thrownCard = gameTx.players[mySlotIndex].hand.splice(sIndex, 1)[0];
                         if(!gameTx.players[mySlotIndex].discard) gameTx.players[mySlotIndex].discard = [];
@@ -1215,24 +1086,22 @@
             if (!isMyTurn || turnPhase !== 'DISCARD') return;
             
             get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = sanitizeGameData(snap.val());
-                let pData = game.players[mySlotIndex];
+                let pData = snap.val().players[mySlotIndex];
                 let v = pData.knockVictims || [];
-                let victimMsg = v.length > 0 ? `Target Minus -50:<br><span style='color:var(--red-suit)'>${v.map(idx => game.players[idx].name).join(', ')}</span>` : `Semua musuh akan terkena -50 poin.`;
+                let victimMsg = v.length > 0 ? `Target Minus -50:<br><span style='color:var(--red-suit)'>${v.map(idx => snap.val().players[idx].name).join(', ')}</span>` : `Semua musuh akan terkena -50 poin.`;
 
                 showConfirmModal("TUTUP PERMAINAN?", "Yakin menekan TUTUP?<br><br><span style='color:var(--gold)'>" + victimMsg + "</span>", () => {
-                    runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
-                        gameTx = sanitizeGameData(gameTx);
-                        if(gameTx) {
+                    runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
+                        if(game) {
                             if(selectedCardIndices.length === 1) {
                                 let sIndex = selectedCardIndices[0];
-                                let thrownCard = gameTx.players[mySlotIndex].hand.splice(sIndex, 1)[0];
-                                if(!gameTx.players[mySlotIndex].discard) gameTx.players[mySlotIndex].discard = [];
-                                gameTx.players[mySlotIndex].discard.push(thrownCard);
+                                let thrownCard = game.players[mySlotIndex].hand.splice(sIndex, 1)[0];
+                                if(!game.players[mySlotIndex].discard) game.players[mySlotIndex].discard = [];
+                                game.players[mySlotIndex].discard.push(thrownCard);
                             }
-                            gameTx = handleRoundEnd(gameTx, mySlotIndex, gameTx.players[mySlotIndex].knockVictims);
+                            game = handleRoundEnd(game, mySlotIndex, game.players[mySlotIndex].knockVictims);
                         }
-                        return gameTx;
+                        return game;
                     });
                 });
             });
@@ -1244,7 +1113,6 @@
             isBotThinking = true;
 
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                game = sanitizeGameData(game);
                 if(game && game.players[game.turnIndex % 4].isBot) {
                     let botIdx = game.turnIndex % 4;
                     
