@@ -133,7 +133,6 @@
         .player-left { grid-row: 2; grid-column: 1; justify-content: center;}
         .player-right { grid-row: 2; grid-column: 3; justify-content: center;}
         
-        /* BOTTOM AREA FIXED TO PREVENT DROPPING OFF SCREEN */
         .player-bottom { grid-row: 3; grid-column: 1 / span 3; justify-content: flex-end; padding-bottom: 10px; position: absolute; bottom: 0; width: 100%; }
 
         .avatar-container { display: flex; flex-direction: column; align-items: center; transition: 0.3s; z-index: 6;}
@@ -230,22 +229,15 @@
         
         .my-hand { display: flex; justify-content: center; width: 100%; height: 115px; position: relative; }
         .my-hand .playing-card { position: absolute; margin-left: 0; }
-        
-        .my-hand .playing-card.selected { 
-            transform: translateY(-35px) scale(1.15) rotate(0deg) !important; z-index: 100 !important; 
-            border: 2px solid var(--gold); box-shadow: var(--gold-glow); 
-        }
-        .my-hand .playing-card.paired { 
-            border: 2px solid var(--neon-green) !important; 
-            box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.5), 0 4px 15px rgba(0,0,0,0.7) !important;
-        }
     </style>
 </head>
 <body>
 
+    <!-- EFEK VISUAL -->
     <div id="blood-screen" class="blood-overlay hidden"></div>
     <div id="confetti-container" class="hidden"></div>
 
+    <!-- PANDUAN MODAL -->
     <div id="modal-panduan" class="modal-overlay-bg hidden" style="z-index: 9999;">
         <div class="panel" style="max-width: 400px; text-align: left; padding: 20px;">
             <h3 style="color: var(--gold); text-align: center; margin-top: 0;">Buku Panduan LUNA</h3>
@@ -277,6 +269,7 @@
         </div>
     </div>
 
+    <!-- ALERT MODAL -->
     <div id="custom-modal-overlay" class="modal-overlay-bg hidden">
         <div class="custom-modal">
             <h3 id="modal-title">JUDUL</h3>
@@ -320,6 +313,7 @@
             <div id="turn-display" class="status-info" style="flex:1;">Menunggu...</div>
         </div>
 
+        <!-- LEADERBOARD PANEL -->
         <div id="leaderboard" class="leaderboard-panel">
             <div class="leaderboard-title">KLASEMEN</div>
             <div id="lb-content"></div>
@@ -513,7 +507,7 @@
                 let needed = 0;
                 for(let i=0; i<vals.length-1; i++) {
                     let diff = vals[i+1] - vals[i];
-                    if (diff === 0) return false; 
+                    if (diff === 0) return false; // Anti kembar di seri angka
                     needed += (diff - 1);
                 }
                 return needed <= jokers.length;
@@ -1126,14 +1120,21 @@
                 let isPaired = handInfo.groupedIndices.has(index);
                 
                 let cardElement = document.createElement('div');
-                cardElement.className = `playing-card ${card.color === 'red' ? 'card-red' : 'card-black'} ${isTrueJoker ? 'card-joker' : ''} ${isSelected ? 'selected' : ''} ${isPaired ? 'paired' : ''} ${isFallen ? 'fallen' : ''}`;
-                cardElement.style.zIndex = index + 10;
+                cardElement.className = `playing-card ${card.color === 'red' ? 'card-red' : 'card-black'} ${isTrueJoker ? 'card-joker' : ''} ${isPaired ? 'paired' : ''} ${isFallen ? 'fallen' : ''}`;
                 
+                // FIXED BUG 3: Transform calculated accurately without overriding CSS Fan
                 let offset = index - centerIndex;
-                if (!isSelected) {
-                    cardElement.style.transform = `translateX(${offset * 26}px) translateY(${Math.abs(offset) * 2}px) rotate(${offset * 4}deg)`;
+                let tx = offset * 26;
+                let ty = Math.abs(offset) * 2;
+                let rot = offset * 4;
+
+                if (isSelected) {
+                    cardElement.classList.add('selected');
+                    cardElement.style.transform = `translate(${tx}px, -35px) scale(1.15) rotate(${rot/2}deg)`;
+                    cardElement.style.zIndex = index + 100; 
                 } else {
-                    cardElement.style.transform = `translateX(${offset * 26}px)`; 
+                    cardElement.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
+                    cardElement.style.zIndex = index + 10;
                 }
                 
                 cardElement.innerHTML = renderCardHTML(card, isTrueJoker);
@@ -1204,18 +1205,16 @@
                     return;
                 }
 
-                // VALIDASI AUTO-KNOCK: JANGAN IZINKAN TURUN JIKA TANGAN AKAN KOSONG TAPI BELUM NEMBAK
+                // FIXED BUG 2: VALIDASI DEADLOCK TURUN
                 let testHand = [...myHand];
                 let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                 indicesToRemove.forEach(idx => { testHand.splice(idx, 1); });
                 
                 let pData = game.players[mySlotIndex];
-                let tempMelds = [...(pData.melds || []), selectedCards];
-                let testInfo = evaluateHand(testHand, tempMelds, game.jokerRank);
                 
-                if (testHand.length === 0 || testInfo.isAllPaired) {
+                if (testHand.length <= 1) {
                     if (!pData.knockVictims || pData.knockVictims.length === 0) {
-                        showAlertModal("HUKUM TUTUP", "TIDAK BISA TURUN! Ini akan membuat tanganmu habis/sempurna. Kamu HARAM tutup murni, wajib nembak kartu lawan!");
+                        showAlertModal("HUKUM TUTUP", "TIDAK BISA TURUN! Kamu harus menyisakan minimal 2 kartu (1 dibuang, 1 ditahan sebagai sampah) jika belum nembak lawan.");
                         return;
                     }
                 }
@@ -1231,10 +1230,10 @@
                         if(!txPData.melds) txPData.melds = [];
                         txPData.melds.push(meldCards);
 
-                        // --- AUTO-KNOCK ---
+                        // --- AUTO-KNOCK JIKA TANGAN KOSONG (KARENA NEMBAK) ---
                         let chkInfo = evaluateHand(txPData.hand, txPData.melds, gameTx.jokerRank);
                         if (txPData.hand.length === 0 || chkInfo.isAllPaired) {
-                            let knockC = meldCards[meldCards.length - 1]; // Acuan tutup
+                            let knockC = meldCards[meldCards.length - 1]; 
                             gameTx = handleRoundEnd(gameTx, mySlotIndex, txPData.knockVictims, knockC);
                         } else {
                             selectedCardIndices = [];
@@ -1499,7 +1498,6 @@
                         if (!handInfo.groupedIndices.has(i)) deadwoodIndices.push(i);
                     }
 
-                    // Paksa bot memecah jika tangan 100% jadi tapi gak bisa tutup karena bukan hasil nembak
                     if(deadwoodIndices.length === 0) deadwoodIndices = [0]; 
 
                     let isEliteRevealed = false;
