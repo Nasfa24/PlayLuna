@@ -121,7 +121,7 @@
         .leaderboard-item { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 3px; }
         .dir-indicator { font-size: 22px; color: var(--neon-green); text-shadow: var(--green-glow); position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); font-weight: 900;}
 
-        /* TATA LETAK MEJA */
+        /* TATA LETAK MEJA - FIXED BUG CSS MELDS OVERFLOW */
         .game-table {
             flex: 1; position: relative; display: grid;
             grid-template-rows: 1fr 1fr 1fr; grid-template-columns: 1fr 1fr 1fr;
@@ -175,7 +175,7 @@
         }
         .deck-count { position: absolute; bottom: -20px; width: 100%; text-align: center; font-size: 12px; font-weight: 800; color: #94a3b8; }
 
-        /* KARTU VISUAL UTAMA */
+        /* KARTU VISUAL UTAMA (TANGAN) */
         .playing-card {
             width: 75px; height: 110px; 
             background: #f8fafc; border-radius: 10px;
@@ -191,6 +191,8 @@
         .card-red { color: var(--red-suit); }
         .card-fresh { box-shadow: var(--green-glow); border: 2px solid var(--neon-green); z-index: 10; } 
         .playing-card.fallen { opacity: 0.85; filter: grayscale(20%); background: #e2e8f0; }
+        
+        /* JOKER GLOW EFEK BARU */
         .card-joker { border: 2px solid var(--gold) !important; box-shadow: inset 0 0 20px rgba(251,191,36,0.4), 0 4px 15px rgba(0,0,0,0.7) !important; background: #fffdf5 !important; }
 
         .card-center.pips-container { 
@@ -233,6 +235,7 @@
     <div id="blood-screen" class="blood-overlay hidden"></div>
     <div id="confetti-container" class="hidden"></div>
 
+    <!-- PANDUAN MODAL VISUAL BERGAMBAR LUNA V4.2 -->
     <div id="modal-panduan" class="modal-overlay-bg hidden" style="z-index: 9999;">
         <div class="panel" style="max-width: 400px; text-align: left; padding: 20px; width: 95%;">
             <h3 style="color: var(--gold); text-align: center; margin-top: 0; font-weight: 800;">BUKU PANDUAN LUNA</h3>
@@ -255,10 +258,10 @@
                     <div class="mini-card" style="border:1px solid var(--red-suit);">K<br><span style="font-size:8px">♠</span></div>
                     <div class="mini-card c-red" style="border:1px solid var(--red-suit);">K<br><span style="font-size:8px">♥</span></div>
                     <div class="mini-card c-red" style="border:1px solid var(--red-suit);">K<br><span style="font-size:8px">♦</span></div>
-                    <span style="color:var(--red-suit); margin-left:5px; font-weight:800;">✖ HARAM (Gambar Harus Seri)</span>
+                    <span style="color:var(--red-suit); margin-left:5px; font-weight:800;">✖ HARAM (Gambar & Angka Wajib Seri)</span>
                 </div>
 
-                <p><b style="color:var(--gold);">2. HUKUM KASTA JOKER</b><br>Joker Angka hanya melayani Angka. Joker Gambar melayani Gambar & Angka.</p>
+                <p><b style="color:var(--gold);">2. HUKUM KASTA JOKER</b><br>Joker AS & Angka hanya melayani Angka. Joker Gambar melayani Gambar & Angka.</p>
                 <div style="display:flex; gap:3px; align-items:center; margin-bottom:12px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 8px;">
                     <div class="mini-card c-red" style="border:1px solid var(--neon-green);">8<br><span style="font-size:8px">♥</span></div>
                     <div class="mini-card c-red" style="border:1px solid var(--neon-green);">9<br><span style="font-size:8px">♥</span></div>
@@ -268,9 +271,9 @@
             </div>
 
             <div id="tab-magnet" class="hidden" style="font-size: 11px; color: #cbd5e1; max-height: 50vh; overflow-y: auto;">
-                <p><b style="color:var(--gold);">TUTUP MURNI DEK DILARANG!</b><br>Menang wajib dengan nembak buangan lawan.</p>
-                <p><b style="color:var(--neon-green);">1. EFEK NYAPU:</b><br>Mengambil kartu buangan otomatis menyapu seluruh kartu buangan pemain sebelumnya (Mundur).</p>
-                <p><b style="color:var(--neon-green);">2. FOCUSED MAGNET:</b><br>Sistem LUNA AI akan menyortir otomatis. Kartu sapuan yang cocok secara matematis akan otomatis turun (Meld), sisanya menjadi beban (Deadwood) di tangan.</p>
+                <p><b style="color:var(--gold);">TUTUP MURNI DEK DILARANG!</b><br>Menang wajib dengan nembak buangan lawan. <br><br><span style="color:white;">Kamu BEBAS memiliki formasi yang 100% jadi (Gantung) di tanganmu selama permainan berlangsung tanpa harus menutup.</span></p>
+                <p><b style="color:var(--neon-green);">1. EFEK NYAPU:</b><br>Mengambil kartu buangan otomatis menyapu seluruh kartu buangan pemain sebelumnya (Mundur mengikuti arah putaran saat itu).</p>
+                <p><b style="color:var(--neon-green);">2. FOCUSED MAGNET:</b><br>Sistem LUNA AI akan menyortir otomatis. Kartu sapuan yang cocok secara matematis akan otomatis turun (Meld), sisanya menjadi beban di tangan.</p>
             </div>
 
             <div id="tab-hukuman" class="hidden" style="font-size: 11px; color: #cbd5e1; max-height: 50vh; overflow-y: auto;">
@@ -422,7 +425,6 @@
 
         const suitNames = {'♠': 'Waru', '♣': 'Keriting', '♥': 'Hati', '♦': 'Wajik'};
 
-        // --- SISTEM MODAL & VISUAL EFEK ---
         window.showTab = function(tabId) {
             document.getElementById('tab-aturan').classList.add('hidden');
             document.getElementById('tab-hukuman').classList.add('hidden');
@@ -550,7 +552,21 @@
             }
 
             const SUITS = ['♥', '♦', '♠', '♣'];
-            let usedJokers = 0;
+            
+            let rankGroups = {};
+            nonJokers.forEach(c => {
+                if(!rankGroups[c.rank]) rankGroups[c.rank] = [];
+                rankGroups[c.rank].push(c);
+            });
+            
+            if(rankGroups['A'] && rankGroups['A'].length >= 3) {
+                let g = [];
+                rankGroups['A'].forEach(c => {
+                    groupedIndices.add(c.index);
+                    g.push(handCards[c.index]);
+                });
+                formedGroups.push(g);
+            }
 
             let canJokerHelpFaces = ['J', 'Q', 'K'].includes(jokerRank);
             SUITS.forEach(suit => {
@@ -676,7 +692,6 @@
             return { score, hasValidGroup, isAllPaired, groupedIndices, formedGroups };
         }
 
-        // --- SISTEM SHOWDOWN ---
         function handleRoundEnd(game, knockerIdx, victims, customKnockCard = null) {
             if (!game.globalScores) game.globalScores = {};
             
@@ -1134,16 +1149,14 @@
                 let isPaired = handInfo.groupedIndices.has(index);
                 
                 let cardElement = document.createElement('div');
-                cardElement.className = `playing-card ${card.color === 'red' ? 'card-red' : 'card-black'} ${isTrueJoker ? 'card-joker' : ''} ${isPaired ? 'paired' : ''} ${isFallen ? 'fallen' : ''}`;
+                cardElement.className = `playing-card ${card.color === 'red' ? 'card-red' : 'card-black'} ${isTrueJoker ? 'card-joker' : ''} ${isSelected ? 'selected' : ''} ${isPaired ? 'paired' : ''} ${isFallen ? 'fallen' : ''}`;
                 
-                // BUG 1 FIXED: Murni animasi CSS naik tanpa merusak formasi kipas
                 let offset = index - centerIndex;
                 let tx = offset * 26;
                 let ty = Math.abs(offset) * 2;
                 let rot = offset * 4;
 
                 if (isSelected) {
-                    cardElement.classList.add('selected');
                     cardElement.style.transform = `translate(${tx}px, -35px) scale(1.15) rotate(${rot/2}deg)`;
                     cardElement.style.zIndex = index + 100; 
                 } else {
@@ -1230,10 +1243,11 @@
                 let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                 indicesToRemove.forEach(idx => { testHand.splice(idx, 1); });
                 
-                // BUG 2 FIXED: Deadlock Sisa Kartu
-                if (testHand.length <= 1) {
+                // MURNI DIIZINKAN TURUN WALAUPUN SISANYA SEMPURNA. 
+                // Yang dilarang hanyalah jika sisa tangannya 0 (karena 0 artinya dia maksa Tutup dari Deck).
+                if (testHand.length === 0) {
                     if (!pData.knockVictims || pData.knockVictims.length === 0) {
-                        showAlertModal("HUKUM TUTUP", "TIDAK BISA TURUN! Kamu harus menyisakan minimal 2 kartu (1 dibuang, 1 ditahan sebagai sampah) jika belum nembak lawan.");
+                        showAlertModal("HUKUM TUTUP", "TIDAK BISA TURUN! Kamu harus menyisakan minimal 1 kartu untuk dibuang jika belum nembak lawan.");
                         return;
                     }
                 }
@@ -1250,7 +1264,7 @@
                         txPData.melds.push(meldCards);
 
                         let chkInfo = evaluateHand(txPData.hand, txPData.melds, gameTx.jokerRank);
-                        if (txPData.hand.length === 0 || chkInfo.isAllPaired) {
+                        if (txPData.hand.length === 0 || (chkInfo.isAllPaired && txPData.knockVictims && txPData.knockVictims.length > 0)) {
                             let knockC = meldCards[meldCards.length - 1]; 
                             gameTx = handleRoundEnd(gameTx, mySlotIndex, txPData.knockVictims, knockC);
                         } else {
@@ -1396,13 +1410,13 @@
                     return;
                 }
 
+                // FIXED: Hapus pembatasan gantung. Hanya dilarang jika tangan KOSONG (Habis tapi tidak ada korban).
                 let testHand = [...myHand];
                 testHand.splice(sIndex, 1); 
-                let testInfo = evaluateHand(testHand, myMelds, game.jokerRank);
                 
-                if (testHand.length === 0 || testInfo.isAllPaired) {
+                if (testHand.length === 0) {
                     if (!pData.knockVictims || pData.knockVictims.length === 0) {
-                        showAlertModal("HUKUM TUTUP", "Haram Tutup Murni dari Deck LUNA! Kamu harus nembak kartu lawan untuk menang. Tolong buang kartu yang lain untuk memecah formasi.");
+                        showAlertModal("HUKUM TUTUP", "Kamu tidak bisa membuang kartu terakhirmu! Kamu harus menyisakan minimal 1 kartu di tangan jika belum nembak lawan.");
                         return;
                     }
                 }
@@ -1413,13 +1427,17 @@
                         let thrownCard = txPData.hand.splice(sIndex, 1)[0];
                         
                         let chkInfo = evaluateHand(txPData.hand, txPData.melds, gameTx.jokerRank);
-                        if (txPData.hand.length === 0 || chkInfo.isAllPaired) {
+                        let hasVictim = txPData.knockVictims && txPData.knockVictims.length > 0;
+
+                        // JIKA BENAR-BENAR NEMBAK DAN TUTUP
+                        if (hasVictim && (txPData.hand.length === 0 || chkInfo.isAllPaired)) {
                             if (!txPData.discard) txPData.discard = [];
                             txPData.discard.push(thrownCard);
                             gameTx = handleRoundEnd(gameTx, mySlotIndex, txPData.knockVictims, thrownCard);
                             return gameTx;
                         }
 
+                        // JIKA HANYA DISCARD BIASA (Termasuk jika dia sedang gantung/100% paired tapi gak nembak)
                         let isTrueJoker = (thrownCard.rank === gameTx.jokerRank && !thrownCard.isFallen);
                         if (isTrueJoker) {
                             thrownCard.isFallen = true; 
@@ -1447,7 +1465,7 @@
             });
         };
 
-        // --- PREDATOR BOT AI LUNA ---
+        // --- BOT LUNA AI FIX (DEADLOCK RECOVERY) ---
         let isBotThinking = false;
         function playBotTurn(gameData) {
             if(isBotThinking) return; 
@@ -1459,8 +1477,6 @@
                     let dir = game.playDirection || 1;
                     let hand = game.players[botIdx].hand;
 
-                    // FASE 1: NEMBAK MODE
-                    let tookDiscard = false;
                     let targetP = -1;
                     let baseMeld = null;
                     let cardsToRemoveFromHand = [];
@@ -1488,7 +1504,6 @@
                     }
 
                     if (targetP !== -1) {
-                        tookDiscard = true;
                         let tPlayer = game.players[targetP];
                         let takenCard = tPlayer.discard.pop();
                         
@@ -1520,7 +1535,6 @@
                         }
                         hand.push(...sweptToHand);
                     } else {
-                        // FASE 2: DRAW DARI DECK
                         if(game.deck && game.deck.length > 0) {
                             let drawnCard = game.deck.pop();
                             game.players[botIdx].hand.push(drawnCard);
@@ -1529,15 +1543,15 @@
                         }
                     }
 
-                    // FASE 3: MELDING DARI TANGAN (BIAR BOT JAGO TURUN)
                     let handInfo = evaluateHand(hand, game.players[botIdx].melds, game.jokerRank);
                     if (handInfo.formedGroups && handInfo.formedGroups.length > 0) {
                         if (!game.players[botIdx].melds) game.players[botIdx].melds = [];
                         let hasShot = game.players[botIdx].knockVictims && game.players[botIdx].knockVictims.length > 0;
                         
                         handInfo.formedGroups.forEach(g => {
-                            if (!hasShot && (hand.length - g.length) <= 1) {
-                                // Skip meld (Patuh Hukum Sisa 2)
+                            // BOT HARUS MENYISAKAN MINIMAL 2 KARTU SEBELUM DIBUANG AGAR TIDAK DEADLOCK
+                            if (!hasShot && (hand.length - g.length) < 2) {
+                                // Skip
                             } else {
                                 game.players[botIdx].melds.push(g);
                                 g.forEach(gc => {
@@ -1549,73 +1563,94 @@
                         handInfo = evaluateHand(hand, game.players[botIdx].melds, game.jokerRank);
                     }
 
-                    // FASE 4: CEK TUTUP JIKA SUDAH NEMBAK
                     let hasShotKnock = game.players[botIdx].knockVictims && game.players[botIdx].knockVictims.length > 0;
-                    if (hasShotKnock && (hand.length === 0 || handInfo.isAllPaired)) {
-                        let knockC = hand.length > 0 ? hand[0] : (game.players[botIdx].melds[game.players[botIdx].melds.length-1][0]);
-                        if(hand.length > 0) {
-                            let thrownCard = hand.pop();
-                            if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
-                            game.players[botIdx].discard.push(thrownCard);
-                            knockC = thrownCard;
+                    if (hasShotKnock) {
+                        let canKnock = false;
+                        let bestDiscardIdx = -1;
+
+                        if (hand.length === 0) {
+                            canKnock = true;
+                        } else {
+                            for(let i=0; i<hand.length; i++) {
+                                let testHand = [...hand];
+                                testHand.splice(i, 1);
+                                let testInfo = evaluateHand(testHand, game.players[botIdx].melds, game.jokerRank);
+                                if(testInfo.isAllPaired || testHand.length === 0) {
+                                    bestDiscardIdx = i;
+                                    canKnock = true;
+                                    break;
+                                }
+                            }
                         }
-                        game = handleRoundEnd(game, botIdx, game.players[botIdx].knockVictims, knockC);
-                        return game;
-                    }
 
-                    // FASE 5: DISCARD
-                    let deadwoodIndices = [];
-                    for(let i=0; i<hand.length; i++) {
-                        if (!handInfo.groupedIndices.has(i)) deadwoodIndices.push(i);
-                    }
-                    if(deadwoodIndices.length === 0) deadwoodIndices = [0]; 
-
-                    let isEliteRevealed = false;
-                    game.players.forEach(p => {
-                        if(p.discard) {
-                            p.discard.forEach(c => {
-                                if(['J','Q','K','A', game.jokerRank].includes(c.rank)) isEliteRevealed = true;
-                            });
+                        if (canKnock) {
+                            let knockC;
+                            if (hand.length === 0) {
+                                knockC = game.players[botIdx].melds[game.players[botIdx].melds.length - 1][0]; 
+                            } else {
+                                knockC = hand.splice(bestDiscardIdx, 1)[0];
+                                if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
+                                game.players[botIdx].discard.push(knockC);
+                            }
+                            game = handleRoundEnd(game, botIdx, game.players[botIdx].knockVictims, knockC);
+                            return game;
                         }
-                    });
-
-                    let safeCards = []; let dangerCards = []; let eliteCards = []; let aceCards = []; let jokerCards = [];
-                    deadwoodIndices.forEach(idx => {
-                        let c = hand[idx];
-                        if (c.rank === game.jokerRank && !c.isFallen) jokerCards.push(idx);
-                        else if (c.rank === 'A') aceCards.push(idx);
-                        else if (['J','Q','K'].includes(c.rank)) eliteCards.push(idx);
-                        else if (['4','5','6','7','8'].includes(c.rank)) dangerCards.push(idx);
-                        else safeCards.push(idx);
-                    });
-
-                    let discardIdx = -1;
-                    if(safeCards.length > 0) { discardIdx = safeCards[Math.floor(Math.random() * safeCards.length)]; } 
-                    else if (!isEliteRevealed) {
-                        if (dangerCards.length > 0) discardIdx = dangerCards[0];
-                        else if (eliteCards.length > 0) discardIdx = eliteCards[0]; 
-                        else if (aceCards.length > 0 && game.players[botIdx].melds && game.players[botIdx].melds.length > 0) discardIdx = aceCards[0];
-                        else if (jokerCards.length > 0) discardIdx = jokerCards[0];
-                    } else {
-                        if (dangerCards.length > 0) discardIdx = dangerCards[Math.floor(Math.random() * dangerCards.length)];
-                        else if (eliteCards.length > 0) discardIdx = eliteCards[Math.floor(Math.random() * eliteCards.length)];
-                        else if (aceCards.length > 0 && game.players[botIdx].melds && game.players[botIdx].melds.length > 0) discardIdx = aceCards[Math.floor(Math.random() * aceCards.length)];
-                        else if (jokerCards.length > 0) discardIdx = jokerCards[0];
-                    }
-                    
-                    if(discardIdx === -1) discardIdx = deadwoodIndices[0]; 
-
-                    let thrownCard = hand.splice(discardIdx, 1)[0];
-                    let isTrueJoker = (thrownCard.rank === game.jokerRank && !thrownCard.isFallen);
-                    if (isTrueJoker) {
-                        thrownCard.isFallen = true;
-                        if(!game.globalScores) game.globalScores = {};
-                        if(game.globalScores[game.players[botIdx].id] === undefined) game.globalScores[game.players[botIdx].id] = 0;
-                        game.globalScores[game.players[botIdx].id] -= 250;
                     }
 
-                    if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
-                    game.players[botIdx].discard.push(thrownCard);
+                    if (hand.length > 0) {
+                        let deadwoodIndices = [];
+                        for(let i=0; i<hand.length; i++) {
+                            if (!handInfo.groupedIndices.has(i)) deadwoodIndices.push(i);
+                        }
+                        if(deadwoodIndices.length === 0) deadwoodIndices = [0]; 
+
+                        let isEliteRevealed = false;
+                        game.players.forEach(p => {
+                            if(p.discard) {
+                                p.discard.forEach(c => {
+                                    if(['J','Q','K','A', game.jokerRank].includes(c.rank)) isEliteRevealed = true;
+                                });
+                            }
+                        });
+
+                        let safeCards = []; let dangerCards = []; let eliteCards = []; let aceCards = []; let jokerCards = [];
+                        deadwoodIndices.forEach(idx => {
+                            let c = hand[idx];
+                            if (c.rank === game.jokerRank && !c.isFallen) jokerCards.push(idx);
+                            else if (c.rank === 'A') aceCards.push(idx);
+                            else if (['J','Q','K'].includes(c.rank)) eliteCards.push(idx);
+                            else if (['4','5','6','7','8'].includes(c.rank)) dangerCards.push(idx);
+                            else safeCards.push(idx);
+                        });
+
+                        let discardIdx = -1;
+                        if(safeCards.length > 0) { discardIdx = safeCards[Math.floor(Math.random() * safeCards.length)]; } 
+                        else if (!isEliteRevealed) {
+                            if (dangerCards.length > 0) discardIdx = dangerCards[0];
+                            else if (eliteCards.length > 0) discardIdx = eliteCards[0]; 
+                            else if (aceCards.length > 0 && game.players[botIdx].melds && game.players[botIdx].melds.length > 0) discardIdx = aceCards[0];
+                            else if (jokerCards.length > 0) discardIdx = jokerCards[0];
+                        } else {
+                            if (dangerCards.length > 0) discardIdx = dangerCards[Math.floor(Math.random() * dangerCards.length)];
+                            else if (eliteCards.length > 0) discardIdx = eliteCards[Math.floor(Math.random() * eliteCards.length)];
+                            else if (aceCards.length > 0 && game.players[botIdx].melds && game.players[botIdx].melds.length > 0) discardIdx = aceCards[Math.floor(Math.random() * aceCards.length)];
+                            else if (jokerCards.length > 0) discardIdx = jokerCards[0];
+                        }
+                        
+                        if(discardIdx === -1) discardIdx = deadwoodIndices[0]; 
+
+                        let thrownCard = hand.splice(discardIdx, 1)[0];
+                        let isTrueJoker = (thrownCard.rank === game.jokerRank && !thrownCard.isFallen);
+                        if (isTrueJoker) {
+                            thrownCard.isFallen = true;
+                            if(!game.globalScores) game.globalScores = {};
+                            if(game.globalScores[game.players[botIdx].id] === undefined) game.globalScores[game.players[botIdx].id] = 0;
+                            game.globalScores[game.players[botIdx].id] -= 250;
+                        }
+
+                        if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
+                        game.players[botIdx].discard.push(thrownCard);
+                    }
 
                     game.players[botIdx].knockVictims = [];
                     game.players[botIdx].hasDrawnFromDeck = false;
@@ -1625,9 +1660,11 @@
                     game.players[nextIdx].knockVictims = [];
                     game.players[nextIdx].hasDrawnFromDeck = false;
                     game.turnPhase = 'DRAW';
+                    
+                    return game;
                 }
                 return game;
-            }).then(() => { isBotThinking = false; });
+            }).then(() => { isBotThinking = false; }).catch(err => { console.error("LUNA AI Error:", err); isBotThinking = false; });
         }
     </script>
 </body>
