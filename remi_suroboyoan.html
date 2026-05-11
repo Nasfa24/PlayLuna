@@ -121,7 +121,7 @@
         .leaderboard-item { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 3px; }
         .dir-indicator { font-size: 22px; color: var(--neon-green); text-shadow: var(--green-glow); position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); font-weight: 900;}
 
-        /* TATA LETAK MEJA - FIXED BUG CSS MELDS OVERFLOW */
+        /* TATA LETAK MEJA */
         .game-table {
             flex: 1; position: relative; display: grid;
             grid-template-rows: 1fr 1fr 1fr; grid-template-columns: 1fr 1fr 1fr;
@@ -175,7 +175,7 @@
         }
         .deck-count { position: absolute; bottom: -20px; width: 100%; text-align: center; font-size: 12px; font-weight: 800; color: #94a3b8; }
 
-        /* KARTU VISUAL UTAMA (TANGAN) */
+        /* KARTU VISUAL UTAMA */
         .playing-card {
             width: 75px; height: 110px; 
             background: #f8fafc; border-radius: 10px;
@@ -191,8 +191,6 @@
         .card-red { color: var(--red-suit); }
         .card-fresh { box-shadow: var(--green-glow); border: 2px solid var(--neon-green); z-index: 10; } 
         .playing-card.fallen { opacity: 0.85; filter: grayscale(20%); background: #e2e8f0; }
-        
-        /* JOKER GLOW EFEK BARU */
         .card-joker { border: 2px solid var(--gold) !important; box-shadow: inset 0 0 20px rgba(251,191,36,0.4), 0 4px 15px rgba(0,0,0,0.7) !important; background: #fffdf5 !important; }
 
         .card-center.pips-container { 
@@ -235,7 +233,6 @@
     <div id="blood-screen" class="blood-overlay hidden"></div>
     <div id="confetti-container" class="hidden"></div>
 
-    <!-- PANDUAN MODAL VISUAL BERGAMBAR LUNA V4.2 -->
     <div id="modal-panduan" class="modal-overlay-bg hidden" style="z-index: 9999;">
         <div class="panel" style="max-width: 400px; text-align: left; padding: 20px; width: 95%;">
             <h3 style="color: var(--gold); text-align: center; margin-top: 0; font-weight: 800;">BUKU PANDUAN LUNA</h3>
@@ -425,6 +422,9 @@
 
         const suitNames = {'♠': 'Waru', '♣': 'Keriting', '♥': 'Hati', '♦': 'Wajik'};
 
+        // --- GLOBAL AI LOCK ---
+        let isBotThinking = false;
+
         window.showTab = function(tabId) {
             document.getElementById('tab-aturan').classList.add('hidden');
             document.getElementById('tab-hukuman').classList.add('hidden');
@@ -479,6 +479,35 @@
             }
             setTimeout(() => { container.classList.add('hidden'); container.innerHTML=''; }, 4000);
         };
+
+        window.showMatchWinner = function(game) {
+            let sortedPlayers = [...game.players].sort((a,b) => (game.globalScores[b.id]||0) - (game.globalScores[a.id]||0));
+            let winner = sortedPlayers[0];
+            
+            let html = `<div style="font-size:36px; margin-bottom:10px;">👑</div>
+                        <div style="font-size:22px; color:var(--gold); font-weight:900; margin-bottom:5px;">${winner.name}</div>
+                        <div style="color:var(--neon-green); font-size:16px; font-weight:bold; margin-bottom:20px;">Skor Akhir: ${game.globalScores[winner.id]}</div>
+                        <div style="text-align:left; background:rgba(0,0,0,0.5); padding:10px; border-radius:10px;">`;
+            
+            sortedPlayers.forEach((p, i) => {
+                html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12px;">
+                            <span>${i+1}. ${p.name}</span>
+                            <b style="color:${game.globalScores[p.id] < 0 ? 'var(--red-suit)' : 'var(--neon-green)'}">${game.globalScores[p.id]} Poin</b>
+                         </div>`;
+            });
+            html += `</div>`;
+
+            showAlertModal("🏆 TURNAMEN SELESAI!", html, [
+                { text: "KEMBALI KE MENU", class: "btn-blue", action: () => resetLocalData() }
+            ]);
+            
+            if (amIHost) {
+                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (g) => {
+                    if (g) g.status = "ENDED";
+                    return g;
+                });
+            }
+        }
 
         function getCardPoints(rank, isJoker) {
             if (isJoker) return 25; 
@@ -638,17 +667,40 @@
                 }
             });
 
-            let hasOtherMeld = (melds && melds.length > 0) || formedGroups.length > 0 || isSimulatingPickup;
-            if (hasOtherMeld) {
-                let acesInHand = nonJokers.filter(c => c.rank === 'A' && !groupedIndices.has(c.index));
-                if (acesInHand.length >= 3) {
-                    let g = [];
-                    acesInHand.forEach(c => {
-                        groupedIndices.add(c.index);
-                        g.push(handCards[c.index]);
-                    });
-                    formedGroups.push(g);
+            let remainingJokers = jokers.filter(j => !groupedIndices.has(j.index));
+            remainingJokers.forEach(jObj => {
+                let jCard = handCards[jObj.index];
+                for (let g of formedGroups) {
+                    let normals = g.filter(c => c.rank !== jokerRank || c.isFallen);
+                    if (normals.length === 0) continue;
+                    
+                    let isAceGroup = normals.some(c => c.rank === 'A');
+                    let isFaceGroup = normals.some(c => ['J','Q','K'].includes(c.rank));
+                    let isJokerFace = ['J','Q','K'].includes(jokerRank);
+
+                    if (isAceGroup) continue; 
+                    if (isFaceGroup && !isJokerFace) continue; 
+                    if (isFaceGroup && isJokerFace && jCard.suit !== normals[0].suit) continue; 
+
+                    groupedIndices.add(jObj.index);
+                    g.push(jCard);
+                    break; 
                 }
+            });
+
+            let hasOtherMeld = (melds && melds.length > 0) || formedGroups.filter(g => !g.some(c => c.rank === 'A')).length > 0 || isSimulatingPickup;
+            if (!hasOtherMeld) {
+                formedGroups = formedGroups.filter(g => {
+                    let isAceGroup = g.some(c => c.rank === 'A');
+                    if(isAceGroup) {
+                        g.forEach(c => {
+                            let origIdx = handCards.findIndex(hc => hc === c);
+                            groupedIndices.delete(origIdx);
+                        });
+                        return false; 
+                    }
+                    return true;
+                });
             }
 
             function scoreGroup(groupCards) {
@@ -715,6 +767,11 @@
                 else { baseKnockValue = 50; } 
                 
                 knockMsg = `🎉 ${knocker.name} MENUTUP DENGAN KARTU ${isTrueJoker ? 'JOKER' : knockCard.rank}!`;
+                
+                if (victims && victims.length > 0) {
+                    let victimNames = victims.map(v => game.players[v].name).join(', ');
+                    knockMsg += `<br><span style="color:var(--red-suit); font-size:11px; display:block; margin-top:5px;">(Denda Nembak ditanggung oleh: ${victimNames})</span>`;
+                }
             } else {
                 knockMsg = "⚠️ STOK KARTU HABIS! SKOR NORMAL DITERAPKAN!";
             }
@@ -722,6 +779,7 @@
             game.players.forEach((p, idx) => {
                 if (game.globalScores[p.id] === undefined) game.globalScores[p.id] = 0;
                 let handInfo = evaluateHand(p.hand || [], p.melds || [], game.jokerRank);
+                
                 let rScore = handInfo.score; 
                 
                 if (knockerIdx !== null) {
@@ -751,7 +809,7 @@
                 if (game.globalScores[pid] >= (game.targetScore || 250)) isMatchOver = true;
                 if (game.globalScores[pid] > maxScore) { maxScore = game.globalScores[pid]; winner = game.players.find(x=>x.id===pid).name; }
             }
-            if (isMatchOver) { game.status = "MATCH_ENDED"; game.matchWinner = winner; }
+            game.isMatchOver = isMatchOver;
             return game;
         }
 
@@ -796,12 +854,17 @@
 
             let hasReadied = (game.readyList && game.readyList.includes(myPlayerId));
             let btns = [];
-            if(!hasReadied) {
-                btns.push({ text: "SAYA SIAP LANJUT", class: "btn-green", action: () => setPlayerReady() });
+            
+            if (game.isMatchOver) {
+                btns.push({ text: "🏆 LIHAT JUARA", class: "btn-gold", action: () => showMatchWinner(game) });
             } else {
-                btns.push({ text: "MENUNGGU LAINNYA...", class: "btn-gold", action: ()=>{} });
+                if(!hasReadied) {
+                    btns.push({ text: "SAYA SIAP LANJUT", class: "btn-green", action: () => setPlayerReady() });
+                } else {
+                    btns.push({ text: "MENUNGGU LAINNYA...", class: "btn-gold", action: ()=>{} });
+                }
+                btns.push({ text: "KELUAR ROOM", class: "btn-red", action: () => resetLocalData() });
             }
-            btns.push({ text: "KELUAR ROOM", class: "btn-red", action: () => resetLocalData() });
 
             showAlertModal("HASIL RONDE", html, btns);
         }
@@ -842,8 +905,8 @@
                         for (let pid in game.globalScores) {
                             if (game.globalScores[pid] > maxScore) { maxScore = game.globalScores[pid]; winner = game.players.find(x=>x.id===pid).name; }
                         }
-                        game.matchWinner = winner || "Belum ada poin";
-                        game.status = "MATCH_ENDED";
+                        game.isMatchOver = true;
+                        game.status = "ROUND_ENDED"; 
                     }
                     return game;
                 });
@@ -945,9 +1008,6 @@
                     renderShowdown(game);
                 }
 
-                if (game.status === "MATCH_ENDED") { 
-                    showAlertModal("🏆 TURNAMEN SELESAI!", `<div style="font-size:24px; color:var(--gold); font-weight:800; margin:15px 0;">${game.matchWinner}</div>Telah mencapai target skor. Selamat!`, [{text:"KEMBALI KE MENU", action: resetLocalData}]); 
-                }
                 if (game.status === "ENDED") { 
                     showAlertModal("GAME DIBUBARKAN", "Permainan telah ditutup oleh Host.", [{text:"OK", action: resetLocalData}]); 
                 }
@@ -1157,6 +1217,7 @@
                 let rot = offset * 4;
 
                 if (isSelected) {
+                    cardElement.classList.add('selected');
                     cardElement.style.transform = `translate(${tx}px, -35px) scale(1.15) rotate(${rot/2}deg)`;
                     cardElement.style.zIndex = index + 100; 
                 } else {
@@ -1194,7 +1255,13 @@
                 }
             } else { actionBtns.classList.remove('active'); }
 
-            if(amIHost && activePlayer.isBot) { setTimeout(() => { playBotTurn(game); }, 1500); }
+            // BUG FIXED 1: FAST AWAKENING PROTOCOL
+            if(amIHost && activePlayer.isBot) { 
+                if (!isBotThinking) {
+                    isBotThinking = true;
+                    setTimeout(() => { playBotTurn(); }, 800); // Eksekusi Ngebut
+                }
+            }
         }
 
         window.selectCard = (index) => {
@@ -1243,8 +1310,6 @@
                 let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                 indicesToRemove.forEach(idx => { testHand.splice(idx, 1); });
                 
-                // MURNI DIIZINKAN TURUN WALAUPUN SISANYA SEMPURNA. 
-                // Yang dilarang hanyalah jika sisa tangannya 0 (karena 0 artinya dia maksa Tutup dari Deck).
                 if (testHand.length === 0) {
                     if (!pData.knockVictims || pData.knockVictims.length === 0) {
                         showAlertModal("HUKUM TUTUP", "TIDAK BISA TURUN! Kamu harus menyisakan minimal 1 kartu untuk dibuang jika belum nembak lawan.");
@@ -1332,6 +1397,12 @@
                 if(!targetPlayer || !targetPlayer.discard || targetPlayer.discard.length === 0) return;
                 
                 let topCard = targetPlayer.discard[targetPlayer.discard.length - 1];
+                
+                if (topCard.rank === 'A' && (!pData.melds || pData.melds.length === 0)) {
+                    showAlertModal("HUKUM KARTU AS", "HARAM! Kamu belum punya formasi pasangan di meja, tidak diizinkan mengambil AS buangan lawan.");
+                    return;
+                }
+
                 let myHand = pData.hand;
                 let selectedCards = selectedCardIndices.map(i => myHand[i]);
                 let testGroup = [...selectedCards, topCard];
@@ -1410,7 +1481,6 @@
                     return;
                 }
 
-                // FIXED: Hapus pembatasan gantung. Hanya dilarang jika tangan KOSONG (Habis tapi tidak ada korban).
                 let testHand = [...myHand];
                 testHand.splice(sIndex, 1); 
                 
@@ -1429,7 +1499,6 @@
                         let chkInfo = evaluateHand(txPData.hand, txPData.melds, gameTx.jokerRank);
                         let hasVictim = txPData.knockVictims && txPData.knockVictims.length > 0;
 
-                        // JIKA BENAR-BENAR NEMBAK DAN TUTUP
                         if (hasVictim && (txPData.hand.length === 0 || chkInfo.isAllPaired)) {
                             if (!txPData.discard) txPData.discard = [];
                             txPData.discard.push(thrownCard);
@@ -1437,7 +1506,6 @@
                             return gameTx;
                         }
 
-                        // JIKA HANYA DISCARD BIASA (Termasuk jika dia sedang gantung/100% paired tapi gak nembak)
                         let isTrueJoker = (thrownCard.rank === gameTx.jokerRank && !thrownCard.isFallen);
                         if (isTrueJoker) {
                             thrownCard.isFallen = true; 
@@ -1465,27 +1533,31 @@
             });
         };
 
-        // --- BOT LUNA AI FIX (DEADLOCK RECOVERY) ---
-        let isBotThinking = false;
-        function playBotTurn(gameData) {
-            if(isBotThinking) return; 
-            isBotThinking = true;
-
+        // --- PREDATOR BOT AI V5.1 (TITANIUM ENGINE) ---
+        function playBotTurn() {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                if(game && game.players[game.currentTurnSlot].isBot) {
-                    let botIdx = game.currentTurnSlot;
-                    let dir = game.playDirection || 1;
-                    let hand = game.players[botIdx].hand;
+                if(!game || !game.players || !game.players[game.currentTurnSlot] || !game.players[game.currentTurnSlot].isBot) {
+                    return game; 
+                }
 
-                    let targetP = -1;
-                    let baseMeld = null;
-                    let cardsToRemoveFromHand = [];
+                let botIdx = game.currentTurnSlot;
+                let dir = game.playDirection || 1;
+                let hand = game.players[botIdx].hand || [];
 
-                    let currTarget = (botIdx - dir + 4) % 4;
-                    while(currTarget !== botIdx) {
-                        let tPlayer = game.players[currTarget];
-                        if (tPlayer.discard && tPlayer.discard.length > 0) {
-                            let topD = tPlayer.discard[tPlayer.discard.length - 1];
+                let targetP = -1;
+                let baseMeld = null;
+                let cardsToRemoveFromHand = [];
+
+                let currTarget = (botIdx - dir + 4) % 4;
+                while(currTarget !== botIdx) {
+                    let tPlayer = game.players[currTarget];
+                    if (tPlayer.discard && tPlayer.discard.length > 0) {
+                        let topD = tPlayer.discard[tPlayer.discard.length - 1];
+                        
+                        let botMelds = game.players[botIdx].melds || [];
+                        if (topD.rank === 'A' && botMelds.length === 0) {
+                            // Lewati
+                        } else {
                             for(let i=0; i<hand.length-1; i++) {
                                 for(let j=i+1; j<hand.length; j++) {
                                     let testGroup = [hand[i], hand[j], topD];
@@ -1499,172 +1571,190 @@
                                 if(targetP !== -1) break;
                             }
                         }
-                        if(targetP !== -1) break;
-                        currTarget = (currTarget - dir + 4) % 4;
                     }
+                    if(targetP !== -1) break;
+                    currTarget = (currTarget - dir + 4) % 4;
+                }
 
-                    if (targetP !== -1) {
-                        let tPlayer = game.players[targetP];
-                        let takenCard = tPlayer.discard.pop();
-                        
-                        let sortedRem = cardsToRemoveFromHand.sort((a,b)=>b-a);
-                        sortedRem.forEach(idx => hand.splice(idx, 1));
-                        
-                        if(!game.players[botIdx].melds) game.players[botIdx].melds = [];
-                        game.players[botIdx].melds.push(baseMeld);
-                        
-                        if(!game.players[botIdx].knockVictims) game.players[botIdx].knockVictims = [];
-                        if(!game.players[botIdx].knockVictims.includes(targetP)) game.players[botIdx].knockVictims.push(targetP);
+                if (targetP !== -1) {
+                    let tPlayer = game.players[targetP];
+                    let takenCard = tPlayer.discard.pop();
+                    
+                    let sortedRem = cardsToRemoveFromHand.sort((a,b)=>b-a);
+                    sortedRem.forEach(idx => hand.splice(idx, 1));
+                    
+                    if(!game.players[botIdx].melds) game.players[botIdx].melds = [];
+                    game.players[botIdx].melds.push(baseMeld);
+                    
+                    if(!game.players[botIdx].knockVictims) game.players[botIdx].knockVictims = [];
+                    if(!game.players[botIdx].knockVictims.includes(targetP)) game.players[botIdx].knockVictims.push(targetP);
 
-                        let sweptToHand = [];
-                        let sweepTarget = targetP;
-                        while (sweepTarget !== botIdx) {
-                            sweepTarget = (sweepTarget + dir + 4) % 4;
-                            if (sweepTarget === botIdx) break; 
-                            
-                            let iterPlayer = game.players[sweepTarget];
-                            if(iterPlayer.discard && iterPlayer.discard.length > 0) {
-                                let sweptCard = iterPlayer.discard.pop();
-                                let testMagnet = [...baseMeld, sweptCard];
-                                if (isValidSingleGroup(testMagnet, game.jokerRank)) {
-                                    baseMeld.push(sweptCard); 
-                                } else {
-                                    sweptToHand.push(sweptCard); 
-                                }
+                    let sweptToHand = [];
+                    let sweepTarget = targetP;
+                    while (sweepTarget !== botIdx) {
+                        sweepTarget = (sweepTarget + dir + 4) % 4;
+                        if (sweepTarget === botIdx) break; 
+                        
+                        let iterPlayer = game.players[sweepTarget];
+                        if(iterPlayer.discard && iterPlayer.discard.length > 0) {
+                            let sweptCard = iterPlayer.discard.pop();
+                            let testMagnet = [...baseMeld, sweptCard];
+                            if (isValidSingleGroup(testMagnet, game.jokerRank)) {
+                                baseMeld.push(sweptCard); 
+                            } else {
+                                sweptToHand.push(sweptCard); 
                             }
                         }
-                        hand.push(...sweptToHand);
+                    }
+                    hand.push(...sweptToHand);
+                } else {
+                    if(game.deck && game.deck.length > 0) {
+                        let drawnCard = game.deck.pop();
+                        game.players[botIdx].hand.push(drawnCard);
                     } else {
-                        if(game.deck && game.deck.length > 0) {
-                            let drawnCard = game.deck.pop();
-                            game.players[botIdx].hand.push(drawnCard);
+                        game = handleRoundEnd(game, null, []); return game;
+                    }
+                }
+
+                let handInfo = evaluateHand(hand, game.players[botIdx].melds, game.jokerRank);
+                if (handInfo.formedGroups && handInfo.formedGroups.length > 0) {
+                    if (!game.players[botIdx].melds) game.players[botIdx].melds = [];
+                    let hasShot = game.players[botIdx].knockVictims && game.players[botIdx].knockVictims.length > 0;
+                    
+                    let tempHand = [...hand];
+                    handInfo.formedGroups.forEach(g => {
+                        if (!hasShot && (tempHand.length - g.length) < 2) {
+                            // Skip
                         } else {
-                            game = handleRoundEnd(game, null, []); return game;
+                            game.players[botIdx].melds.push(g);
+                            g.forEach(gc => {
+                                let hIdx = tempHand.findIndex(hc => hc.suit === gc.suit && hc.rank === gc.rank && hc.isFallen === gc.isFallen);
+                                if(hIdx !== -1) tempHand.splice(hIdx, 1);
+                                
+                                let realHIdx = hand.findIndex(hc => hc.suit === gc.suit && hc.rank === gc.rank && hc.isFallen === gc.isFallen);
+                                if(realHIdx !== -1) hand.splice(realHIdx, 1);
+                            });
                         }
-                    }
+                    });
+                    handInfo = evaluateHand(hand, game.players[botIdx].melds, game.jokerRank);
+                }
 
-                    let handInfo = evaluateHand(hand, game.players[botIdx].melds, game.jokerRank);
-                    if (handInfo.formedGroups && handInfo.formedGroups.length > 0) {
-                        if (!game.players[botIdx].melds) game.players[botIdx].melds = [];
-                        let hasShot = game.players[botIdx].knockVictims && game.players[botIdx].knockVictims.length > 0;
-                        
-                        handInfo.formedGroups.forEach(g => {
-                            // BOT HARUS MENYISAKAN MINIMAL 2 KARTU SEBELUM DIBUANG AGAR TIDAK DEADLOCK
-                            if (!hasShot && (hand.length - g.length) < 2) {
-                                // Skip
-                            } else {
-                                game.players[botIdx].melds.push(g);
-                                g.forEach(gc => {
-                                    let hIdx = hand.findIndex(hc => hc.suit === gc.suit && hc.rank === gc.rank && hc.isFallen === gc.isFallen);
-                                    if(hIdx !== -1) hand.splice(hIdx, 1);
-                                });
-                            }
-                        });
-                        handInfo = evaluateHand(hand, game.players[botIdx].melds, game.jokerRank);
-                    }
+                let hasShotKnock = game.players[botIdx].knockVictims && game.players[botIdx].knockVictims.length > 0;
+                if (hasShotKnock) {
+                    let canKnock = false;
+                    let bestDiscardIdx = -1;
 
-                    let hasShotKnock = game.players[botIdx].knockVictims && game.players[botIdx].knockVictims.length > 0;
-                    if (hasShotKnock) {
-                        let canKnock = false;
-                        let bestDiscardIdx = -1;
-
-                        if (hand.length === 0) {
-                            canKnock = true;
-                        } else {
-                            for(let i=0; i<hand.length; i++) {
-                                let testHand = [...hand];
-                                testHand.splice(i, 1);
-                                let testInfo = evaluateHand(testHand, game.players[botIdx].melds, game.jokerRank);
-                                if(testInfo.isAllPaired || testHand.length === 0) {
-                                    bestDiscardIdx = i;
-                                    canKnock = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (canKnock) {
-                            let knockC;
-                            if (hand.length === 0) {
-                                knockC = game.players[botIdx].melds[game.players[botIdx].melds.length - 1][0]; 
-                            } else {
-                                knockC = hand.splice(bestDiscardIdx, 1)[0];
-                                if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
-                                game.players[botIdx].discard.push(knockC);
-                            }
-                            game = handleRoundEnd(game, botIdx, game.players[botIdx].knockVictims, knockC);
-                            return game;
-                        }
-                    }
-
-                    if (hand.length > 0) {
-                        let deadwoodIndices = [];
+                    if (hand.length === 0) {
+                        canKnock = true;
+                    } else {
                         for(let i=0; i<hand.length; i++) {
-                            if (!handInfo.groupedIndices.has(i)) deadwoodIndices.push(i);
-                        }
-                        if(deadwoodIndices.length === 0) deadwoodIndices = [0]; 
-
-                        let isEliteRevealed = false;
-                        game.players.forEach(p => {
-                            if(p.discard) {
-                                p.discard.forEach(c => {
-                                    if(['J','Q','K','A', game.jokerRank].includes(c.rank)) isEliteRevealed = true;
-                                });
+                            let testHand = [...hand];
+                            testHand.splice(i, 1);
+                            let testInfo = evaluateHand(testHand, game.players[botIdx].melds, game.jokerRank);
+                            if(testInfo.isAllPaired || testHand.length === 0) {
+                                bestDiscardIdx = i; 
+                                canKnock = true;
+                                break;
                             }
-                        });
+                        }
+                    }
 
-                        let safeCards = []; let dangerCards = []; let eliteCards = []; let aceCards = []; let jokerCards = [];
+                    if (canKnock) {
+                        let knockC = null;
+                        if (hand.length === 0) {
+                            knockC = game.players[botIdx].melds[game.players[botIdx].melds.length - 1][0]; 
+                        } else {
+                            knockC = hand.splice(bestDiscardIdx, 1)[0];
+                            if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
+                            game.players[botIdx].discard.push(knockC);
+                        }
+                        game = handleRoundEnd(game, botIdx, game.players[botIdx].knockVictims, knockC);
+                        return game;
+                    }
+                }
+
+                if (hand.length > 0) {
+                    let deadwoodIndices = [];
+                    for(let i=0; i<hand.length; i++) {
+                        if (!handInfo.groupedIndices.has(i)) deadwoodIndices.push(i);
+                    }
+                    
+                    let discardIdx = -1;
+
+                    if (deadwoodIndices.length > 0) {
+                        let bestCardIdx = -1;
+                        let bestScore = -9999;
+                        
                         deadwoodIndices.forEach(idx => {
                             let c = hand[idx];
-                            if (c.rank === game.jokerRank && !c.isFallen) jokerCards.push(idx);
-                            else if (c.rank === 'A') aceCards.push(idx);
-                            else if (['J','Q','K'].includes(c.rank)) eliteCards.push(idx);
-                            else if (['4','5','6','7','8'].includes(c.rank)) dangerCards.push(idx);
-                            else safeCards.push(idx);
+                            let itemScore = 0;
+                            
+                            if (c.rank === game.jokerRank && !c.isFallen) {
+                                itemScore = -100;
+                            } 
+                            else if (c.rank === 'A') {
+                                if (!game.players[botIdx].melds || game.players[botIdx].melds.length === 0) {
+                                    itemScore = -200; 
+                                } else {
+                                    itemScore = -10; 
+                                }
+                            }
+                            else if (['J','Q','K'].includes(c.rank)) itemScore = 10;
+                            else if (['4','5','6','7','8'].includes(c.rank)) itemScore = 20; 
+                            else itemScore = 30; 
+                            
+                            if (itemScore > bestScore) {
+                                bestScore = itemScore;
+                                bestCardIdx = idx;
+                            }
                         });
-
-                        let discardIdx = -1;
-                        if(safeCards.length > 0) { discardIdx = safeCards[Math.floor(Math.random() * safeCards.length)]; } 
-                        else if (!isEliteRevealed) {
-                            if (dangerCards.length > 0) discardIdx = dangerCards[0];
-                            else if (eliteCards.length > 0) discardIdx = eliteCards[0]; 
-                            else if (aceCards.length > 0 && game.players[botIdx].melds && game.players[botIdx].melds.length > 0) discardIdx = aceCards[0];
-                            else if (jokerCards.length > 0) discardIdx = jokerCards[0];
-                        } else {
-                            if (dangerCards.length > 0) discardIdx = dangerCards[Math.floor(Math.random() * dangerCards.length)];
-                            else if (eliteCards.length > 0) discardIdx = eliteCards[Math.floor(Math.random() * eliteCards.length)];
-                            else if (aceCards.length > 0 && game.players[botIdx].melds && game.players[botIdx].melds.length > 0) discardIdx = aceCards[Math.floor(Math.random() * aceCards.length)];
-                            else if (jokerCards.length > 0) discardIdx = jokerCards[0];
-                        }
                         
-                        if(discardIdx === -1) discardIdx = deadwoodIndices[0]; 
-
-                        let thrownCard = hand.splice(discardIdx, 1)[0];
-                        let isTrueJoker = (thrownCard.rank === game.jokerRank && !thrownCard.isFallen);
-                        if (isTrueJoker) {
-                            thrownCard.isFallen = true;
-                            if(!game.globalScores) game.globalScores = {};
-                            if(game.globalScores[game.players[botIdx].id] === undefined) game.globalScores[game.players[botIdx].id] = 0;
-                            game.globalScores[game.players[botIdx].id] -= 250;
-                        }
-
-                        if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
-                        game.players[botIdx].discard.push(thrownCard);
+                        discardIdx = (bestCardIdx !== -1) ? bestCardIdx : deadwoodIndices[0];
+                    } else {
+                        discardIdx = hand.length - 1;
                     }
 
-                    game.players[botIdx].knockVictims = [];
-                    game.players[botIdx].hasDrawnFromDeck = false;
+                    if(discardIdx >= 0 && discardIdx < hand.length) {
+                        let thrownCard = hand.splice(discardIdx, 1)[0];
+                        if (thrownCard) {
+                            let isTrueJoker = (thrownCard.rank === game.jokerRank && !thrownCard.isFallen);
+                            if (isTrueJoker) {
+                                thrownCard.isFallen = true;
+                                if(!game.globalScores) game.globalScores = {};
+                                if(game.globalScores[game.players[botIdx].id] === undefined) game.globalScores[game.players[botIdx].id] = 0;
+                                game.globalScores[game.players[botIdx].id] -= 250;
+                            }
 
-                    game.currentTurnSlot = (game.currentTurnSlot + dir + 4) % 4;
-                    let nextIdx = game.currentTurnSlot;
-                    game.players[nextIdx].knockVictims = [];
-                    game.players[nextIdx].hasDrawnFromDeck = false;
-                    game.turnPhase = 'DRAW';
-                    
-                    return game;
+                            if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
+                            game.players[botIdx].discard.push(thrownCard);
+                        }
+                    }
                 }
+
+                game.players[botIdx].knockVictims = [];
+                game.players[botIdx].hasDrawnFromDeck = false;
+
+                game.currentTurnSlot = (game.currentTurnSlot + dir + 4) % 4;
+                let nextIdx = game.currentTurnSlot;
+                game.players[nextIdx].knockVictims = [];
+                game.players[nextIdx].hasDrawnFromDeck = false;
+                game.turnPhase = 'DRAW';
+                
                 return game;
-            }).then(() => { isBotThinking = false; }).catch(err => { console.error("LUNA AI Error:", err); isBotThinking = false; });
+            }).then((result) => { 
+                isBotThinking = false; 
+                
+                // BUG FIXED 1: THE AWAKENING PROTOCOL (Paksa UI update jika bot berurutan)
+                if (result.committed && result.snapshot.exists()) {
+                    let updatedGame = result.snapshot.val();
+                    if (amIHost && updatedGame.status === "PLAYING" && updatedGame.players[updatedGame.currentTurnSlot].isBot) {
+                        setTimeout(() => { startGameUI(updatedGame); }, 50);
+                    }
+                }
+            }).catch(err => { 
+                console.error("LUNA AI Error:", err); 
+                isBotThinking = false; 
+            });
         }
     </script>
 </body>
