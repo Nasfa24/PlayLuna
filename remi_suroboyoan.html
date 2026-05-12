@@ -1,20 +1,3 @@
-Injeksi "Otak Grandmaster" ke AI Bot:
-Fungsi buang kartu pada Bot (playBotTurn) sudah akurombak total menggunakan Sistem Skor Probabilitas Tertimbang (Weighted Probability Score). Sekarang AI bisa berpikir persis seperti strategimu:
-
-Lacak Kartu Mati: Bot akan membaca seluruh kartu di meja. Jika angka sudah keluar 2x dan kartu urutannya sudah hilang, ia akan memberi skor -500 (Buang Segera!).
-
-Emergency Dump (Dek < 15): Saat kartu dek menipis, skor memegang J, Q, K, dan As otomatis menjadi negatif tinggi, memaksa Bot untuk segera membuang beban raksasa tersebut.
-
-Radar Defensif: Bot melacak formasi musuh di sebelahnya. Jika musuh butuh Wajik, Bot akan menghindari membuang Wajik.
-
-Umpan Aman: Bot sangat memprioritaskan membuang angka yang berdekatan dengan kartu yang baru saja dibuang oleh pemain sebelumnya (karena 100% aman).
-
-Catatan : Bot harus mengikuti rule of the game yang sudah ada.
-
-__________________________
-
-ini script yang aku pakai :
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
