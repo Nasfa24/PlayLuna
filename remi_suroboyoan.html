@@ -430,6 +430,22 @@
 
         const suitNames = {'♠': 'Waru', '♣': 'Keriting', '♥': 'Hati', '♦': 'Wajik'};
         window.botTurnTimer = null; 
+        let isBotThinking = false;
+
+        setInterval(() => {
+            if (amIHost && currentRoomId && !isBotThinking) {
+                get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
+                    let game = snap.val();
+                    if (game && game.status === "PLAYING") {
+                        let activePlayer = game.players[game.currentTurnSlot];
+                        if (activePlayer && activePlayer.isBot) {
+                            isBotThinking = true;
+                            playBotTurn();
+                        }
+                    }
+                });
+            }
+        }, 4000);
 
         window.showTab = function(tabId) {
             document.getElementById('tab-aturan').classList.add('hidden');
@@ -666,26 +682,29 @@
                 }
             });
 
-            let remainingJokers = jokers.filter(j => !groupedIndices.has(j.index));
-            remainingJokers.forEach(jObj => {
-                let jCard = handCards[jObj.index];
-                for (let g of formedGroups) {
-                    let normals = g.filter(c => c.rank !== jokerRank || c.isFallen);
-                    if (normals.length === 0) continue;
-                    
-                    let isAceGroup = normals.some(c => c.rank === 'A');
-                    let isFaceGroup = normals.some(c => ['J','Q','K'].includes(c.rank));
-                    let isJokerFace = ['J','Q','K'].includes(jokerRank);
+            // LUNA V9.0: Gembok Joker hanya jika mensimulasikan tembakan atau tangan penuh. 
+            if (isSimulatingPickup || handCards.length + (melds ? melds.reduce((a,c)=>a+c.length,0) : 0) >= 7) {
+                let remainingJokers = jokers.filter(j => !groupedIndices.has(j.index));
+                remainingJokers.forEach(jObj => {
+                    let jCard = handCards[jObj.index];
+                    for (let g of formedGroups) {
+                        let normals = g.filter(c => c.rank !== jokerRank || c.isFallen);
+                        if (normals.length === 0) continue;
+                        
+                        let isAceGroup = normals.some(c => c.rank === 'A');
+                        let isFaceGroup = normals.some(c => ['J','Q','K'].includes(c.rank));
+                        let isJokerFace = ['J','Q','K'].includes(jokerRank);
 
-                    if (isAceGroup) continue; 
-                    if (isFaceGroup && !isJokerFace) continue; 
-                    if (isFaceGroup && isJokerFace && jCard.suit !== normals[0].suit) continue; 
+                        if (isAceGroup) continue; 
+                        if (isFaceGroup && !isJokerFace) continue; 
+                        if (isFaceGroup && isJokerFace && jCard.suit !== normals[0].suit) continue; 
 
-                    groupedIndices.add(jObj.index);
-                    g.push(jCard);
-                    break; 
-                }
-            });
+                        groupedIndices.add(jObj.index);
+                        g.push(jCard);
+                        break; 
+                    }
+                });
+            }
 
             let hasOtherMeld = (melds && melds.length > 0) || formedGroups.filter(g => !g.some(c => c.rank === 'A')).length > 0 || isSimulatingPickup;
             if (!hasOtherMeld) {
@@ -825,7 +844,6 @@
                     <div class="showdown-name"><span>${p.name}</span> <span style="color:${(p.lastRoundScore||0) < 0 ? 'var(--red-suit)':'var(--neon-green)'}">${p.lastRoundScore||0} Poin</span></div>
                     <div class="showdown-cards">`;
                 
-                // BUG FIXED 3: RENDER X-RAY SHOWDOWN (Pemisahan Kartu Gantung dengan Kotak Emas)
                 let handInfo = evaluateHand(p.hand || [], p.melds || [], game.jokerRank);
 
                 if(p.melds) {
@@ -1286,7 +1304,10 @@
             if (window.botTurnTimer) clearTimeout(window.botTurnTimer);
             if(amIHost && activePlayer.isBot && game.status === "PLAYING") { 
                 window.botTurnTimer = setTimeout(() => { 
-                    playBotTurn(game); 
+                    if (!isBotThinking) {
+                        isBotThinking = true;
+                        playBotTurn(); 
+                    }
                 }, 800); 
             }
         }
@@ -1355,13 +1376,7 @@
                         if(!txPData.melds) txPData.melds = [];
                         txPData.melds.push(meldCards);
 
-                        let chkInfo = evaluateHand(txPData.hand, txPData.melds, gameTx.jokerRank);
-                        if (txPData.hand.length === 0 || (chkInfo.isAllPaired && txPData.knockVictims && txPData.knockVictims.length > 0)) {
-                            let knockC = meldCards[meldCards.length - 1]; 
-                            gameTx = handleRoundEnd(gameTx, mySlotIndex, txPData.knockVictims, knockC);
-                        } else {
-                            selectedCardIndices = [];
-                        }
+                        selectedCardIndices = [];
                     }
                     return gameTx;
                 });
@@ -1457,6 +1472,14 @@
                     showAlertModal("KOMBINASI SALAH", "Kartu di tangan yang kamu pilih tidak sah jika digabung dengan kartu buangan ini (walau ditambah kartu sapuan).");
                     return;
                 }
+                
+                // Mencegah tembak murahan (Cuma 3 kartu tapi pakai joker)
+                let jokersInSim = simMeld.filter(c => c.rank === game.jokerRank && !c.isFallen);
+                let normalsInSim = simMeld.length - jokersInSim.length;
+                if (normalsInSim < 3 && jokersInSim.length > 0) {
+                    showAlertModal("HUKUM KASTA JOKER", "AI melarang mengambil buangan jika hasil akhirnya hanya berupa 3 kartu yang dipaksakan memakai Joker!");
+                    return;
+                }
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
                     if(gameTx) {
@@ -1497,13 +1520,8 @@
                         txPData.melds.push(baseMeld);
                         txPData.hand.push(...sweptToHand);
 
-                        let testInfo = evaluateHand(txPData.hand, txPData.melds, gameTx.jokerRank, true);
-                        if (txPData.hand.length === 0 || testInfo.isAllPaired) {
-                            gameTx = handleRoundEnd(gameTx, mySlotIndex, txPData.knockVictims, takenCard);
-                        } else {
-                            gameTx.turnPhase = 'DISCARD'; 
-                            selectedCardIndices = [];
-                        }
+                        gameTx.turnPhase = 'DISCARD'; 
+                        selectedCardIndices = [];
                     }
                     return gameTx;
                 });
@@ -1577,8 +1595,8 @@
             });
         };
 
-        // --- PREDATOR BOT AI V8.1 (THE GRAND REVEAL) ---
-        function playBotTurn(gData) {
+        // --- PREDATOR BOT AI V9.0 (THE GRANDMASTER AI) ---
+        function playBotTurn() {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                 try {
                     if(!game || game.status !== "PLAYING" || !game.players || !game.players[game.currentTurnSlot] || !game.players[game.currentTurnSlot].isBot) {
@@ -1587,11 +1605,13 @@
 
                     let botIdx = game.currentTurnSlot;
                     let dir = game.playDirection || 1;
-                    let hand = game.players[botIdx].hand || [];
+                    let hand = [...(game.players[botIdx].hand || [])];
                     let botMelds = game.players[botIdx].melds || [];
 
+                    // 1. MEMBACA SEJARAH MEJA
                     let deadCardsMap = {}; 
                     let lastDiscards = []; 
+                    let opponentMelds = [];
                     game.players.forEach((p, idx) => {
                         if(p.discard) {
                             p.discard.forEach(c => {
@@ -1601,6 +1621,9 @@
                                     lastDiscards.push(c);
                                 }
                             });
+                        }
+                        if(idx !== botIdx && p.melds) {
+                            p.melds.forEach(m => opponentMelds.push(...m));
                         }
                     });
 
@@ -1643,7 +1666,10 @@
 
                                         if (isValidSingleGroup(finalMeld, game.jokerRank)) {
                                             let jokersInMeld = finalMeld.filter(c => c.rank === game.jokerRank && !c.isFallen);
-                                            if (finalMeld.length === 3 && jokersInMeld.length > 0) {
+                                            let normalsInMeld = finalMeld.length - jokersInMeld.length;
+                                            
+                                            // HARAM menggunakan Joker untuk formasi 3 kartu dari buangan
+                                            if (normalsInMeld < 3 && jokersInMeld.length > 0) {
                                                 // Skip
                                             } else {
                                                 baseMeld = [topD, hand[i], hand[j]];
@@ -1692,26 +1718,32 @@
                             }
                         }
                         hand.push(...sweptToHand);
+                        game.players[botIdx].hand = hand;
                     } else {
+                        // FASE 2: DRAW DARI DECK
                         if(game.deck && game.deck.length > 0) {
                             let drawnCard = game.deck.pop();
-                            game.players[botIdx].hand.push(drawnCard);
+                            hand.push(drawnCard);
+                            game.players[botIdx].hand = hand;
                         } else {
                             game = handleRoundEnd(game, null, []); return game;
                         }
                     }
 
-                    let isDeckVeryCritical = game.deck && game.deck.length < 10;
+                    let deckCount = game.deck ? game.deck.length : 0;
+                    let isDeckVeryCritical = deckCount < 10;
                     let hasShotKnock = game.players[botIdx].knockVictims && game.players[botIdx].knockVictims.length > 0;
 
+                    // FASE 3: MELDING
                     let handInfo = evaluateHand(hand, game.players[botIdx].melds, game.jokerRank);
                     if (handInfo.formedGroups && handInfo.formedGroups.length > 0) {
                         if (!game.players[botIdx].melds) game.players[botIdx].melds = [];
                         
                         let tempHand = [...hand];
                         handInfo.formedGroups.forEach(g => {
-                            if (!hasShotKnock && (tempHand.length - g.length) < 1) {
-                                // Skip
+                            // BOT HARUS SISA MINIMAL 2 KARTU (Jika belum nembak)
+                            if (!hasShotKnock && (tempHand.length - g.length) <= 1) {
+                                // Gantung formasi di tangan
                             } else {
                                 let hasJQK = g.some(c => ['J','Q','K'].includes(c.rank));
                                 let hasJoker = g.some(c => c.rank === game.jokerRank && !c.isFallen);
@@ -1730,10 +1762,11 @@
                                 }
                             }
                         });
+                        game.players[botIdx].hand = hand;
                         handInfo = evaluateHand(hand, game.players[botIdx].melds, game.jokerRank);
                     }
 
-                    // FASE 4: KNOCK / TUTUP DENGAN AMAN
+                    // FASE 4: KNOCK / TUTUP
                     if (hasShotKnock) {
                         let canKnock = false;
                         let bestDiscardIdx = -1;
@@ -1762,12 +1795,13 @@
                                 if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
                                 game.players[botIdx].discard.push(knockC);
                             }
+                            game.players[botIdx].hand = hand;
                             game = handleRoundEnd(game, botIdx, game.players[botIdx].knockVictims, knockC);
                             return game;
                         }
                     }
 
-                    // FASE 5: SCORING DISCARD
+                    // FASE 5: SCORING DISCARD AI
                     if (hand.length > 0) {
                         let deadwoodIndices = [];
                         for(let i=0; i<hand.length; i++) {
@@ -1776,70 +1810,88 @@
                         
                         let discardIdx = -1;
 
-                        if (deadwoodIndices.length > 0) {
-                            let bestCardIdx = -1;
-                            let bestScore = -9999;
-                            
-                            let partialPairs = new Set();
-                            let openEnded = new Set();
-                            
-                            for(let i=0; i<deadwoodIndices.length-1; i++) {
-                                for(let j=i+1; j<deadwoodIndices.length; j++) {
-                                    let c1 = hand[deadwoodIndices[i]];
-                                    let c2 = hand[deadwoodIndices[j]];
-                                    
-                                    if (c1.rank === c2.rank) {
+                        // Jika formasi sempurna tapi gagal tutup, pecah kartu tertinggi
+                        if (deadwoodIndices.length === 0) {
+                            let maxV = -1; let maxI = hand.length - 1;
+                            hand.forEach((c, i) => {
+                                if (c.rank !== game.jokerRank) {
+                                    let v = getNumVal(c.rank);
+                                    if(v > maxV) { maxV = v; maxI = i; }
+                                }
+                            });
+                            deadwoodIndices.push(maxI);
+                        }
+
+                        let bestCardIdx = -1;
+                        let minScore = 99999; 
+                        
+                        let partialPairs = new Set();
+                        let openEnded = new Set();
+                        
+                        for(let i=0; i<deadwoodIndices.length-1; i++) {
+                            for(let j=i+1; j<deadwoodIndices.length; j++) {
+                                let c1 = hand[deadwoodIndices[i]];
+                                let c2 = hand[deadwoodIndices[j]];
+                                
+                                if (c1.rank === c2.rank) {
+                                    partialPairs.add(deadwoodIndices[i]); partialPairs.add(deadwoodIndices[j]);
+                                } else if (c1.suit === c2.suit) {
+                                    let v1 = getNumVal(c1.rank); let v2 = getNumVal(c2.rank);
+                                    let diff = Math.abs(v1 - v2);
+                                    if (diff === 1) {
+                                        openEnded.add(deadwoodIndices[i]); openEnded.add(deadwoodIndices[j]);
+                                    } else if (diff === 2) {
                                         partialPairs.add(deadwoodIndices[i]); partialPairs.add(deadwoodIndices[j]);
-                                    } else if (c1.suit === c2.suit) {
-                                        let v1 = getNumVal(c1.rank); let v2 = getNumVal(c2.rank);
-                                        let diff = Math.abs(v1 - v2);
-                                        if (diff === 1) {
-                                            openEnded.add(deadwoodIndices[i]); openEnded.add(deadwoodIndices[j]);
-                                        } else if (diff === 2) {
-                                            partialPairs.add(deadwoodIndices[i]); partialPairs.add(deadwoodIndices[j]);
-                                        }
                                     }
                                 }
                             }
+                        }
 
-                            deadwoodIndices.forEach(idx => {
-                                let c = hand[idx];
-                                let itemScore = 0;
-                                let key = c.rank + c.suit;
-                                let isMati = deadCardsMap[key] >= 3;
-                                
-                                if (c.rank === game.jokerRank && !c.isFallen) { itemScore = -900; } 
-                                else if (c.rank === 'A') {
-                                    if (!game.players[botIdx].melds || game.players[botIdx].melds.length === 0) itemScore = -500; 
-                                    else itemScore = isDeckVeryCritical ? 100 : -10; 
+                        deadwoodIndices.forEach(idx => {
+                            let c = hand[idx];
+                            let keepScore = 0; // TINGGI = TAHAN, RENDAH = BUANG
+                            let key = c.rank + c.suit;
+                            let isMati = deadCardsMap[key] >= 3;
+                            let val = getNumVal(c.rank);
+                            
+                            if (c.rank === game.jokerRank && !c.isFallen) { keepScore += 1000; } 
+                            else if (c.rank === 'A') {
+                                if (!game.players[botIdx].melds || game.players[botIdx].melds.length === 0) keepScore -= 500; // Haram
+                                else keepScore += (deckCount < 15) ? -100 : 15; 
+                            }
+                            else if (['J','Q','K'].includes(c.rank)) { keepScore += (deckCount < 15) ? -150 : 10; }
+                            else if (['5','6','7','8'].includes(c.rank)) keepScore += 40; 
+                            else keepScore += 20; 
+                            
+                            if (isMati) keepScore -= 300; // Kartu mati, buang!
+                            
+                            if (openEnded.has(idx)) keepScore += 50; 
+                            else if (partialPairs.has(idx)) keepScore += 20; 
+                            else keepScore -= 50; // Jomblo
+                            
+                            // DEFENSE: Hindari kasih makan lawan
+                            opponentMelds.forEach(om => {
+                                if (om.suit === c.suit) {
+                                    let diff = Math.abs(getNumVal(om.rank) - val);
+                                    if (diff === 1 || diff === 2) keepScore += 150; // Tahan!
                                 }
-                                else if (['J','Q','K'].includes(c.rank)) { itemScore = isDeckVeryCritical ? 90 : 10; }
-                                else if (['4','5','6','7','8'].includes(c.rank)) itemScore = 20; 
-                                else itemScore = 30; 
-                                
-                                if (isMati) itemScore += 500;
-                                
-                                if (openEnded.has(idx)) itemScore -= 100; 
-                                else if (partialPairs.has(idx)) itemScore -= 50; 
-                                
-                                lastDiscards.forEach(ld => {
-                                    if (c.suit === ld.suit) {
-                                        let diff = Math.abs(getNumVal(c.rank) - getNumVal(ld.rank));
-                                        if (diff === 1) itemScore -= 200; 
-                                        else if (diff === 2) itemScore += 40; 
-                                    }
-                                });
-                                
-                                if (itemScore > bestScore) {
-                                    bestScore = itemScore;
-                                    bestCardIdx = idx;
+                            });
+
+                            // BAIT: Lempar yang deket sama sampah lawan
+                            lastDiscards.forEach(ld => {
+                                if (c.suit === ld.suit) {
+                                    let diff = Math.abs(getNumVal(ld.rank) - val);
+                                    if (diff > 0) keepScore -= (10 - diff); // Makin dekat, makin dijadiin umpan
                                 }
                             });
                             
-                            discardIdx = (bestCardIdx !== -1) ? bestCardIdx : deadwoodIndices[0];
-                        } else {
-                            discardIdx = hand.length - 1;
-                        }
+                            if (keepScore < minScore) {
+                                minScore = keepScore;
+                                bestCardIdx = idx;
+                            }
+                        });
+                        
+                        discardIdx = (bestCardIdx !== -1) ? bestCardIdx : deadwoodIndices[0];
 
                         if(discardIdx >= 0 && discardIdx < hand.length) {
                             let thrownCard = hand.splice(discardIdx, 1)[0];
@@ -1858,6 +1910,7 @@
                         }
                     }
 
+                    game.players[botIdx].hand = hand;
                     game.players[botIdx].knockVictims = [];
                     game.players[botIdx].hasDrawnFromDeck = false;
 
@@ -1872,7 +1925,7 @@
                     console.error("AI FATAL ERROR:", err);
                     
                     let bIdx = game.currentTurnSlot;
-                    if(game.players[bIdx].hand && game.players[bIdx].hand.length > 0) {
+                    if(game.players[bIdx].hand && game.players[bIdx].hand.length > 1) {
                         let c = game.players[bIdx].hand.pop();
                         if(!game.players[bIdx].discard) game.players[bIdx].discard = [];
                         game.players[bIdx].discard.push(c);
@@ -1882,6 +1935,7 @@
                     return game; 
                 }
             }).then((result) => { 
+                isBotThinking = false; 
                 if (result.committed && result.snapshot.exists()) {
                     let updatedGame = result.snapshot.val();
                     if (amIHost && updatedGame.status === "PLAYING" && updatedGame.players[updatedGame.currentTurnSlot].isBot) {
