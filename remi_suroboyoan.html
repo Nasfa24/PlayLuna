@@ -121,7 +121,7 @@
         .leaderboard-item { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 3px; }
         .dir-indicator { font-size: 22px; color: var(--neon-green); text-shadow: var(--green-glow); position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%); font-weight: 900;}
 
-        /* TATA LETAK MEJA & FIX KARTU BUANGAN HILANG */
+        /* TATA LETAK MEJA */
         .game-table {
             flex: 1; position: relative; display: grid;
             grid-template-rows: 1fr 1fr 1fr; grid-template-columns: 1fr 1fr 1fr;
@@ -181,7 +181,7 @@
         }
         .deck-count { position: absolute; bottom: -20px; width: 100%; text-align: center; font-size: 12px; font-weight: 800; color: #94a3b8; }
 
-        /* KARTU VISUAL UTAMA & CLASS REFACTORING */
+        /* KARTU VISUAL UTAMA */
         .playing-card {
             width: 75px; height: 110px; 
             background: #f8fafc; border-radius: 10px;
@@ -245,23 +245,19 @@
             .joker-info, .status-info { font-size: 9px; padding: 4px 8px; }
             .leaderboard-panel { top: 40px; right: 5px; padding: 5px; font-size: 8px; min-width: 80px; opacity: 0.85; }
             
-            /* Avatar & Name */
             .avatar { width: 35px; height: 35px; font-size: 18px; border-width: 1px; }
             .player-name { font-size: 9px; padding: 2px 6px; }
             
-            /* Discard & Deck */
             .discard-pile { width: 45px; height: 65px; margin: 0; }
             .deck-pile { width: 45px; height: 65px; font-size: 11px; }
             .player-left { gap: 4px; padding-right: 5px; }
             .player-right { gap: 4px; padding-left: 5px; }
             .player-top { gap: 4px; }
             
-            /* Melds Shrinking */
             .melds-area { max-width: 110px; margin-bottom: 4px; }
             .mini-card { width: 20px; height: 30px; font-size: 9px; border-width: 1px;}
             .meld-group .mini-card:not(:first-child) { margin-left: -10px; }
 
-            /* Main Playing Cards Shrinking - UKURAN TETAP SESUAI PERMINTAAN */
             .playing-card { width: 50px; height: 75px; padding: 3px; border-radius: 6px; border-width: 1px;}
             .card-top, .card-bottom { font-size: 10px; }
             .pip { font-size: 9px; }
@@ -269,14 +265,12 @@
             .card-face-icon { font-size: 26px; }
             .card-ace-icon { font-size: 32px; }
             
-            /* Player Bottom UI Shrinking */
             .my-hand { height: 85px; }
             .score-display { padding: 4px 12px; font-size: 9px; margin-bottom: 10px; }
             .score-display span { font-size: 11px; }
             .action-buttons { padding: 5px 10px; top: -45px; gap: 4px; }
             .btn-action { padding: 4px 8px; font-size: 10px; border-radius: 8px;}
             
-            /* Custom Modal Adjustments */
             .custom-modal { width: 90%; padding: 15px; }
         }
     </style>
@@ -430,7 +424,6 @@
             <div id="slot-bottom" class="player-area player-bottom">
                 <div style="display: flex; flex-direction: column; align-items: center; width: 100%; position:relative;">
                     
-                    <!-- DIGANTIKAN DENGAN KELAS CSS "my-player-bar" -->
                     <div class="my-player-bar">
                         <div class="discard-pile" id="discard-bottom" style="margin:0;"></div>
                         <div class="avatar-container">
@@ -480,6 +473,408 @@
         // GLOBAL BOT TIMER ANTI STUCK
         window.botTurnTimer = null; 
 
+        // ================== AI ENGINE: CARD TRACKER ==================
+        class CardTracker {
+            constructor() {
+                this.visibleCards = []; 
+                this.playerPickups = {}; 
+                this.suspectedHands = {}; 
+            }
+
+            updateFromGameState(game) {
+                this.visibleCards = [];
+                game.players.forEach(p => {
+                    (p.melds || []).flat().forEach(c => this.visibleCards.push(c));
+                    (p.discard || []).forEach(c => this.visibleCards.push(c));
+                });
+            }
+
+            getRemainingCount(rank, suit) {
+                const totalInDeck = 1;
+                const visible = this.visibleCards.filter(c => c.rank === rank && c.suit === suit).length;
+                return totalInDeck - visible;
+            }
+
+            isCardDead(rank, suit) {
+                return this.getRemainingCount(rank, suit) <= 0;
+            }
+
+            isSequenceImpossible(rank1, suit, rank2) {
+                const v1 = getNumVal(rank1), v2 = getNumVal(rank2);
+                if (v1 === null || v2 === null) return false;
+                const minV = Math.min(v1, v2), maxV = Math.max(v1, v2);
+                for (let v = minV + 1; v < maxV; v++) {
+                    const middleRank = valToRank(v);
+                    if (middleRank && this.getRemainingCount(middleRank, suit) <= 0) {
+                        return true; 
+                    }
+                }
+                return false;
+            }
+
+            trackPickup(playerIdx, card) {
+                if (!this.playerPickups[playerIdx]) this.playerPickups[playerIdx] = [];
+                this.playerPickups[playerIdx].push(card);
+            }
+        }
+
+        const cardTracker = new CardTracker();
+
+        // ================== HELPER FUNCTIONS ==================
+        function getNumVal(rank) {
+            if (rank === 'A') return 1;
+            if (rank === 'J') return 11;
+            if (rank === 'Q') return 12;
+            if (rank === 'K') return 13;
+            const num = parseInt(rank);
+            return isNaN(num) ? null : num;
+        }
+
+        function valToRank(val) {
+            if (val === 1) return 'A';
+            if (val === 11) return 'J';
+            if (val === 12) return 'Q';
+            if (val === 13) return 'K';
+            if (val >= 2 && val <= 10) return String(val);
+            return null;
+        }
+
+        function getCardPoints(rank, isJoker) {
+            if (isJoker) return 25;
+            if (rank === 'A') return 15;
+            if (['J', 'Q', 'K'].includes(rank)) return 10;
+            return 5;
+        }
+
+        // ================== STRATEGY SCORING ENGINE ==================
+        // RULE: LOWER SCORE = DISCARD, HIGHER SCORE = KEEP
+        function calculateDiscardScore(card, hand, melds, game, botIdx) {
+            let score = 0;
+            const jokerRank = game.jokerRank;
+            const dir = game.playDirection || 1;
+            const deckRemaining = game.deck ? game.deck.length : 0;
+
+            // 1. Kartu mati absolut (sudah keluar 3x) -> BUANG (LOWER)
+            const sameRankSuitCount = cardTracker.visibleCards.filter(c => c.rank === card.rank && c.suit === card.suit).length;
+            if (sameRankSuitCount >= 3) {
+                score -= 500; 
+            } else if (sameRankSuitCount >= 2) {
+                score -= 150;
+            }
+
+            // 2. Joker hidup haram dibuang -> SIMPAN (HIGHER)
+            if (card.rank === jokerRank && !card.isFallen) {
+                score += 10000;
+            }
+
+            // 3. Kartu bagian formasi valid -> SIMPAN (HIGHER)
+            const handInfo = evaluateHand(hand, melds, jokerRank);
+            const cardIndex = hand.findIndex(c => c.suit === card.suit && c.rank === card.rank && c.isFallen === card.isFallen);
+            if (cardIndex !== -1 && handInfo.groupedIndices.has(cardIndex)) {
+                score += 200;
+            }
+
+            // 4. Deteksi bolong tengah -> SIMPAN (HIGHER)
+            const sameSuitCards = hand.filter(c => c.suit === card.suit && c !== card && !c.isFallen);
+            const hasGap = sameSuitCards.some(c => {
+                const v1 = getNumVal(c.rank), v2 = getNumVal(card.rank);
+                return v1 !== null && v2 !== null && Math.abs(v1 - v2) === 2;
+            });
+            if (hasGap) score += 15;
+
+            // 5. Kartu berurutan langsung -> SIMPAN (HIGHER)
+            const hasAdjacent = sameSuitCards.some(c => {
+                const v1 = getNumVal(c.rank), v2 = getNumVal(card.rank);
+                return v1 !== null && v2 !== null && Math.abs(v1 - v2) === 1;
+            });
+            if (hasAdjacent) score += 40;
+
+            // 6. Kartu gambar (J,Q,K) yang bisa jadi kong -> SIMPAN (HIGHER)
+            if (['J', 'Q', 'K'].includes(card.rank)) {
+                const faceSameSuit = sameSuitCards.filter(c => ['J','Q','K'].includes(c.rank));
+                if (faceSameSuit.length >= 1) score += 25;
+            }
+
+            // 7. Kartu AS spesial -> HARAM BUANG TANPA MELD (HIGHER)
+            if (card.rank === 'A') {
+                if (!melds || melds.length === 0) {
+                    score += 5000; 
+                }
+                const aceCount = hand.filter(c => c.rank === 'A').length;
+                if (aceCount >= 3 && melds && melds.length > 0) score += 30; // Tris AS potensial
+            }
+
+            // 8. Emergency dump (dek <= 15) -> BUANG KARTU BESAR (LOWER)
+            if (deckRemaining <= 15) {
+                if (card.rank === 'A' && melds && melds.length > 0) score -= 80;
+                if (['J', 'Q', 'K'].includes(card.rank)) score -= 50;
+                if (['5','6','7','8'].includes(card.rank)) score += 15; // Simpan kartu fleksibel
+            }
+
+            // 9. Radar defensif: jangan buang kartu yang dibutuhkan lawan -> SIMPAN (HIGHER)
+            const prevPlayerIdx = (botIdx - dir + 4) % 4;
+            const prevPlayer = game.players[prevPlayerIdx];
+            if (prevPlayer && prevPlayer.knockVictims && prevPlayer.knockVictims.length > 0) {
+                const prevDiscard = prevPlayer.discard;
+                if (prevDiscard && prevDiscard.length > 0) {
+                    const topSwept = prevDiscard[prevDiscard.length - 1];
+                    if (card.suit === topSwept.suit && Math.abs((getNumVal(card.rank)||0) - (getNumVal(topSwept.rank)||0)) <= 2) {
+                        score += 150;
+                    }
+                }
+            }
+
+            // 10. Kartu aman: baru saja dibuang pemain sebelumnya -> BUANG (LOWER)
+            const turnBeforePrev = (botIdx - 2*dir + 4) % 4;
+            const playerBeforePrev = game.players[turnBeforePrev];
+            if (playerBeforePrev && playerBeforePrev.discard && playerBeforePrev.discard.length > 0) {
+                const lastDiscard = playerBeforePrev.discard[playerBeforePrev.discard.length - 1];
+                if (lastDiscard.rank === card.rank && lastDiscard.suit === card.suit) {
+                    score -= 100;
+                }
+            }
+
+            // 11. Hindari kedekatan dengan sampah jika bukan kartu mati
+            if (score <= 0) {
+                const allDiscards = game.players.flatMap(p => p.discard || []);
+                let minDist = 999;
+                const cardVal = getNumVal(card.rank) || 0;
+                allDiscards.forEach(d => {
+                    const dVal = getNumVal(d.rank) || 0;
+                    minDist = Math.min(minDist, Math.abs(cardVal - dVal));
+                });
+                if (minDist <= 2) score -= 30; // Sangat aman dibuang (tetangga sudah dibuang orang lain)
+                else score += 10;
+            }
+
+            return score;
+        }
+
+        function executeFeedingTechnique1(game, botIdx, hand) {
+            const dir = game.playDirection || 1;
+            const nextPlayer = (botIdx + dir + 4) % 4;
+            const nextPlayerMelds = game.players[nextPlayer].melds || [];
+            const nextPlayerAllCards = [
+                ...(game.players[nextPlayer].hand || []),
+                ...nextPlayerMelds.flat()
+            ];
+            const suitFrequency = {};
+            nextPlayerAllCards.forEach(c => { suitFrequency[c.suit] = (suitFrequency[c.suit] || 0) + 1; });
+            const mostNeededSuit = Object.keys(suitFrequency).sort((a,b) => suitFrequency[b] - suitFrequency[a])[0];
+            
+            const rankGroups = {};
+            hand.forEach(c => { if (!c.isFallen) { rankGroups[c.rank] = [...(rankGroups[c.rank] || []), c]; } });
+            
+            for (const [rank, cards] of Object.entries(rankGroups)) {
+                if (cards.length >= 3) {
+                    const baitCard = cards.find(c => c.suit === mostNeededSuit);
+                    if (baitCard) return baitCard;
+                }
+            }
+            return null;
+        }
+
+        function executeFeedingTechnique2(game, botIdx, hand) {
+            if (!game.deck || game.deck.length <= 20) return null;
+            for (let i = 0; i < hand.length; i++) {
+                for (let j = i+1; j < hand.length; j++) {
+                    const c1 = hand[i], c2 = hand[j];
+                    if (c1.suit === c2.suit && !c1.isFallen && !c2.isFallen) {
+                        const v1 = getNumVal(c1.rank), v2 = getNumVal(c2.rank);
+                        if (v1 !== null && v2 !== null && Math.abs(v1 - v2) === 2) {
+                            const middleVal = (v1 + v2) / 2;
+                            const middleRank = valToRank(middleVal);
+                            if (!middleRank) continue;
+                            const baitCard = hand.find(c => c.rank === middleRank && c.suit !== c1.suit && !c.isFallen);
+                            if (baitCard) return baitCard;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        function executeFeedingTechnique3(game, botIdx, hand) {
+            const jokerRank = game.jokerRank;
+            const hasJoker = hand.some(c => c.rank === jokerRank && !c.isFallen);
+            if (!hasJoker) return null;
+
+            const rankCount = {};
+            hand.forEach(c => {
+                if (c.rank !== jokerRank && !c.isFallen) {
+                    if (!rankCount[c.rank]) rankCount[c.rank] = [];
+                    rankCount[c.rank].push(c);
+                }
+            });
+            for (const [rank, cards] of Object.entries(rankCount)) {
+                if (cards.length >= 2 && cards[0].suit !== cards[1].suit) {
+                    return cards[0];
+                }
+            }
+            return null;
+        }
+
+        function emergencyDumpStrategy(game, botIdx, hand, melds) {
+            const deckRemaining = game.deck ? game.deck.length : 0;
+            const jokerRank = game.jokerRank;
+            let totalDeadwood = 0;
+            const handInfo = evaluateHand(hand, melds, jokerRank);
+            hand.forEach((c, i) => {
+                if (!handInfo.groupedIndices.has(i)) {
+                    totalDeadwood += getCardPoints(c.rank, c.rank === jokerRank && !c.isFallen);
+                }
+            });
+
+            if (totalDeadwood > 40 && deckRemaining <= 10) {
+                const candidates = hand
+                    .map(c => ({ card: c, points: getCardPoints(c.rank, c.rank === jokerRank && !c.isFallen) }))
+                    .filter(item => item.points >= 10)
+                    .sort((a,b) => b.points - a.points);
+                if (candidates.length > 0) {
+                    const dead = candidates.find(item => cardTracker.isCardDead(item.card.rank, item.card.suit));
+                    if (dead) return dead.card;
+                    return candidates[0].card;
+                }
+            }
+
+            if (deckRemaining <= 15) {
+                const faceCards = hand.filter(c => ['J','Q','K'].includes(c.rank) && !c.isFallen && c.rank !== jokerRank);
+                const deadFaces = faceCards.filter(c => cardTracker.isCardDead(c.rank, c.suit));
+                if (deadFaces.length > 0) return deadFaces[0];
+            }
+            return null;
+        }
+
+        function defensiveRadar(game, botIdx, hand) {
+            const forbiddenCards = new Set();
+            const dir = game.playDirection || 1;
+
+            game.players.forEach((p, pIdx) => {
+                if (pIdx === botIdx) return;
+                const pickups = cardTracker.playerPickups[pIdx] || [];
+                pickups.forEach(pickedCard => {
+                    const pickedVal = getNumVal(pickedCard.rank);
+                    if (pickedVal === null) return;
+                    for (let offset = -2; offset <= 2; offset++) {
+                        const neighborRank = valToRank(pickedVal + offset);
+                        if (neighborRank) {
+                            forbiddenCards.add(`${neighborRank}_${pickedCard.suit}`);
+                        }
+                    }
+                });
+            });
+
+            game.players.forEach((p, pIdx) => {
+                if (pIdx === botIdx) return;
+                (p.melds || []).flat().forEach(meldCard => {
+                    forbiddenCards.add(`ANY_${meldCard.suit}`);
+                });
+            });
+
+            return hand.filter(c => {
+                const key1 = `${c.rank}_${c.suit}`;
+                const key2 = `ANY_${c.suit}`;
+                return !forbiddenCards.has(key1) && !forbiddenCards.has(key2);
+            });
+        }
+
+        function jokerManagement(game, botIdx, hand, melds) {
+            const jokerRank = game.jokerRank;
+            const deckRemaining = game.deck ? game.deck.length : 0;
+            const jokers = hand.filter(c => c.rank === jokerRank && !c.isFallen);
+
+            if (game.players[botIdx].knockVictims && game.players[botIdx].knockVictims.length > 0) {
+                return { canUse: false, reason: 'Joker dilarang untuk formasi 3 kartu hasil tembakan' };
+            }
+
+            if (deckRemaining > 10 && jokers.length <= 1) {
+                return { canUse: false, reason: 'Simpan Joker, dek masih banyak' };
+            }
+            if (deckRemaining <= 10 && jokers.length > 0) {
+                return { canUse: true, urgency: 'high', reason: 'Dek menipis, pasang Joker sekarang' };
+            }
+
+            const priorities = analyzeJokerPriorities(hand, jokerRank);
+            if (priorities.lubang.length > 0) {
+                return { canUse: true, target: priorities.lubang[0], priority: 1, reason: 'Lubang tengah, hanya 1 kemungkinan' };
+            }
+            if (priorities.ujung.length > 0 && deckRemaining < 15) {
+                return { canUse: true, target: priorities.ujung[0], priority: 2, reason: 'Ujung urutan, 2 kemungkinan tapi dek menipis' };
+            }
+
+            return { canUse: false };
+        }
+
+        function analyzeJokerPriorities(hand, jokerRank) {
+            const result = { lubang: [], ujung: [] };
+            const nonJokers = hand.filter(c => c.rank !== jokerRank || c.isFallen);
+            const suitGroups = {};
+            nonJokers.forEach(c => {
+                if (!['J','Q','K','A'].includes(c.rank)) {
+                    const val = getNumVal(c.rank);
+                    if (val !== null) {
+                        if (!suitGroups[c.suit]) suitGroups[c.suit] = [];
+                        suitGroups[c.suit].push(val);
+                    }
+                }
+            });
+            for (const [suit, vals] of Object.entries(suitGroups)) {
+                vals.sort((a,b) => a-b);
+                for (let i = 0; i < vals.length - 1; i++) {
+                    const gap = vals[i+1] - vals[i];
+                    if (gap === 2) {
+                        result.lubang.push({ suit, missing: valToRank(vals[i] + 1) });
+                    } else if (gap === 1 && (i === 0 || i === vals.length - 2)) {
+                        const missingRank = i === 0 ? valToRank(vals[0]-1) : valToRank(vals[vals.length-1]+1);
+                        if (missingRank) result.ujung.push({ suit, missing: missingRank });
+                    }
+                }
+            }
+            return result;
+        }
+
+        function autoMeldStrategy(game, botIdx, handInfo) {
+            const pData = game.players[botIdx];
+            if (!handInfo.formedGroups || handInfo.formedGroups.length === 0) return;
+            const hasShot = pData.knockVictims && pData.knockVictims.length > 0;
+
+            handInfo.formedGroups.forEach(group => {
+                const tempHand = [...pData.hand];
+                const remainingAfterMeld = tempHand.length - group.length;
+
+                if (!hasShot && remainingAfterMeld <= 1) {
+                    return; // Gantung
+                }
+                
+                if (!pData.melds) pData.melds = [];
+                pData.melds.push(group);
+                group.forEach(gc => {
+                    const idx = pData.hand.findIndex(hc => hc.suit === gc.suit && hc.rank === gc.rank && hc.isFallen === gc.isFallen);
+                    if (idx !== -1) pData.hand.splice(idx, 1);
+                });
+            });
+        }
+
+        function canKnock(game, botIdx) {
+            const pData = game.players[botIdx];
+            const hasVictim = pData.knockVictims && pData.knockVictims.length > 0;
+            if (!hasVictim) return false;
+            if (pData.hand.length === 0) return true;
+
+            for (let i = 0; i < pData.hand.length; i++) {
+                const testHand = [...pData.hand];
+                testHand.splice(i, 1);
+                const testInfo = evaluateHand(testHand, pData.melds, game.jokerRank);
+                if (testInfo.isAllPaired || testHand.length === 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // =======================================================
+        // UI & GAME STATE MANAGEMENT
+        // =======================================================
         window.showTab = function(tabId) {
             document.getElementById('tab-aturan').classList.add('hidden');
             document.getElementById('tab-hukuman').classList.add('hidden');
@@ -564,13 +959,6 @@
             }
         }
 
-        function getCardPoints(rank, isJoker) {
-            if (isJoker) return 25; 
-            if (rank === 'A') return 15;
-            if (['J', 'Q', 'K'].includes(rank)) return 10;
-            return 5;
-        }
-
         window.findValidSweep = function(baseCards, sweptCards, jokerRank) {
             let validMelds = [];
             let n = sweptCards.length;
@@ -646,12 +1034,6 @@
                 if (c.rank === jokerRank && !c.isFallen) jokers.push({ ...c, index: i });
                 else nonJokers.push({ ...c, index: i, val: getNumVal(c.rank) });
             });
-
-            function getNumVal(rank) {
-                if (rank === 'A') return 1; 
-                if (rank === 'J') return 11; if (rank === 'Q') return 12; if (rank === 'K') return 13;
-                return parseInt(rank);
-            }
 
             const SUITS = ['♥', '♦', '♠', '♣'];
             
@@ -1254,7 +1636,6 @@
                 let pData = game.players[pIndex];
                 let pHandLength = pData.hand ? pData.hand.length : 0;
 
-                // TAMPILAN SISA KARTU MUSUH
                 if(pos !== 'bottom') { 
                     document.getElementById(`name-${pos}`).innerHTML = `${pData.name} <span style="color:var(--gold); font-size:11px; font-weight:800;">[${pHandLength}]</span>`; 
                 } else { 
@@ -1302,7 +1683,6 @@
             myHandDiv.innerHTML = '';
             let centerIndex = (myHand.length - 1) / 2;
 
-            // DETEKSI MOBILE & DYNAMIC SPREAD
             let isMobile = window.innerWidth <= 600;
             let spreadAmt = isMobile ? 18 : 26;
             let liftAmt = isMobile ? -25 : -35;
@@ -1486,7 +1866,6 @@
                 let game = snap.val();
                 let pData = game.players[mySlotIndex];
 
-                // [FIX] BLOKIR AMBIL BUANGAN JIKA DECK 0
                 if (!game.deck || game.deck.length === 0) {
                     showAlertModal("STOK HABIS!", "Tumpukan LUNA sudah 0! Kamu tidak bisa memakan kartu buangan. Klik tumpukan tengah untuk mengakhiri ronde!");
                     return;
@@ -1573,6 +1952,9 @@
                         if(!txPData.melds) txPData.melds = []; 
                         txPData.melds.push(baseMeld);
                         txPData.hand.push(...sweptToHand);
+                        
+                        // [TRACKER]: Catat saat pemain manusia mengambil kartu buangan
+                        cardTracker.trackPickup(mySlotIndex, topCard);
 
                         if (txPData.hand.length === 0) {
                             let knockC = baseMeld[baseMeld.length - 1]; 
@@ -1585,7 +1967,7 @@
                     return gameTx;
                 });
             });
-        }
+        };
 
         window.discardSelectedCard = () => {
             if (selectedCardIndices.length !== 1 || !isMyTurn || turnPhase !== 'DISCARD') return;
@@ -1654,24 +2036,30 @@
             });
         };
 
-        // --- BOT AI V6.0 ---
+        // =======================================================
+        // BOT AI V7.0 (BUAS) DENGAN FIX LOGIKA SKOR
+        // =======================================================
         function playBotTurn() {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                 try {
-                    if(!game || game.status !== "PLAYING" || !game.players || !game.players[game.currentTurnSlot] || !game.players[game.currentTurnSlot].isBot) {
-                        return game; 
+                    if (!game || game.status !== "PLAYING" || !game.players || !game.players[game.currentTurnSlot] || !game.players[game.currentTurnSlot].isBot) {
+                        return game;
                     }
 
-                    // [FIX] JIKA DECK HABIS, BOT LANGSUNG END GAME (STOK HABIS)
                     if (!game.deck || game.deck.length === 0) {
                         game = handleRoundEnd(game, null, []);
                         return game;
                     }
 
-                    let botIdx = game.currentTurnSlot;
-                    let dir = game.playDirection || 1;
-                    let hand = game.players[botIdx].hand || [];
+                    // Update tracker state
+                    cardTracker.updateFromGameState(game);
 
+                    const botIdx = game.currentTurnSlot;
+                    const dir = game.playDirection || 1;
+                    let hand = game.players[botIdx].hand;
+                    let melds = game.players[botIdx].melds || [];
+
+                    // ========== FASE 1: CEK KEMUNGKINAN TEMBAK (SWEEP) ==========
                     let targetP = -1;
                     let baseMeld = null;
                     let cardsToRemoveFromHand = [];
@@ -1679,235 +2067,191 @@
                     let currTarget = (botIdx - dir + 4) % 4;
                     let sweptSoFar = [];
                     
-                    while(currTarget !== botIdx) {
+                    while (currTarget !== botIdx) {
                         let tPlayer = game.players[currTarget];
                         if (tPlayer.discard && tPlayer.discard.length > 0) {
                             let topD = tPlayer.discard[tPlayer.discard.length - 1];
-                            
-                            let botMelds = game.players[botIdx].melds || [];
-                            if (topD.rank === 'A' && botMelds.length === 0) {
-                                // Skip AS
+                            if (topD.rank === 'A' && melds.length === 0) {
+                                // Skip AS jika bot belum punya meld
                             } else {
-                                for(let i=0; i<hand.length-1; i++) {
-                                    for(let j=i+1; j<hand.length; j++) {
+                                for (let i = 0; i < hand.length - 1; i++) {
+                                    for (let j = i + 1; j < hand.length; j++) {
                                         let testGroup = [hand[i], hand[j], topD];
                                         let bestMeld = window.findValidSweep(testGroup, sweptSoFar, game.jokerRank);
                                         if (bestMeld) {
-                                            baseMeld = bestMeld; 
+                                            // Aturan Joker: minimal ada 2 kartu normal (bukan joker)
+                                            let jokersInGroup = bestMeld.filter(c => c.rank === game.jokerRank && !c.isFallen);
+                                            let nonJokers = bestMeld.filter(c => c.rank !== game.jokerRank || c.isFallen);
+                                            if (nonJokers.length < 2) continue; 
+                                            
+                                            baseMeld = bestMeld;
                                             cardsToRemoveFromHand = [i, j];
                                             targetP = currTarget;
                                             break;
                                         }
                                     }
-                                    if(targetP !== -1) break;
+                                    if (targetP !== -1) break;
                                 }
                             }
-                            if(targetP !== -1) break;
-                            sweptSoFar.push(topD);
+                        }
+                        if (targetP !== -1) break;
+                        if (tPlayer.discard && tPlayer.discard.length > 0) {
+                            sweptSoFar.push(tPlayer.discard[tPlayer.discard.length - 1]);
                         }
                         currTarget = (currTarget - dir + 4) % 4;
                     }
 
                     if (targetP !== -1) {
+                        // Lakukan tembakan (sweep)
                         let tPlayer = game.players[targetP];
-                        tPlayer.discard.pop(); 
-                        
+                        tPlayer.discard.pop();
                         let sortedRem = cardsToRemoveFromHand.sort((a,b)=>b-a);
                         sortedRem.forEach(idx => hand.splice(idx, 1));
                         
-                        if(!game.players[botIdx].melds) game.players[botIdx].melds = [];
-                        game.players[botIdx].melds.push(baseMeld);
+                        if (!melds) melds = [];
+                        melds.push(baseMeld);
                         
-                        if(!game.players[botIdx].knockVictims) game.players[botIdx].knockVictims = [];
-                        if(!game.players[botIdx].knockVictims.includes(targetP)) game.players[botIdx].knockVictims.push(targetP);
+                        if (!game.players[botIdx].knockVictims) game.players[botIdx].knockVictims = [];
+                        if (!game.players[botIdx].knockVictims.includes(targetP)) game.players[botIdx].knockVictims.push(targetP);
+                        
+                        cardTracker.trackPickup(botIdx, baseMeld[baseMeld.length-1]); 
 
                         let sweptToHand = [];
                         let sweepTarget = targetP;
                         let absorbedFromSweep = baseMeld.slice(3);
                         let tempAbsorbed = [...absorbedFromSweep];
-
+                        
                         while (sweepTarget !== botIdx) {
                             sweepTarget = (sweepTarget + dir + 4) % 4;
-                            if (sweepTarget === botIdx) break; 
-                            
+                            if (sweepTarget === botIdx) break;
                             let iterPlayer = game.players[sweepTarget];
-                            if(iterPlayer.discard && iterPlayer.discard.length > 0) {
+                            if (iterPlayer.discard && iterPlayer.discard.length > 0) {
                                 let sweptCard = iterPlayer.discard.pop();
-                                
                                 let aIdx = tempAbsorbed.findIndex(c => c.suit === sweptCard.suit && c.rank === sweptCard.rank && c.isFallen === sweptCard.isFallen);
                                 if (aIdx !== -1) {
                                     tempAbsorbed.splice(aIdx, 1);
                                 } else {
-                                    sweptToHand.push(sweptCard); 
+                                    sweptToHand.push(sweptCard);
                                 }
                             }
                         }
                         hand.push(...sweptToHand);
                     } else {
-                        if(game.deck && game.deck.length > 0) {
-                            let drawnCard = game.deck.pop();
-                            game.players[botIdx].hand.push(drawnCard);
+                        // Tidak bisa tembak, ambil kartu dari deck
+                        if (game.deck && game.deck.length > 0) {
+                            game.players[botIdx].hand.push(game.deck.pop());
                         } else {
-                            game = handleRoundEnd(game, null, []); return game;
-                        }
-                    }
-
-                    let handInfo = evaluateHand(hand, game.players[botIdx].melds, game.jokerRank);
-                    if (handInfo.formedGroups && handInfo.formedGroups.length > 0) {
-                        if (!game.players[botIdx].melds) game.players[botIdx].melds = [];
-                        let hasShot = game.players[botIdx].knockVictims && game.players[botIdx].knockVictims.length > 0;
-                        
-                        let tempHand = [...hand];
-                        handInfo.formedGroups.forEach(g => {
-                            if (!hasShot && (tempHand.length - g.length) <= 1) {
-                                // TERSEGEL SEBAGAI GANTUNG (Skip Push)
-                            } else {
-                                game.players[botIdx].melds.push(g);
-                                g.forEach(gc => {
-                                    let hIdx = tempHand.findIndex(hc => hc.suit === gc.suit && hc.rank === gc.rank && hc.isFallen === gc.isFallen);
-                                    if(hIdx !== -1) tempHand.splice(hIdx, 1);
-                                    
-                                    let realHIdx = hand.findIndex(hc => hc.suit === gc.suit && hc.rank === gc.rank && hc.isFallen === gc.isFallen);
-                                    if(realHIdx !== -1) hand.splice(realHIdx, 1);
-                                });
-                            }
-                        });
-                        handInfo = evaluateHand(hand, game.players[botIdx].melds, game.jokerRank);
-                    }
-
-                    let hasShotKnock = game.players[botIdx].knockVictims && game.players[botIdx].knockVictims.length > 0;
-                    if (hasShotKnock) {
-                        let canKnock = false;
-                        let bestDiscardIdx = -1;
-
-                        if (hand.length === 0) {
-                            canKnock = true;
-                        } else {
-                            for(let i=0; i<hand.length; i++) {
-                                let testHand = [...hand];
-                                testHand.splice(i, 1);
-                                let testInfo = evaluateHand(testHand, game.players[botIdx].melds, game.jokerRank);
-                                if(testInfo.isAllPaired || testHand.length === 0) {
-                                    bestDiscardIdx = i; 
-                                    canKnock = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (canKnock) {
-                            let knockC = null;
-                            if (hand.length === 0) {
-                                knockC = game.players[botIdx].melds[game.players[botIdx].melds.length - 1][0]; 
-                            } else {
-                                knockC = hand.splice(bestDiscardIdx, 1)[0];
-                                if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
-                                game.players[botIdx].discard.push(knockC);
-                            }
-                            game = handleRoundEnd(game, botIdx, game.players[botIdx].knockVictims, knockC);
+                            game = handleRoundEnd(game, null, []);
                             return game;
                         }
                     }
 
-                    if (hand.length > 0) {
-                        let deadwoodIndices = [];
-                        for(let i=0; i<hand.length; i++) {
-                            if (!handInfo.groupedIndices.has(i)) deadwoodIndices.push(i);
-                        }
-                        
-                        let discardIdx = -1;
+                    // ========== FASE 2: EVALUASI FORMASI & TURUNKAN ==========
+                    hand = game.players[botIdx].hand;
+                    melds = game.players[botIdx].melds || [];
+                    const handInfo = evaluateHand(hand, melds, game.jokerRank);
+                    autoMeldStrategy(game, botIdx, handInfo);
 
-                        if (deadwoodIndices.length > 0) {
-                            let bestCardIdx = -1;
-                            let bestScore = -9999;
-                            
-                            function getNumVal(rank) {
-                                if (rank === 'A') return 1; 
-                                if (rank === 'J') return 11; if (rank === 'Q') return 12; if (rank === 'K') return 13;
-                                return parseInt(rank);
+                    // ========== FASE 3: CEK KEMUNGKINAN TUTUP ==========
+                    if (canKnock(game, botIdx)) {
+                        let knockCard = null;
+                        if (hand.length === 0) {
+                            if (melds.length > 0) {
+                                knockCard = melds[melds.length - 1][0];
                             }
-
-                            let partialPairs = new Set();
-                            for(let i=0; i<deadwoodIndices.length-1; i++) {
-                                for(let j=i+1; j<deadwoodIndices.length; j++) {
-                                    let c1 = hand[deadwoodIndices[i]];
-                                    let c2 = hand[deadwoodIndices[j]];
-                                    if (c1.rank === c2.rank) {
-                                        partialPairs.add(deadwoodIndices[i]); partialPairs.add(deadwoodIndices[j]);
-                                    } else if (c1.suit === c2.suit) {
-                                        let v1 = getNumVal(c1.rank); let v2 = getNumVal(c2.rank);
-                                        if (Math.abs(v1 - v2) <= 2) {
-                                            partialPairs.add(deadwoodIndices[i]); partialPairs.add(deadwoodIndices[j]);
-                                        }
-                                    }
-                                }
-                            }
-
-                            deadwoodIndices.forEach(idx => {
-                                let c = hand[idx];
-                                let itemScore = 0;
-                                
-                                if (c.rank === game.jokerRank && !c.isFallen) {
-                                    itemScore = -100;
-                                } 
-                                else if (c.rank === 'A') {
-                                    if (!game.players[botIdx].melds || game.players[botIdx].melds.length === 0) {
-                                        itemScore = -200; 
-                                    } else {
-                                        itemScore = -10; 
-                                    }
-                                }
-                                else if (['J','Q','K'].includes(c.rank)) itemScore = 10;
-                                else if (['4','5','6','7','8'].includes(c.rank)) itemScore = 20; 
-                                else itemScore = 30; 
-                                
-                                if (partialPairs.has(idx)) {
-                                    itemScore -= 50; 
-                                }
-                                
-                                if (itemScore > bestScore) {
-                                    bestScore = itemScore;
-                                    bestCardIdx = idx;
-                                }
-                            });
-                            
-                            discardIdx = (bestCardIdx !== -1) ? bestCardIdx : deadwoodIndices[0];
                         } else {
-                            discardIdx = hand.length - 1;
-                        }
-
-                        if(discardIdx >= 0 && discardIdx < hand.length) {
-                            let thrownCard = hand.splice(discardIdx, 1)[0];
-                            if (thrownCard) {
-                                let isTrueJoker = (thrownCard.rank === game.jokerRank && !thrownCard.isFallen);
-                                if (isTrueJoker) {
-                                    thrownCard.isFallen = true;
-                                    if(!game.globalScores) game.globalScores = {};
-                                    if(game.globalScores[game.players[botIdx].id] === undefined) game.globalScores[game.players[botIdx].id] = 0;
-                                    game.globalScores[game.players[botIdx].id] -= 250;
+                            for (let i = 0; i < hand.length; i++) {
+                                let testHand = [...hand];
+                                testHand.splice(i, 1);
+                                const testInfo = evaluateHand(testHand, melds, game.jokerRank);
+                                if (testInfo.isAllPaired || testHand.length === 0) {
+                                    knockCard = hand.splice(i, 1)[0];
+                                    if (!game.players[botIdx].discard) game.players[botIdx].discard = [];
+                                    game.players[botIdx].discard.push(knockCard);
+                                    break;
                                 }
-
-                                if(!game.players[botIdx].discard) game.players[botIdx].discard = [];
-                                game.players[botIdx].discard.push(thrownCard);
                             }
                         }
+                        game = handleRoundEnd(game, botIdx, game.players[botIdx].knockVictims, knockCard);
+                        return game;
                     }
 
+                    // ========== FASE 4: PILIH KARTU BUANGAN DENGAN SISTEM SKOR ==========
+                    hand = game.players[botIdx].hand;
+                    
+                    const discardCandidates = hand.map((card, index) => ({
+                        card,
+                        index,
+                        score: calculateDiscardScore(card, hand, melds, game, botIdx)
+                    }));
+
+                    // FILTER WAJIB (ATURAN HARAM):
+                    // Bot DILARANG KERAS membuang Joker hidup & AS (jika meld kosong).
+                    let validCandidates = discardCandidates.filter(c => {
+                        let isTrueJoker = (c.card.rank === game.jokerRank && !c.card.isFallen);
+                        let isHaramAce = (c.card.rank === 'A' && (!melds || melds.length === 0));
+                        return !isTrueJoker && !isHaramAce;
+                    });
+
+                    // Fallback darurat (jika semua kartu di tangan ternyata haram)
+                    if (validCandidates.length === 0) {
+                        validCandidates = discardCandidates;
+                    }
+
+                    let baitCard = null;
+                    if (game.deck && game.deck.length > 20) {
+                        baitCard = executeFeedingTechnique1(game, botIdx, hand)
+                                || executeFeedingTechnique2(game, botIdx, hand)
+                                || executeFeedingTechnique3(game, botIdx, hand);
+                    }
+
+                    const emergencyCard = emergencyDumpStrategy(game, botIdx, hand, melds);
+
+                    // Sorting (SKOR RENDAH = KARTU SAMPAH YANG AMAN DIBUANG)
+                    validCandidates.sort((a, b) => a.score - b.score);
+                    let chosen = validCandidates[0];
+
+                    if (emergencyCard) {
+                        const found = validCandidates.find(c => c.card === emergencyCard);
+                        if (found) chosen = found;
+                    }
+
+                    if (baitCard) {
+                        const found = validCandidates.find(c => c.card === baitCard);
+                        // Umpan hanya dieksekusi jika kartunya bukan bagian formasi penting
+                        if (found && found.score < 50) chosen = found;
+                    }
+
+                    // Eksekusi buangan berdasarkan index kartu yang terpilih (aman splice menggunakan index array orisinil)
+                    const thrownCard = game.players[botIdx].hand.splice(chosen.index, 1)[0];
+                    const isTrueJoker = (thrownCard.rank === game.jokerRank && !thrownCard.isFallen);
+                    
+                    // Kalau sampai Joker jebol kesini, potong skor
+                    if (isTrueJoker) {
+                        thrownCard.isFallen = true;
+                        if (!game.globalScores) game.globalScores = {};
+                        if (game.globalScores[game.players[botIdx].id] === undefined) game.globalScores[game.players[botIdx].id] = 0;
+                        game.globalScores[game.players[botIdx].id] -= 250;
+                    }
+                    
+                    if (!game.players[botIdx].discard) game.players[botIdx].discard = [];
+                    game.players[botIdx].discard.push(thrownCard);
                     game.players[botIdx].knockVictims = [];
                     game.players[botIdx].hasDrawnFromDeck = false;
 
+                    // Oper ke pemain selanjutnya
                     game.currentTurnSlot = (game.currentTurnSlot + dir + 4) % 4;
                     let nextIdx = game.currentTurnSlot;
                     game.players[nextIdx].knockVictims = [];
                     game.players[nextIdx].hasDrawnFromDeck = false;
                     game.turnPhase = 'DRAW';
-                    
+
                     return game;
                 } catch (err) {
                     console.error("AI FATAL ERROR:", err);
-                    return game; 
+                    return game;
                 }
-            }).then((result) => { 
+            }).then((result) => {
                 if (result.committed && result.snapshot.exists()) {
                     let updatedGame = result.snapshot.val();
                     if (amIHost && updatedGame.status === "PLAYING" && updatedGame.players[updatedGame.currentTurnSlot].isBot) {
