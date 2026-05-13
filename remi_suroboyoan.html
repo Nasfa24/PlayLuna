@@ -233,8 +233,15 @@
         .btn-buang { background: var(--red-suit) !important; color: white !important; }
         .btn-turun { background: var(--blue) !important; color: white !important; }
         
-        .my-hand { display: flex; justify-content: center; width: 100%; height: 115px; position: relative; }
-        .my-hand .playing-card { position: absolute; margin-left: 0; }
+        /* FIX UI KARTU TANGAN DIPERBESAR DAN DINAIKKAN */
+        .my-hand { display: flex; justify-content: center; width: 100%; height: 140px; position: relative; margin-top: -10px; }
+        .my-hand .playing-card { 
+            position: absolute; 
+            margin-left: 0;
+            width: 86px; 
+            height: 126px; 
+            bottom: 25px; /* Naik posisinya */
+        }
 
         /* ============================================================ */
         /* RESPONSIVE MOBILE ENGINE (SUPER FLUID SCALING)               */
@@ -265,7 +272,9 @@
             .card-face-icon { font-size: 26px; }
             .card-ace-icon { font-size: 32px; }
             
-            .my-hand { height: 85px; }
+            .my-hand { height: 105px; margin-top: -5px; }
+            .my-hand .playing-card { width: 62px; height: 92px; bottom: 18px; }
+            
             .score-display { padding: 4px 12px; font-size: 9px; margin-bottom: 10px; }
             .score-display span { font-size: 11px; }
             .action-buttons { padding: 5px 10px; top: -45px; gap: 4px; }
@@ -1684,8 +1693,8 @@
             let centerIndex = (myHand.length - 1) / 2;
 
             let isMobile = window.innerWidth <= 600;
-            let spreadAmt = isMobile ? 18 : 26;
-            let liftAmt = isMobile ? -25 : -35;
+            let spreadAmt = isMobile ? 22 : 32;
+            let liftAmt = isMobile ? -20 : -30;
 
             myHand.forEach((card, index) => {
                 let isTrueJoker = (card.rank === game.jokerRank && !card.isFallen);
@@ -2072,9 +2081,8 @@
                         if (tPlayer.discard && tPlayer.discard.length > 0) {
                             let topD = tPlayer.discard[tPlayer.discard.length - 1];
                             
-                            // Cari kombinasi kartu di tangan (1 s/d 4 kartu)
+                            // Cari kombinasi kartu di tangan (2 s/d 4 kartu)
                             let subsets = [];
-                            for(let i=0; i<hand.length; i++) subsets.push([i]);
                             for(let i=0; i<hand.length-1; i++) 
                                 for(let j=i+1; j<hand.length; j++) subsets.push([i,j]);
                             for(let i=0; i<hand.length-2; i++) 
