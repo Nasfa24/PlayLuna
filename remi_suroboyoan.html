@@ -2071,28 +2071,40 @@
                         let tPlayer = game.players[currTarget];
                         if (tPlayer.discard && tPlayer.discard.length > 0) {
                             let topD = tPlayer.discard[tPlayer.discard.length - 1];
-                            if (topD.rank === 'A' && melds.length === 0) {
-                                // Skip AS jika bot belum punya meld
-                            } else {
-                                for (let i = 0; i < hand.length - 1; i++) {
-                                    for (let j = i + 1; j < hand.length; j++) {
-                                        let testGroup = [hand[i], hand[j], topD];
-                                        let bestMeld = window.findValidSweep(testGroup, sweptSoFar, game.jokerRank);
-                                        if (bestMeld) {
-                                            // Aturan Joker: minimal ada 2 kartu normal (bukan joker)
-                                            let jokersInGroup = bestMeld.filter(c => c.rank === game.jokerRank && !c.isFallen);
-                                            let nonJokers = bestMeld.filter(c => c.rank !== game.jokerRank || c.isFallen);
-                                            if (nonJokers.length < 2) continue; 
-                                            
-                                            baseMeld = bestMeld;
-                                            cardsToRemoveFromHand = [i, j];
-                                            targetP = currTarget;
-                                            break;
-                                        }
+                            
+                            // Cari kombinasi kartu di tangan (1 s/d 4 kartu)
+                            let subsets = [];
+                            for(let i=0; i<hand.length; i++) subsets.push([i]);
+                            for(let i=0; i<hand.length-1; i++) 
+                                for(let j=i+1; j<hand.length; j++) subsets.push([i,j]);
+                            for(let i=0; i<hand.length-2; i++) 
+                                for(let j=i+1; j<hand.length-1; j++) 
+                                    for(let k=j+1; k<hand.length; k++) subsets.push([i,j,k]);
+                            for(let i=0; i<hand.length-3; i++) 
+                                for(let j=i+1; j<hand.length-2; j++) 
+                                    for(let k=j+1; k<hand.length-1; k++) 
+                                        for(let l=k+1; l<hand.length; l++) subsets.push([i,j,k,l]);
+
+                            let validSweepFound = false;
+                            for (let subset of subsets) {
+                                let testGroup = subset.map(idx => hand[idx]);
+                                testGroup.push(topD);
+                                let bestMeld = window.findValidSweep(testGroup, sweptSoFar, game.jokerRank);
+                                if (bestMeld) {
+                                    let hasAce = bestMeld.some(c => c.rank === 'A');
+                                    let isTrisAce = hasAce && bestMeld.every(c => c.rank === 'A' || (c.rank === game.jokerRank && !c.isFallen));
+                                    if (isTrisAce && (!game.players[botIdx].melds || game.players[botIdx].melds.length === 0)) {
+                                        continue;
                                     }
-                                    if (targetP !== -1) break;
+                                    
+                                    baseMeld = bestMeld;
+                                    cardsToRemoveFromHand = subset;
+                                    targetP = currTarget;
+                                    validSweepFound = true;
+                                    break;
                                 }
                             }
+                            if (validSweepFound) break;
                         }
                         if (targetP !== -1) break;
                         if (tPlayer.discard && tPlayer.discard.length > 0) {
@@ -2108,8 +2120,9 @@
                         let sortedRem = cardsToRemoveFromHand.sort((a,b)=>b-a);
                         sortedRem.forEach(idx => hand.splice(idx, 1));
                         
-                        if (!melds) melds = [];
-                        melds.push(baseMeld);
+                        if (!game.players[botIdx].melds) game.players[botIdx].melds = [];
+                        game.players[botIdx].melds.push(baseMeld);
+                        melds = game.players[botIdx].melds; 
                         
                         if (!game.players[botIdx].knockVictims) game.players[botIdx].knockVictims = [];
                         if (!game.players[botIdx].knockVictims.includes(targetP)) game.players[botIdx].knockVictims.push(targetP);
@@ -2118,7 +2131,7 @@
 
                         let sweptToHand = [];
                         let sweepTarget = targetP;
-                        let absorbedFromSweep = baseMeld.slice(3);
+                        let absorbedFromSweep = baseMeld.slice(cardsToRemoveFromHand.length + 1);
                         let tempAbsorbed = [...absorbedFromSweep];
                         
                         while (sweepTarget !== botIdx) {
