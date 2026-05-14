@@ -234,13 +234,13 @@
         .btn-turun { background: var(--blue) !important; color: white !important; }
         
         /* FIX UI KARTU TANGAN DIPERBESAR DAN DINAIKKAN */
-        .my-hand { display: flex; justify-content: center; width: 100%; height: 140px; position: relative; margin-top: -10px; }
+        .my-hand { display: flex; justify-content: center; width: 100%; height: 180px; position: relative; margin-top: 0px; }
         .my-hand .playing-card { 
             position: absolute; 
             margin-left: 0;
-            width: 86px; 
-            height: 126px; 
-            bottom: 25px; /* Naik posisinya */
+            width: 100px;  /* DIPERBESAR */
+            height: 145px; /* DIPERBESAR */
+            bottom: 35px;  /* DINAIKKAN */
         }
 
         /* ============================================================ */
@@ -272,12 +272,16 @@
             .card-face-icon { font-size: 26px; }
             .card-ace-icon { font-size: 32px; }
             
-            .my-hand { height: 105px; margin-top: -5px; }
-            .my-hand .playing-card { width: 62px; height: 92px; bottom: 18px; }
+            .my-hand { height: 130px; margin-top: 0px; }
+            .my-hand .playing-card { 
+                width: 75px;  /* DIPERBESAR DI MOBILE */
+                height: 110px; /* DIPERBESAR DI MOBILE */
+                bottom: 25px; /* DINAIKKAN DI MOBILE */
+            }
             
             .score-display { padding: 4px 12px; font-size: 9px; margin-bottom: 10px; }
             .score-display span { font-size: 11px; }
-            .action-buttons { padding: 5px 10px; top: -45px; gap: 4px; }
+            .action-buttons { padding: 5px 10px; top: -50px; gap: 4px; }
             .btn-action { padding: 4px 8px; font-size: 10px; border-radius: 8px;}
             
             .custom-modal { width: 90%; padding: 15px; }
@@ -563,7 +567,6 @@
             const dir = game.playDirection || 1;
             const deckRemaining = game.deck ? game.deck.length : 0;
 
-            // 1. Kartu mati absolut (sudah keluar 3x) -> BUANG (LOWER)
             const sameRankSuitCount = cardTracker.visibleCards.filter(c => c.rank === card.rank && c.suit === card.suit).length;
             if (sameRankSuitCount >= 3) {
                 score -= 500; 
@@ -571,19 +574,16 @@
                 score -= 150;
             }
 
-            // 2. Joker hidup haram dibuang -> SIMPAN (HIGHER)
             if (card.rank === jokerRank && !card.isFallen) {
                 score += 10000;
             }
 
-            // 3. Kartu bagian formasi valid -> SIMPAN (HIGHER)
             const handInfo = evaluateHand(hand, melds, jokerRank);
             const cardIndex = hand.findIndex(c => c.suit === card.suit && c.rank === card.rank && c.isFallen === card.isFallen);
             if (cardIndex !== -1 && handInfo.groupedIndices.has(cardIndex)) {
                 score += 200;
             }
 
-            // 4. Deteksi bolong tengah -> SIMPAN (HIGHER)
             const sameSuitCards = hand.filter(c => c.suit === card.suit && c !== card && !c.isFallen);
             const hasGap = sameSuitCards.some(c => {
                 const v1 = getNumVal(c.rank), v2 = getNumVal(card.rank);
@@ -591,36 +591,31 @@
             });
             if (hasGap) score += 15;
 
-            // 5. Kartu berurutan langsung -> SIMPAN (HIGHER)
             const hasAdjacent = sameSuitCards.some(c => {
                 const v1 = getNumVal(c.rank), v2 = getNumVal(card.rank);
                 return v1 !== null && v2 !== null && Math.abs(v1 - v2) === 1;
             });
             if (hasAdjacent) score += 40;
 
-            // 6. Kartu gambar (J,Q,K) yang bisa jadi kong -> SIMPAN (HIGHER)
             if (['J', 'Q', 'K'].includes(card.rank)) {
                 const faceSameSuit = sameSuitCards.filter(c => ['J','Q','K'].includes(c.rank));
                 if (faceSameSuit.length >= 1) score += 25;
             }
 
-            // 7. Kartu AS spesial -> HARAM BUANG TANPA MELD (HIGHER)
             if (card.rank === 'A') {
                 if (!melds || melds.length === 0) {
                     score += 5000; 
                 }
                 const aceCount = hand.filter(c => c.rank === 'A').length;
-                if (aceCount >= 3 && melds && melds.length > 0) score += 30; // Tris AS potensial
+                if (aceCount >= 3 && melds && melds.length > 0) score += 30;
             }
 
-            // 8. Emergency dump (dek <= 15) -> BUANG KARTU BESAR (LOWER)
             if (deckRemaining <= 15) {
                 if (card.rank === 'A' && melds && melds.length > 0) score -= 80;
                 if (['J', 'Q', 'K'].includes(card.rank)) score -= 50;
-                if (['5','6','7','8'].includes(card.rank)) score += 15; // Simpan kartu fleksibel
+                if (['5','6','7','8'].includes(card.rank)) score += 15;
             }
 
-            // 9. Radar defensif: jangan buang kartu yang dibutuhkan lawan -> SIMPAN (HIGHER)
             const prevPlayerIdx = (botIdx - dir + 4) % 4;
             const prevPlayer = game.players[prevPlayerIdx];
             if (prevPlayer && prevPlayer.knockVictims && prevPlayer.knockVictims.length > 0) {
@@ -633,7 +628,6 @@
                 }
             }
 
-            // 10. Kartu aman: baru saja dibuang pemain sebelumnya -> BUANG (LOWER)
             const turnBeforePrev = (botIdx - 2*dir + 4) % 4;
             const playerBeforePrev = game.players[turnBeforePrev];
             if (playerBeforePrev && playerBeforePrev.discard && playerBeforePrev.discard.length > 0) {
@@ -643,7 +637,6 @@
                 }
             }
 
-            // 11. Hindari kedekatan dengan sampah jika bukan kartu mati
             if (score <= 0) {
                 const allDiscards = game.players.flatMap(p => p.discard || []);
                 let minDist = 999;
@@ -652,7 +645,7 @@
                     const dVal = getNumVal(d.rank) || 0;
                     minDist = Math.min(minDist, Math.abs(cardVal - dVal));
                 });
-                if (minDist <= 2) score -= 30; // Sangat aman dibuang (tetangga sudah dibuang orang lain)
+                if (minDist <= 2) score -= 30; 
                 else score += 10;
             }
 
@@ -1693,8 +1686,8 @@
             let centerIndex = (myHand.length - 1) / 2;
 
             let isMobile = window.innerWidth <= 600;
-            let spreadAmt = isMobile ? 22 : 32;
-            let liftAmt = isMobile ? -20 : -30;
+            let spreadAmt = isMobile ? 26 : 36;
+            let liftAmt = isMobile ? -25 : -40;
 
             myHand.forEach((card, index) => {
                 let isTrueJoker = (card.rank === game.jokerRank && !card.isFallen);
@@ -1962,7 +1955,6 @@
                         txPData.melds.push(baseMeld);
                         txPData.hand.push(...sweptToHand);
                         
-                        // [TRACKER]: Catat saat pemain manusia mengambil kartu buangan
                         cardTracker.trackPickup(mySlotIndex, topCard);
 
                         if (txPData.hand.length === 0) {
@@ -2046,7 +2038,7 @@
         };
 
         // =======================================================
-        // BOT AI V7.0 (BUAS) DENGAN FIX LOGIKA SKOR
+        // BOT AI V7.0 (BUAS) - FULL PATCHED LOGIC & RULES
         // =======================================================
         function playBotTurn() {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
@@ -2060,7 +2052,6 @@
                         return game;
                     }
 
-                    // Update tracker state
                     cardTracker.updateFromGameState(game);
 
                     const botIdx = game.currentTurnSlot;
@@ -2081,7 +2072,8 @@
                         if (tPlayer.discard && tPlayer.discard.length > 0) {
                             let topD = tPlayer.discard[tPlayer.discard.length - 1];
                             
-                            // Cari kombinasi kartu di tangan (2 s/d 4 kartu)
+                            // SUBSETS GENERATOR (HANYA 2 S/D 4 KARTU)
+                            // Ini mengunci bot agar MUSTAHIL melakukan cheat dengan modal 1 kartu di tangan
                             let subsets = [];
                             for(let i=0; i<hand.length-1; i++) 
                                 for(let j=i+1; j<hand.length; j++) subsets.push([i,j]);
@@ -2122,7 +2114,6 @@
                     }
 
                     if (targetP !== -1) {
-                        // Lakukan tembakan (sweep)
                         let tPlayer = game.players[targetP];
                         tPlayer.discard.pop();
                         let sortedRem = cardsToRemoveFromHand.sort((a,b)=>b-a);
@@ -2158,7 +2149,6 @@
                         }
                         hand.push(...sweptToHand);
                     } else {
-                        // Tidak bisa tembak, ambil kartu dari deck
                         if (game.deck && game.deck.length > 0) {
                             game.players[botIdx].hand.push(game.deck.pop());
                         } else {
@@ -2206,15 +2196,12 @@
                         score: calculateDiscardScore(card, hand, melds, game, botIdx)
                     }));
 
-                    // FILTER WAJIB (ATURAN HARAM):
-                    // Bot DILARANG KERAS membuang Joker hidup & AS (jika meld kosong).
                     let validCandidates = discardCandidates.filter(c => {
                         let isTrueJoker = (c.card.rank === game.jokerRank && !c.card.isFallen);
                         let isHaramAce = (c.card.rank === 'A' && (!melds || melds.length === 0));
                         return !isTrueJoker && !isHaramAce;
                     });
 
-                    // Fallback darurat (jika semua kartu di tangan ternyata haram)
                     if (validCandidates.length === 0) {
                         validCandidates = discardCandidates;
                     }
@@ -2228,7 +2215,6 @@
 
                     const emergencyCard = emergencyDumpStrategy(game, botIdx, hand, melds);
 
-                    // Sorting (SKOR RENDAH = KARTU SAMPAH YANG AMAN DIBUANG)
                     validCandidates.sort((a, b) => a.score - b.score);
                     let chosen = validCandidates[0];
 
@@ -2239,15 +2225,12 @@
 
                     if (baitCard) {
                         const found = validCandidates.find(c => c.card === baitCard);
-                        // Umpan hanya dieksekusi jika kartunya bukan bagian formasi penting
                         if (found && found.score < 50) chosen = found;
                     }
 
-                    // Eksekusi buangan berdasarkan index kartu yang terpilih (aman splice menggunakan index array orisinil)
                     const thrownCard = game.players[botIdx].hand.splice(chosen.index, 1)[0];
                     const isTrueJoker = (thrownCard.rank === game.jokerRank && !thrownCard.isFallen);
                     
-                    // Kalau sampai Joker jebol kesini, potong skor
                     if (isTrueJoker) {
                         thrownCard.isFallen = true;
                         if (!game.globalScores) game.globalScores = {};
@@ -2260,7 +2243,6 @@
                     game.players[botIdx].knockVictims = [];
                     game.players[botIdx].hasDrawnFromDeck = false;
 
-                    // Oper ke pemain selanjutnya
                     game.currentTurnSlot = (game.currentTurnSlot + dir + 4) % 4;
                     let nextIdx = game.currentTurnSlot;
                     game.players[nextIdx].knockVictims = [];
