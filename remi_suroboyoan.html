@@ -6,7 +6,7 @@
     <title>Remi Suroboyoan | LUNA</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Rye&display=swap" rel="stylesheet">
     
-  <style>
+    <style>
         :root {
             --bg-dark: #0f172a;
             --bg-light: #1e293b;
@@ -124,8 +124,7 @@
         /* TATA LETAK MEJA - KUNCIAN GRID MINMAX AGAR TIDAK MELAR */
         .game-table {
             flex: 1; position: relative; display: grid;
-            grid-template-rows: 1fr 1fr 1fr; 
-            /* Trik agar grid tidak melar merusak sisi kanan */
+            grid-template-rows: 1fr 1fr 1fr;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
             padding: 10px; padding-top: 65px; gap: 5px; height: 100%; box-sizing: border-box; overflow: hidden;
         }
@@ -134,7 +133,7 @@
         
         .player-top { grid-row: 1; grid-column: 2; flex-direction: column; justify-content: flex-start; gap: 8px;}
         
-        /* Justify-content diubah ke flex-start agar avatar nempel di tembok & kartu mengarah ke tengah meja */
+        /* Justify-content flex-start menjangkar UI pemain ke dinding layar, menjamin tak ada tabrakan ke tengah */
         .player-left { grid-row: 2; grid-column: 1; flex-direction: row; justify-content: flex-start; gap: 10px;}
         .player-right { grid-row: 2; grid-column: 3; flex-direction: row-reverse; justify-content: flex-start; gap: 10px;} 
         
@@ -164,8 +163,9 @@
             color: var(--black-suit); display: flex; flex-direction: column; align-items: center; justify-content: center;
             border: 1px solid #cbd5e1; font-weight: 800; line-height: 1; font-family: 'Rye', serif; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
-        /* MELD SPACING - DIRENGGANGKAN DESKTOP */
-        .meld-group .mini-card:not(:first-child) { margin-left: -10px; }
+        /* MELD SPACING - DIRENGGANGKAN DESKTOP (-15px) */
+        .meld-group .mini-card:not(:first-child) { margin-left: -15px; } 
+
         .mini-card.c-red { color: var(--red-suit); }
         .mini-card.fallen { opacity: 0.85; filter: grayscale(30%); background: #e2e8f0; }
 
@@ -217,9 +217,11 @@
         .card-face-icon { font-size: 42px; display:flex; height:100%; align-items:center; justify-content:center; }
         .card-ace-icon { font-size: 50px; display:flex; height:100%; align-items:center; justify-content:center; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
-        /* UI KIRI BAWAH PEMAIN */
-        .bottom-left-ui { position: absolute; left: 15px; bottom: 15px; display: flex; flex-direction: column; align-items: flex-start; z-index: 20; }
-        .bottom-meld-ui { position: absolute; left: 15px; bottom: 95px; z-index: 20; }
+        /* UI KANAN BAWAH PEMAIN (DIPINDAHKAN DAN DINAIKKAN KE KANAN) */
+        .bottom-right-ui { position: absolute; right: 15px; bottom: 130px; display: flex; flex-direction: column; align-items: flex-end; z-index: 30; }
+        
+        /* LOKASI MELD BAWAH (KIRI) */
+        .bottom-meld-ui { position: absolute; left: 15px; bottom: 130px; z-index: 20; }
         
         .score-display {
             background: rgba(15,23,42,0.9); border: 1px solid #475569; padding: 6px 15px; border-radius: 20px;
@@ -228,7 +230,7 @@
         .score-display span { color: var(--gold); font-size: 14px; font-weight: 800; }
 
         .action-buttons {
-            display: flex; gap: 8px; position: absolute; top: -60px;
+            display: flex; gap: 12px; position: absolute; top: -75px;
             background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(5px); padding: 8px 15px; border-radius: 25px;
             border: 1px solid rgba(255,255,255,0.2); opacity: 0; pointer-events: none; transform: translateY(10px); transition: 0.3s; z-index: 200; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
@@ -240,6 +242,9 @@
         .btn-buang { background: var(--red-suit) !important; color: white !important; }
         .btn-turun { background: var(--blue) !important; color: white !important; }
         
+        /* TOMBOL GESER KIRI/KANAN (DIPERBESAR) */
+        #btn-geser-kiri, #btn-geser-kanan { font-size: 18px; padding: 10px 20px; }
+
         /* ---------------------------------------------------- */
         /* KARTU VISUAL TANGAN PEMAIN                           */
         /* ---------------------------------------------------- */
@@ -284,10 +289,10 @@
             .player-right { gap: 4px; padding-right: 2px; }
             .player-top { gap: 4px; }
             
-            /* Meld di Meja Mobile - DIPERLEBAR & DIRENGGANGKAN */
+            /* Meld di Meja Mobile - DIRENGGANGKAN (-13px) */
             .melds-area { max-width: 140px; margin-bottom: 4px; }
             .mini-card { width: 28px; height: 42px; font-size: 11px; border-width: 1px;}
-            .meld-group .mini-card:not(:first-child) { margin-left: -8px; }
+            .meld-group .mini-card:not(:first-child) { margin-left: -13px; }
 
             .playing-card { width: 50px; height: 75px; padding: 3px; border-radius: 6px; border-width: 1px;}
             .card-top, .card-bottom { font-size: 10px; }
@@ -296,14 +301,14 @@
             .card-face-icon { font-size: 26px; }
             .card-ace-icon { font-size: 32px; }
             
-            /* Penyesuaian layout Kiri-Bawah untuk Mobile */
-            .bottom-left-ui { left: 5px !important; bottom: 5px !important; z-index: 30; }
-            .bottom-meld-ui { left: 5px !important; bottom: 90px !important; z-index: 20; }
-            .bottom-left-ui .score-display { transform: scale(0.85); transform-origin: left bottom; margin-bottom: 2px !important; }
-            .bottom-left-ui .avatar { width: 35px !important; height: 35px !important; font-size: 16px !important; }
-            .bottom-left-ui .player-name { font-size: 9px !important; padding: 2px 6px !important; }
+            /* Penyesuaian UI Kanan-Bawah (Avatar & Score) untuk Mobile */
+            .bottom-right-ui { right: 5px !important; bottom: 125px !important; z-index: 30; }
+            .bottom-meld-ui { left: 5px !important; bottom: 125px !important; z-index: 20; }
+            .bottom-right-ui .score-display { transform: scale(0.85); transform-origin: right bottom; margin-bottom: 2px !important; }
+            .bottom-right-ui .avatar { width: 35px !important; height: 35px !important; font-size: 16px !important; }
+            .bottom-right-ui .player-name { font-size: 9px !important; padding: 2px 6px !important; }
 
-            /* Penyesuaian Kartu Tangan Mobile (Lebih proporsional) */
+            /* Penyesuaian Kartu Tangan Mobile (Diperkecil ke 75x110) */
             .my-hand { height: 110px; margin-top: 0px; }
             .my-hand .playing-card { 
                 width: 75px;  
@@ -317,8 +322,11 @@
             .my-hand .playing-card .card-face-icon { font-size: 35px; }
             .my-hand .playing-card .card-ace-icon { font-size: 45px; }
 
-            .action-buttons { padding: 5px 10px; top: -45px !important; gap: 4px; z-index: 200; }
+            .action-buttons { padding: 5px 10px; top: -60px !important; gap: 6px; z-index: 200; }
             .btn-action { padding: 4px 8px; font-size: 10px; border-radius: 8px;}
+            
+            /* TOMBOL GESER MOBILE (DIPERBESAR) */
+            #btn-geser-kiri, #btn-geser-kanan { font-size: 16px; padding: 8px 18px; }
             
             .custom-modal { width: 90%; padding: 15px; }
         }
@@ -439,24 +447,20 @@
 
         <div class="game-table">
             
-            <!-- TOP PLAYER (Merah pindah ke Hijau) -->
             <div id="slot-top" class="player-area player-top" style="flex-direction: column;">
                 <div class="avatar-container">
                     <div class="avatar" id="ava-top">🤖</div><div class="player-name" id="name-top">Bot 1</div>
                 </div>
-                <!-- Meld dan Discard disejajarkan horizontal di bawah avatar -->
                 <div style="display: flex; gap: 15px; align-items: center; justify-content: center;">
                     <div class="melds-area" id="melds-top"></div>
                     <div class="discard-pile" id="discard-top" onclick="drawFromDiscard('top')"></div>
                 </div>
             </div>
 
-            <!-- LEFT PLAYER -->
             <div id="slot-left" class="player-area player-left" style="flex-direction: row;">
                 <div class="avatar-container">
                     <div class="avatar" id="ava-left">👾</div><div class="player-name" id="name-left">Bot 2</div>
                 </div>
-                <!-- Discard dan Meld disejajarkan vertikal di kanan avatar -->
                 <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-start;">
                     <div class="discard-pile" id="discard-left" onclick="drawFromDiscard('left')"></div>
                     <div class="melds-area" id="melds-left" style="justify-content: flex-start;"></div>
@@ -471,42 +475,35 @@
                 </div>
             </div>
 
-            <!-- RIGHT PLAYER -->
             <div id="slot-right" class="player-area player-right" style="flex-direction: row-reverse;">
                 <div class="avatar-container">
                     <div class="avatar" id="ava-right">👽</div><div class="player-name" id="name-right">Bot 3</div>
                 </div>
-                <!-- Discard dan Meld disejajarkan vertikal di kiri avatar -->
                 <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
                     <div class="discard-pile" id="discard-right" onclick="drawFromDiscard('right')"></div>
                     <div class="melds-area" id="melds-right" style="justify-content: flex-end;"></div>
                 </div>
             </div>
 
-            <!-- BOTTOM PLAYER -->
             <div id="slot-bottom" class="player-area player-bottom">
                 
-                <!-- KIRI BAWAH: Avatar & Score -->
-                <div class="bottom-left-ui">
+                <div class="bottom-right-ui">
                     <div class="score-display" id="my-score-display" style="margin-bottom: 5px;">
                         <div>Ronde: <span id="my-score-val">0</span></div>
                         <div style="border-left: 1px solid #475569; padding-left: 8px; margin-left: 8px;">Total: <span id="my-total-val" style="color:white;">0</span></div>
                     </div>
-                    <div class="avatar-container" style="flex-direction: row; gap: 8px; align-items: center;">
+                    <div class="avatar-container" style="flex-direction: row-reverse; gap: 8px; align-items: center;">
                         <div class="avatar" style="font-size: 22px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); margin: 0;">😎</div>
                         <div class="player-name" id="my-name" style="margin: 0; padding: 4px 10px;">Kamu</div>
                     </div>
                 </div>
 
-                <!-- LOKASI PINK (MELD BAWAH): Di kiri agak ke atas sedikit, di atas avatar/score -->
                 <div class="bottom-meld-ui">
                     <div class="melds-area" id="melds-bottom" style="justify-content: flex-start; max-width: 250px;"></div>
                 </div>
 
-                <!-- TENGAH: Discard Pile & Hand Cards -->
                 <div style="display: flex; flex-direction: column; align-items: center; width: 100%; position:relative; z-index: 10;">
                     
-                    <!-- Discard diletakkan presisi di depan Kartu yang dipegang -->
                     <div class="discard-pile" id="discard-bottom" style="margin-bottom: 20px; z-index: 5;"></div>
                     
                     <div class="my-hand-container">
@@ -1770,7 +1767,7 @@
                 }
                 
                 cardElement.innerHTML = renderCardHTML(card, isTrueJoker);
-                cardElement.onclick = () => { if(isMyTurn) selectCard(index); };
+                cardElement.onclick = () => { selectCard(index); };
                 myHandDiv.appendChild(cardElement);
             });
 
@@ -1782,10 +1779,10 @@
 
             btnTurun.style.display = 'none'; 
 
-            if(selectedCardIndices.length > 0 && isMyTurn) { 
+            if(selectedCardIndices.length > 0) { 
                 actionBtns.classList.add('active'); 
                 
-                if(selectedCardIndices.length >= 3) {
+                if(selectedCardIndices.length >= 3 && isMyTurn) {
                     let selectedCards = selectedCardIndices.map(i => myHand[i]);
                     if(isValidSingleGroup(selectedCards, game.jokerRank)) {
                         btnTurun.style.display = 'block';
@@ -1795,7 +1792,8 @@
                 if(selectedCardIndices.length > 1) {
                     btnGeserL.style.display = 'none'; btnGeserR.style.display = 'none'; btnBuang.style.display = 'none';
                 } else {
-                    btnGeserL.style.display = 'block'; btnGeserR.style.display = 'block'; btnBuang.style.display = turnPhase === 'DISCARD' ? 'block' : 'none';
+                    btnGeserL.style.display = 'block'; btnGeserR.style.display = 'block'; 
+                    btnBuang.style.display = (isMyTurn && turnPhase === 'DISCARD') ? 'block' : 'none';
                 }
             } else { actionBtns.classList.remove('active'); }
 
@@ -1814,7 +1812,7 @@
         };
 
         window.moveCard = (direction) => {
-            if (selectedCardIndices.length !== 1 || !isMyTurn) return;
+            if (selectedCardIndices.length !== 1) return;
             let sIndex = selectedCardIndices[0];
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                 if(game) {
