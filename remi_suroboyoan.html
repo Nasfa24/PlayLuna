@@ -1693,6 +1693,8 @@
             document.getElementById('joker-display').innerText = `🃏 JOKER: ${game.jokerRank}${game.jokerMasterCard ? game.jokerMasterCard.suit : ""}${jName}`;
             document.getElementById('deck-count').innerText = game.deck ? game.deck.length : 0;
             
+            document.getElementById('room-code-display').innerText = `🏠 ROOM: ${currentRoomId}`;
+            
             document.getElementById('dir-indicator').innerText = (game.playDirection === 1) ? "↻" : "↺";
 
             if (game.jokerCursed && game.jokerCursed.includes(myPlayerId) && !hasFlashedBlood) {
