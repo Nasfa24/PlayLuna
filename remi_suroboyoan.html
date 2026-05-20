@@ -133,7 +133,6 @@
         
         .player-top { grid-row: 1; grid-column: 2; flex-direction: column; justify-content: flex-start; gap: 8px;}
         
-        /* FIX TASK 5 & 6: Restrukturisasi Kiri dan Kanan */
         .player-left { grid-row: 2; grid-column: 1; flex-direction: column; justify-content: center; gap: 5px;}
         .player-right { grid-row: 2; grid-column: 3; flex-direction: column; justify-content: center; gap: 5px;} 
         
@@ -170,7 +169,6 @@
         .mini-card.c-red { color: var(--red-suit); }
         .mini-card.fallen { opacity: 0.85; filter: grayscale(30%); background: #e2e8f0; }
 
-        /* FIX TASK 4: Ukuran Discard pile ditambah 2px */
         .discard-pile {
             width: 62px; height: 87px; border: 2px dashed rgba(255,255,255,0.2);
             border-radius: 8px; margin: 0; position: relative;
@@ -433,7 +431,6 @@
             
             <button class="btn-action" id="btn-end-match" style="background:var(--blue); display:none;" onclick="forceEndMatch()">🏁 AKHIRI TURNAMEN</button>
             <button class="btn-action" style="background: var(--gold); color: #000;" onclick="document.getElementById('modal-panduan').classList.remove('hidden')">📖 PANDUAN</button>
-            <!-- Tombol Keluar untuk Semua -->
             <button class="btn-action" style="background: var(--red-suit); color: white;" onclick="confirmLeaveRoom()">🚪 KELUAR</button>
             
             <div id="joker-display" class="joker-info">🃏 JOKER: -</div>
@@ -1077,7 +1074,6 @@
             return false;
         }
 
-        // FIX LOGIKA PERHITUNGAN SKOR: Pastikan kartu sisa memotong dengan benar dan melds menambah positif
         function evaluateHand(handCards, melds, jokerRank, isSimulatingPickup = false) {
             let score = 0; let groupedIndices = new Set();
             let jokers = []; let nonJokers = [];
@@ -1233,11 +1229,9 @@
                 return grpScore;
             }
 
-            // MELDS ADALAH POIN POSITIF
             if (melds) melds.forEach(g => score += scoreGroup(g));
             formedGroups.forEach(g => score += scoreGroup(g));
 
-            // SISA TANGAN (DEADWOOD) ADALAH POIN NEGATIF
             handCards.forEach((c, i) => {
                 if (!groupedIndices.has(i)) {
                     if (c.rank === jokerRank && !c.isFallen) score -= 25; 
@@ -1254,6 +1248,9 @@
             return { score, hasValidGroup, isAllPaired, groupedIndices, formedGroups };
         }
 
+        // =======================================================
+        // LOGIKA BARU: EKSEKUSI DENDA SAAT KNOCK
+        // =======================================================
         function handleRoundEnd(game, knockerIdx, victims, customKnockCard = null) {
             if (!game.globalScores) game.globalScores = {};
             
@@ -1277,10 +1274,38 @@
                 else { baseKnockValue = 50; } 
                 
                 knockMsg = `🎉 ${knocker.name} MENUTUP DENGAN KARTU ${isTrueJoker ? 'JOKER' : knockCard.rank}!`;
+
+                // --- EKSEKUSI DENDA PENALTY (DARI TRACKING PENDING) ---
+                let allValidMelds = [];
+                if (knocker.melds) knocker.melds.forEach(m => allValidMelds.push(...m));
+                
+                let handInfo = evaluateHand(knocker.hand || [], knocker.melds || [], game.jokerRank);
+                if (handInfo.formedGroups) handInfo.formedGroups.forEach(m => allValidMelds.push(...m));
+
+                let confirmedVictimIndices = [];
+                let confirmedVictimNames = [];
+
+                if (knocker.pendingPenalties && knocker.pendingPenalties.length > 0) {
+                    knocker.pendingPenalties.forEach(pen => {
+                        let isUsedInMeld = allValidMelds.some(mc => mc.rank === pen.card.rank && mc.suit === pen.card.suit && mc.isFallen === pen.card.isFallen);
+                        
+                        if (isUsedInMeld) {
+                            let vId = game.players[pen.victimIdx].id;
+                            game.globalScores[vId] -= pen.penalty; // Potong Denda Nembak!
+                            
+                            if (!confirmedVictimIndices.includes(pen.victimIdx)) {
+                                confirmedVictimIndices.push(pen.victimIdx);
+                                confirmedVictimNames.push(game.players[pen.victimIdx].name);
+                            }
+                        }
+                    });
+                }
+
+                // Ganti argumen victims dengan victim asli yang kartunya dipakai
+                victims = confirmedVictimIndices;
                 
                 if (victims && victims.length > 0) {
-                    let victimNames = victims.map(v => game.players[v].name).join(', ');
-                    knockMsg += `<br><span style="color:var(--red-suit); font-size:11px; display:block; margin-top:5px;">(Denda Nembak ditanggung oleh: ${victimNames})</span>`;
+                    knockMsg += `<br><span style="color:var(--red-suit); font-size:11px; display:block; margin-top:5px;">(Denda Nembak & Tutup ditanggung: ${confirmedVictimNames.join(', ')})</span>`;
                 }
             } else {
                 knockMsg = "⚠️ STOK KARTU HABIS! SKOR NORMAL DITERAPKAN!";
@@ -1296,9 +1321,8 @@
                     if (idx === knockerIdx) {
                         rScore += baseKnockValue; 
                     } else {
-                        // Fix 1: Denda Tutup untuk korban (Denda Menembak sudah dipotong saat pasang, jadi ini ekstra tutup jika relevan)
                         if (victims && victims.includes(idx)) {
-                            rScore -= baseKnockValue;
+                            rScore -= baseKnockValue; // Ekstra Denda Tutup untuk target yang sah
                         }
                     }
                 }
@@ -1505,7 +1529,7 @@
             const roomId = Math.random().toString(36).substring(2,6).toUpperCase();
             set(ref(db, `remi_rooms/${roomId}`), {
                 status: "LOBBY", host: myPlayerId, deckMultiplier: 1,
-                players: [{ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [], hasDrawnFromDeck: false }],
+                players: [{ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [], hasDrawnFromDeck: false, pendingPenalties: [] }],
                 playDirection: 1, currentTurnSlot: 0, jokerCursed: []
             }).then(() => {
                 localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", roomId);
@@ -1525,7 +1549,7 @@
                         myPlayerId = "p_" + Date.now();
                         localStorage.setItem("luna_global_name", myName);
                         let updatedPlayers = roomData.players || [];
-                        updatedPlayers.push({ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [], hasDrawnFromDeck: false });
+                        updatedPlayers.push({ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [], hasDrawnFromDeck: false, pendingPenalties: [] });
                         update(ref(db, `remi_rooms/${code}`), { players: updatedPlayers }).then(() => {
                             localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", code);
                             enterLobby(code, false);
@@ -1593,15 +1617,13 @@
             
             for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
 
-            // FIX 8: Joker Penentu ditarik dan tidak dimasukkan kembali
             let jokerCard = deck.pop(); 
             game.jokerRank = jokerCard.rank; 
             game.jokerMasterCard = jokerCard;
-            // deck.push(jokerCard); <-- Dede Hapus ini agar sisa 3 joker di dalam!
             
             for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
 
-            game.players.forEach(p => { p.hand = []; p.discard = []; p.melds = []; p.knockVictims = []; p.hasDrawnFromDeck = false; });
+            game.players.forEach(p => { p.hand = []; p.discard = []; p.melds = []; p.knockVictims = []; p.hasDrawnFromDeck = false; p.pendingPenalties = []; });
             game.jokerCursed = [];
 
             for(let i=0; i<7; i++) { for(let p=0; p<4; p++) { game.players[p].hand.push(deck.pop()); } }
@@ -1629,7 +1651,7 @@
                     game.globalScores = {};
                     let botsAdded = 0;
                     while(game.players.length < 4) {
-                        game.players.push({ id: `bot_${botsAdded}`, name: BOT_NAMES[botsAdded], isBot: true, hand: [], discard: [], melds: [], knockVictims:[], hasDrawnFromDeck: false });
+                        game.players.push({ id: `bot_${botsAdded}`, name: BOT_NAMES[botsAdded], isBot: true, hand: [], discard: [], melds: [], knockVictims:[], hasDrawnFromDeck: false, pendingPenalties: [] });
                         botsAdded++;
                     }
                     game.players.forEach(p => { game.globalScores[p.id] = 0; });
@@ -1684,7 +1706,6 @@
             let jName = game.jokerMasterCard ? ` (${game.jokerMasterCard.rank} ${suitNames[game.jokerMasterCard.suit]})` : "";
             document.getElementById('joker-display').innerText = `🃏 JOKER: ${game.jokerRank}${game.jokerMasterCard ? game.jokerMasterCard.suit : ""}${jName}`;
             
-            // HUD JOKER DI ATAS DEK LUNA
             if(game.jokerMasterCard) {
                 let jRank = game.jokerMasterCard.rank;
                 let jSuit = game.jokerMasterCard.suit;
@@ -1969,7 +1990,9 @@
             });
         };
 
-        // FIX 7: BUG PICKUP DAN FIX 2: DENDA TEMBAK PADA MANUSIA
+        // =======================================================
+        // MANUAL PLAY: FUNGSI TARIK DARI MEJA (SWEEP/NEMBAK)
+        // =======================================================
         window.drawFromDiscard = (posStr) => {
             if (!isMyTurn) return;
             
@@ -2011,7 +2034,6 @@
                 let selectedCards = selectedCardIndices.map(i => myHand[i]);
                 let simMeld = [...selectedCards, topCard];
                 
-                // FIX 7: Tidak perlu sweep generator rumit untuk pilihan manual. Cukup validasi apakah pilihan + kartu meja sah!
                 if (!isValidSingleGroup(simMeld, game.jokerRank)) {
                     showAlertModal("KOMBINASI SALAH", "Kartu di tangan yang kamu pilih tidak membentuk pasangan yang sah jika digabung dengan kartu buangan ini.");
                     return;
@@ -2027,13 +2049,10 @@
 
                         tPlayer.discard.pop(); 
                         
-                        // FIX 2: TERAPKAN DENDA MENEMBAK KEPADA KORBAN SECARA LANGSUNG
-                        let penalty = 50;
-                        if (topCard.rank === 'A') penalty = 150;
-                        else if (['J', 'Q', 'K'].includes(topCard.rank)) penalty = 100;
-                        
-                        if(!gameTx.globalScores) gameTx.globalScores = {};
-                        gameTx.globalScores[tPlayer.id] = (gameTx.globalScores[tPlayer.id] || 0) - penalty;
+                        // TRACKING DENDA: Simpan memori kartu apa saja yang disapu dan siapa pemiliknya
+                        let pendingPen = [];
+                        let p1 = (topCard.rank === 'A') ? 150 : (['J', 'Q', 'K'].includes(topCard.rank) ? 100 : 50);
+                        pendingPen.push({ victimIdx: actualTargetIdx, card: topCard, penalty: p1 });
 
                         let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                         indicesToRemove.forEach(idx => { txPData.hand.splice(idx, 1); });
@@ -2046,7 +2065,6 @@
                         let sweepTarget = actualTargetIdx;
                         let dir = gameTx.playDirection || 1;
                         
-                        // Tarik otomatis sisa buangan jika ada di antara penembak dan target
                         while (sweepTarget !== mySlotIndex) {
                             sweepTarget = (sweepTarget + dir + 4) % 4;
                             if (sweepTarget === mySlotIndex) break; 
@@ -2055,9 +2073,15 @@
                             if(iterPlayer.discard && iterPlayer.discard.length > 0) {
                                 let sweptCard = iterPlayer.discard.pop();
                                 sweptToHand.push(sweptCard); 
+                                
+                                // TRACKING DENDA: Masukkan kartu efek magnet/sapuan
+                                let p2 = (sweptCard.rank === 'A') ? 150 : (['J', 'Q', 'K'].includes(sweptCard.rank) ? 100 : 50);
+                                pendingPen.push({ victimIdx: sweepTarget, card: sweptCard, penalty: p2 });
                             }
                         }
-
+                        
+                        txPData.pendingPenalties = pendingPen; // Save history ke memori pemain
+                        
                         if(!txPData.melds) txPData.melds = []; 
                         txPData.melds.push(baseMeld);
                         txPData.hand.push(...sweptToHand);
@@ -2130,6 +2154,7 @@
                         
                         txPData.knockVictims = [];
                         txPData.hasDrawnFromDeck = false;
+                        txPData.pendingPenalties = []; // RESET: Karena lempar tanpa knock, denda dari sapuan hangus
 
                         selectedCardIndices = [];
                         let dir = gameTx.playDirection || 1;
@@ -2137,6 +2162,7 @@
                         let nextIdx = gameTx.currentTurnSlot;
                         gameTx.players[nextIdx].knockVictims = [];
                         gameTx.players[nextIdx].hasDrawnFromDeck = false;
+                        gameTx.players[nextIdx].pendingPenalties = []; // Reset memori giliran berikutnya
                         gameTx.turnPhase = 'DRAW'; 
                     }
                     return gameTx;
@@ -2221,12 +2247,10 @@
                         let tPlayer = game.players[targetP];
                         let topD = tPlayer.discard.pop();
                         
-                        // FIX 2 BOT: TERAPKAN DENDA MENEMBAK KEPADA KORBAN
-                        let penalty = 50;
-                        if (topD.rank === 'A') penalty = 150;
-                        else if (['J', 'Q', 'K'].includes(topD.rank)) penalty = 100;
-                        if(!game.globalScores) game.globalScores = {};
-                        game.globalScores[tPlayer.id] = (game.globalScores[tPlayer.id] || 0) - penalty;
+                        // TRACKING DENDA BOT
+                        let pendingPen = [];
+                        let p1 = (topD.rank === 'A') ? 150 : (['J', 'Q', 'K'].includes(topD.rank) ? 100 : 50);
+                        pendingPen.push({ victimIdx: targetP, card: topD, penalty: p1 });
 
                         let sortedRem = cardsToRemoveFromHand.sort((a,b)=>b-a);
                         sortedRem.forEach(idx => hand.splice(idx, 1));
@@ -2250,9 +2274,15 @@
                             if (iterPlayer.discard && iterPlayer.discard.length > 0) {
                                 let sweptCard = iterPlayer.discard.pop();
                                 sweptToHand.push(sweptCard);
+                                
+                                let p2 = (sweptCard.rank === 'A') ? 150 : (['J', 'Q', 'K'].includes(sweptCard.rank) ? 100 : 50);
+                                pendingPen.push({ victimIdx: sweepTarget, card: sweptCard, penalty: p2 });
                             }
                         }
+                        
+                        game.players[botIdx].pendingPenalties = pendingPen;
                         hand.push(...sweptToHand);
+                        
                     } else {
                         if (game.deck && game.deck.length > 0) {
                             game.players[botIdx].hand.push(game.deck.pop());
@@ -2293,9 +2323,7 @@
                     hand = game.players[botIdx].hand;
                     
                     const discardCandidates = hand.map((card, index) => ({
-                        card,
-                        index,
-                        score: calculateDiscardScore(card, hand, melds, game, botIdx)
+                        card, index, score: calculateDiscardScore(card, hand, melds, game, botIdx)
                     }));
 
                     let validCandidates = discardCandidates.filter(c => {
@@ -2344,11 +2372,13 @@
                     game.players[botIdx].discard.push(thrownCard);
                     game.players[botIdx].knockVictims = [];
                     game.players[botIdx].hasDrawnFromDeck = false;
+                    game.players[botIdx].pendingPenalties = []; // RESET MEMORI
 
                     game.currentTurnSlot = (game.currentTurnSlot + dir + 4) % 4;
                     let nextIdx = game.currentTurnSlot;
                     game.players[nextIdx].knockVictims = [];
                     game.players[nextIdx].hasDrawnFromDeck = false;
+                    game.players[nextIdx].pendingPenalties = []; // RESET NEXT PLAYER MEMORY
                     game.turnPhase = 'DRAW';
 
                     return game;
