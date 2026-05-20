@@ -337,7 +337,7 @@
             </div>
 
             <div id="tab-aturan" style="font-size: 11px; color: #cbd5e1; max-height: 55vh; overflow-y: auto; padding-right:5px;">
-                <p><b style="color:var(--gold);">1. HUKUM TRIS & AS (ANTI JOKER)</b><br>Tris (Tiga kembar) <b>HANYA</b> untuk AS, dan <b>WAJIB</b> memiliki minimal 1 pasangan lain yang hidup. Jika tidak, 3 AS dihitung Deadwood! Kartu AS Haram pakai Joker!</p>
+                <p><b style="color:var(--gold);">1. HUKUM TRIS & AS (ANTI JOKER)</b><br>Tris (Tiga kembar) <b>HANYA</b> untuk AS, and <b>WAJIB</b> memiliki minimal 1 pasangan lain yang hidup. Jika tidak, 3 AS dihitung Deadwood! Kartu AS Haram pakai Joker!</p>
                 <div style="display:flex; gap:3px; align-items:center; margin-bottom:12px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 8px;">
                     <div class="mini-card" style="border:1px solid var(--neon-green);">A<br><span style="font-size:8px">♠</span></div>
                     <div class="mini-card c-red" style="border:1px solid var(--neon-green);">A<br><span style="font-size:8px">♥</span></div>
@@ -1301,7 +1301,6 @@
                     });
                 }
 
-                // Ganti argumen victims dengan victim asli yang kartunya dipakai
                 victims = confirmedVictimIndices;
                 
                 if (victims && victims.length > 0) {
@@ -1322,7 +1321,7 @@
                         rScore += baseKnockValue; 
                     } else {
                         if (victims && victims.includes(idx)) {
-                            rScore -= baseKnockValue; // Ekstra Denda Tutup untuk target yang sah
+                            rScore -= baseKnockValue; 
                         }
                     }
                 }
@@ -2047,9 +2046,9 @@
                         let tPlayer = gameTx.players[actualTargetIdx];
                         if(!tPlayer || !tPlayer.discard || tPlayer.discard.length === 0) return gameTx;
 
+                        // FIX URUTAN KARTU BUANGAN: Hapus kartu teratas secara langsung
                         tPlayer.discard.pop(); 
                         
-                        // TRACKING DENDA: Simpan memori kartu apa saja yang disapu dan siapa pemiliknya
                         let pendingPen = [];
                         let p1 = (topCard.rank === 'A') ? 150 : (['J', 'Q', 'K'].includes(topCard.rank) ? 100 : 50);
                         pendingPen.push({ victimIdx: actualTargetIdx, card: topCard, penalty: p1 });
@@ -2065,22 +2064,28 @@
                         let sweepTarget = actualTargetIdx;
                         let dir = gameTx.playDirection || 1;
                         
-                        while (sweepTarget !== mySlotIndex) {
-                            sweepTarget = (sweepTarget + dir + 4) % 4;
-                            if (sweepTarget === mySlotIndex) break; 
-                            
-                            let iterPlayer = gameTx.players[sweepTarget];
+                        // FIX SINKRONISASI MAGNET NYAPU KRONOLOGIS
+                        let sweepSteps = [];
+                        let currentStepTarget = actualTargetIdx;
+                        while (currentStepTarget !== mySlotIndex) {
+                            currentStepTarget = (currentStepTarget + dir + 4) % 4;
+                            if (currentStepTarget === mySlotIndex) break;
+                            sweepSteps.push(currentStepTarget);
+                        }
+
+                        // Bersihkan tumpukan secara urut
+                        sweepSteps.forEach(stepIdx => {
+                            let iterPlayer = gameTx.players[stepIdx];
                             if(iterPlayer.discard && iterPlayer.discard.length > 0) {
                                 let sweptCard = iterPlayer.discard.pop();
                                 sweptToHand.push(sweptCard); 
                                 
-                                // TRACKING DENDA: Masukkan kartu efek magnet/sapuan
                                 let p2 = (sweptCard.rank === 'A') ? 150 : (['J', 'Q', 'K'].includes(sweptCard.rank) ? 100 : 50);
-                                pendingPen.push({ victimIdx: sweepTarget, card: sweptCard, penalty: p2 });
+                                pendingPen.push({ victimIdx: stepIdx, card: sweptCard, penalty: p2 });
                             }
-                        }
+                        });
                         
-                        txPData.pendingPenalties = pendingPen; // Save history ke memori pemain
+                        txPData.pendingPenalties = pendingPen; 
                         
                         if(!txPData.melds) txPData.melds = []; 
                         txPData.melds.push(baseMeld);
@@ -2154,7 +2159,7 @@
                         
                         txPData.knockVictims = [];
                         txPData.hasDrawnFromDeck = false;
-                        txPData.pendingPenalties = []; // RESET: Karena lempar tanpa knock, denda dari sapuan hangus
+                        txPData.pendingPenalties = []; 
 
                         selectedCardIndices = [];
                         let dir = gameTx.playDirection || 1;
@@ -2162,7 +2167,7 @@
                         let nextIdx = gameTx.currentTurnSlot;
                         gameTx.players[nextIdx].knockVictims = [];
                         gameTx.players[nextIdx].hasDrawnFromDeck = false;
-                        gameTx.players[nextIdx].pendingPenalties = []; // Reset memori giliran berikutnya
+                        gameTx.players[nextIdx].pendingPenalties = []; 
                         gameTx.turnPhase = 'DRAW'; 
                     }
                     return gameTx;
@@ -2247,7 +2252,6 @@
                         let tPlayer = game.players[targetP];
                         let topD = tPlayer.discard.pop();
                         
-                        // TRACKING DENDA BOT
                         let pendingPen = [];
                         let p1 = (topD.rank === 'A') ? 150 : (['J', 'Q', 'K'].includes(topD.rank) ? 100 : 50);
                         pendingPen.push({ victimIdx: targetP, card: topD, penalty: p1 });
@@ -2267,18 +2271,24 @@
                         let sweptToHand = [];
                         let sweepTarget = targetP;
                         
+                        // BOT TRACKING SINKRONISASI KRONOLOGIS MAGNET NYAPU
+                        let botSweepSteps = [];
                         while (sweepTarget !== botIdx) {
                             sweepTarget = (sweepTarget + dir + 4) % 4;
                             if (sweepTarget === botIdx) break;
-                            let iterPlayer = game.players[sweepTarget];
+                            botSweepSteps.push(sweepTarget);
+                        }
+
+                        botSweepSteps.forEach(stepIdx => {
+                            let iterPlayer = game.players[stepIdx];
                             if (iterPlayer.discard && iterPlayer.discard.length > 0) {
                                 let sweptCard = iterPlayer.discard.pop();
                                 sweptToHand.push(sweptCard);
                                 
                                 let p2 = (sweptCard.rank === 'A') ? 150 : (['J', 'Q', 'K'].includes(sweptCard.rank) ? 100 : 50);
-                                pendingPen.push({ victimIdx: sweepTarget, card: sweptCard, penalty: p2 });
+                                pendingPen.push({ victimIdx: stepIdx, card: sweptCard, penalty: p2 });
                             }
-                        }
+                        });
                         
                         game.players[botIdx].pendingPenalties = pendingPen;
                         hand.push(...sweptToHand);
@@ -2372,13 +2382,13 @@
                     game.players[botIdx].discard.push(thrownCard);
                     game.players[botIdx].knockVictims = [];
                     game.players[botIdx].hasDrawnFromDeck = false;
-                    game.players[botIdx].pendingPenalties = []; // RESET MEMORI
+                    game.players[botIdx].pendingPenalties = []; 
 
                     game.currentTurnSlot = (game.currentTurnSlot + dir + 4) % 4;
                     let nextIdx = game.currentTurnSlot;
                     game.players[nextIdx].knockVictims = [];
                     game.players[nextIdx].hasDrawnFromDeck = false;
-                    game.players[nextIdx].pendingPenalties = []; // RESET NEXT PLAYER MEMORY
+                    game.players[nextIdx].pendingPenalties = []; 
                     game.turnPhase = 'DRAW';
 
                     return game;
