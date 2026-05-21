@@ -2050,7 +2050,10 @@
                         tPlayer.discard.pop(); 
                         
                         let pendingPen = [];
-                        let p1 = (topCard.rank === 'A') ? 150 : (['J', 'Q', 'K'].includes(topCard.rank) ? 100 : 50);
+                        let p1 = 50;
+                        if (topCard.rank === gameTx.jokerRank && !topCard.isFallen) p1 = 250;
+                        else if (topCard.rank === 'A') p1 = 150;
+                        else if (['J', 'Q', 'K'].includes(topCard.rank)) p1 = 100;
                         pendingPen.push({ victimIdx: actualTargetIdx, card: topCard, penalty: p1 });
 
                         let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
@@ -2080,7 +2083,10 @@
                                 let sweptCard = iterPlayer.discard.pop();
                                 sweptToHand.push(sweptCard); 
                                 
-                                let p2 = (sweptCard.rank === 'A') ? 150 : (['J', 'Q', 'K'].includes(sweptCard.rank) ? 100 : 50);
+                                let p2 = 50;
+                                if (sweptCard.rank === gameTx.jokerRank && !sweptCard.isFallen) p2 = 250;
+                                else if (sweptCard.rank === 'A') p2 = 150;
+                                else if (['J', 'Q', 'K'].includes(sweptCard.rank)) p2 = 100;
                                 pendingPen.push({ victimIdx: stepIdx, card: sweptCard, penalty: p2 });
                             }
                         });
@@ -2253,7 +2259,10 @@
                         let topD = tPlayer.discard.pop();
                         
                         let pendingPen = [];
-                        let p1 = (topD.rank === 'A') ? 150 : (['J', 'Q', 'K'].includes(topD.rank) ? 100 : 50);
+                        let p1 = 50;
+                        if (topD.rank === game.jokerRank && !topD.isFallen) p1 = 250;
+                        else if (topD.rank === 'A') p1 = 150;
+                        else if (['J', 'Q', 'K'].includes(topD.rank)) p1 = 100;
                         pendingPen.push({ victimIdx: targetP, card: topD, penalty: p1 });
 
                         let sortedRem = cardsToRemoveFromHand.sort((a,b)=>b-a);
@@ -2285,7 +2294,10 @@
                                 let sweptCard = iterPlayer.discard.pop();
                                 sweptToHand.push(sweptCard);
                                 
-                                let p2 = (sweptCard.rank === 'A') ? 150 : (['J', 'Q', 'K'].includes(sweptCard.rank) ? 100 : 50);
+                                let p2 = 50;
+                                if (sweptCard.rank === game.jokerRank && !sweptCard.isFallen) p2 = 250;
+                                else if (sweptCard.rank === 'A') p2 = 150;
+                                else if (['J', 'Q', 'K'].includes(sweptCard.rank)) p2 = 100;
                                 pendingPen.push({ victimIdx: stepIdx, card: sweptCard, penalty: p2 });
                             }
                         });
