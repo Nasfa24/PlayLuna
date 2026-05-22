@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LUNA CHAMPIONSHIP | Lobby</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* Menggunakan style dasar yang sama agar senada */
+        :root {
+            --bg-dark: #0f172a; --bg-light: #1e293b;
+            --gold: #fbbf24; --panel-bg: rgba(30, 41, 59, 0.85);
+            --neon-green: #10b981; --red-suit: #ef4444;
+        }
+        body {
+            margin: 0; padding: 0; 
+            background: radial-gradient(circle at center, var(--bg-light) 0%, var(--bg-dark) 100%);
+            font-family: 'Poppins', sans-serif; color: white; height: 100vh;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .panel {
+            background: var(--panel-bg); padding: 25px; border-radius: 20px; 
+            border: 1px solid rgba(255,255,255,0.1); text-align: center; width: 85%; max-width: 340px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        input {
+            width: 100%; padding: 12px; margin: 8px 0; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.3); color: white; text-align: center; font-family: 'Poppins'; 
+            font-weight: 600; box-sizing: border-box; outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: var(--gold); }
+        .btn {
+            width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 12px;
+            font-weight: 800; font-family: 'Poppins'; cursor: pointer; transition: 0.2s; 
+        }
+        .btn-gold { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; }
+        .hidden { display: none !important; }
+        .status-badge {
+            display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PANEL PENDAFTARAN / LOGIN -->
+    <div class="panel" id="panel-register">
+        <h2 style="color:var(--gold); margin-top:0;">LIGA LUNA</h2>
+        <p style="font-size:12px; color:#cbd5e1;">Daftar atau Masuk menggunakan Username dan PIN yang sama.</p>
+        
+        <input type="text" id="input-username" placeholder="Username (Tidak bisa diubah)" maxlength="15">
+        <input type="password" id="input-pin" placeholder="PIN 4 Angka (Contoh: 1234)" maxlength="4" pattern="\d{4}">
+        
+        <button class="btn btn-gold" onclick="loginOrRegister()">DAFTAR / MASUK</button>
+        <button class="btn" style="background: transparent; border: 1px solid white; color: white;" onclick="window.location.href='remi_suroboyoan.html'">KEMBALI</button>
+    </div>
+
+    <!-- PANEL LOBBY (WAITING ROOM) -->
+    <div class="panel hidden" id="panel-lobby">
+        <h2 style="color:var(--gold); margin-top:0;">RUANG TUNGGU</h2>
+        <h3 id="display-nama" style="margin: 5px 0;">Pemain</h3>
+        
+        <div id="status-container" class="status-badge" style="background: rgba(239, 68, 68, 0.2); color: var(--red-suit); border: 1px solid var(--red-suit);">
+            STATUS: MENUNGGU VERIFIKASI PANITIA
+        </div>
+
+        <p style="font-size: 11px; color:#94a3b8; margin-top: 20px;">
+            Sistem akan otomatis memindahkanmu ke meja pertandingan jika Panitia sudah memulai Liga. Jangan tutup halaman ini.
+        </p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Ganti dengan Config Firebase kamu yang ada di remi_suroboyoan.html
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSOOCaSfzAELvbtrEFOxdR8nYsKWlCnag",
+            authDomain: "remi-suroboyoan.firebaseapp.com",
+            databaseURL: "https://remi-suroboyoan-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "remi-suroboyoan",
+            storageBucket: "remi-suroboyoan.firebasestorage.app",
+            messagingSenderId: "583998906308",
+            appId: "1:583998906308:web:74b40a03cfbd5df5138e91"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Cek LocalStorage jika sudah pernah login
+        window.onload = () => {
+            const savedUser = localStorage.getItem("liga_username");
+            const savedPin = localStorage.getItem("liga_pin");
+            if (savedUser && savedPin) {
+                document.getElementById("input-username").value = savedUser;
+                document.getElementById("input-pin").value = savedPin;
+                loginOrRegister(); // Auto login
+            }
+        };
+
+        window.loginOrRegister = () => {
+            const username = document.getElementById('input-username').value.trim().toUpperCase();
+            const pin = document.getElementById('input-pin').value.trim();
+
+            if (!username || pin.length !== 4 || isNaN(pin)) {
+                alert("Username wajib diisi dan PIN harus 4 angka!");
+                return;
+            }
+
+            const userRef = ref(db, `luna_liga/participants/${username}`);
+            
+            get(userRef).then((snap) => {
+                if (snap.exists()) {
+                    // Akun sudah ada, cek PIN
+                    if (snap.val().pin === pin) {
+                        enterLobby(username, pin);
+                    } else {
+                        alert("Username sudah terdaftar dan PIN SALAH!");
+                    }
+                } else {
+                    // Akun belum ada, Daftarkan!
+                    set(userRef, {
+                        pin: pin,
+                        status: "pending", // pending, approved, rejected
+                        total_score: 0,
+                        is_eliminated: false,
+                        current_room: ""
+                    }).then(() => {
+                        enterLobby(username, pin);
+                    });
+                }
+            }).catch(err => alert("Gagal koneksi ke server!"));
+        };
+
+        function enterLobby(username, pin) {
+            // Simpan di LocalStorage agar aman jika terefresh
+            localStorage.setItem("liga_username", username);
+            localStorage.setItem("liga_pin", pin);
+
+            document.getElementById('panel-register').classList.add('hidden');
+            document.getElementById('panel-lobby').classList.remove('hidden');
+            document.getElementById('display-nama').innerText = username;
+
+            // Pantau status pemain secara Realtime
+            const userRef = ref(db, `luna_liga/participants/${username}`);
+            onValue(userRef, (snap) => {
+                if (!snap.exists()) return;
+                const data = snap.val();
+                
+                const statusBadge = document.getElementById('status-container');
+                if (data.status === "pending") {
+                    statusBadge.style.color = "var(--gold)";
+                    statusBadge.style.borderColor = "var(--gold)";
+                    statusBadge.style.background = "rgba(251, 191, 36, 0.2)";
+                    statusBadge.innerText = "STATUS: MENUNGGU VERIFIKASI PANITIA";
+                } else if (data.status === "approved") {
+                    statusBadge.style.color = "var(--neon-green)";
+                    statusBadge.style.borderColor = "var(--neon-green)";
+                    statusBadge.style.background = "rgba(16, 185, 129, 0.2)";
+                    statusBadge.innerText = "STATUS: TERVERIFIKASI! MENUNGGU LIGA DIMULAI";
+                } else if (data.status === "rejected") {
+                    statusBadge.style.color = "var(--red-suit)";
+                    statusBadge.style.borderColor = "var(--red-suit)";
+                    statusBadge.style.background = "rgba(239, 68, 68, 0.2)";
+                    statusBadge.innerText = "STATUS: PENDAFTARAN DITOLAK!";
+                }
+
+                // Jika Panitia sudah memasukkan pemain ke Room, lempar ke arena!
+                if (data.current_room !== "" && data.status === "approved") {
+                    localStorage.setItem("remi_liga_room", data.current_room);
+                    window.location.href = "liga_arena.html";
+                }
+            });
+        }
+    </script>
+</body>
+</html>
