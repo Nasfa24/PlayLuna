@@ -187,7 +187,6 @@
         }
         .deck-count { position: absolute; bottom: -20px; width: 100%; text-align: center; font-size: 12px; font-weight: 800; color: #94a3b8; }
 
-        /* HUD JOKER ON DECK */
         #deck-joker-display { position: absolute; top: -15px; right: -15px; z-index: 20; transform: rotate(15deg); box-shadow: 0 5px 15px rgba(0,0,0,0.5); border-radius: 4px; pointer-events: none;}
 
         .playing-card {
@@ -219,7 +218,6 @@
         .card-ace-icon { font-size: 50px; display:flex; height:100%; align-items:center; justify-content:center; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
         .bottom-right-ui { position: absolute; right: 15px; bottom: 40px; display: flex; flex-direction: column; align-items: flex-end; z-index: 30; }
-        
         .bottom-meld-ui { position: absolute; left: 15px; bottom: 130px; z-index: 20; }
         
         .score-display {
@@ -263,11 +261,7 @@
         @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); box-shadow: var(--gold-glow); } }
 
         @media (max-width: 600px) {
-            .game-table { 
-                padding-top: 45px; 
-                gap: 2px; 
-                grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr);
-            }
+            .game-table { padding-top: 45px; gap: 2px; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr); }
             .top-bar { padding: 5px 10px; }
             .joker-info, .status-info { font-size: 9px; padding: 4px 8px; }
             .leaderboard-panel { top: 40px; right: 5px; padding: 5px; font-size: 8px; min-width: 80px; opacity: 0.85; }
@@ -300,21 +294,14 @@
             .bottom-right-ui .player-name { font-size: 9px !important; padding: 2px 6px !important; }
 
             .my-hand { height: 110px; margin-top: 0px; }
-            .my-hand .playing-card { 
-                width: 75px;  
-                height: 110px; 
-                bottom: 20px;  
-                border-radius: 8px;
-            }
-            .my-hand .playing-card .card-top, 
-            .my-hand .playing-card .card-bottom { font-size: 14px; }
+            .my-hand .playing-card { width: 75px; height: 110px; bottom: 20px; border-radius: 8px; }
+            .my-hand .playing-card .card-top, .my-hand .playing-card .card-bottom { font-size: 14px; }
             .my-hand .playing-card .pip { font-size: 14px; }
             .my-hand .playing-card .card-face-icon { font-size: 35px; }
             .my-hand .playing-card .card-ace-icon { font-size: 45px; }
 
             .action-buttons { padding: 5px 10px; top: -60px !important; gap: 6px; z-index: 200; }
             .btn-action { padding: 4px 8px; font-size: 10px; border-radius: 8px;}
-            
             #btn-geser-kiri, #btn-geser-kanan { font-size: 18px; padding: 12px 22px; }
             
             .custom-modal { width: 90%; padding: 15px; }
@@ -386,7 +373,7 @@
         </div>
     </div>
 
-    <div id="custom-modal-overlay" class="modal-overlay-bg hidden">
+    <div id="custom-modal-overlay" class="modal-overlay-bg hidden" style="z-index: 9999;">
         <div class="custom-modal">
             <h3 id="modal-title">JUDUL</h3>
             <div id="modal-text">Deskripsi</div>
@@ -402,7 +389,7 @@
             <p style="font-size:11px; color:#64748b; margin:10px;">- ATAU -</p>
             <input type="text" id="input-kode" placeholder="KODE ROOM" style="text-transform:uppercase;" maxlength="5">
             <button class="btn btn-blue" onclick="joinRoom()">Gabung Room</button>
-            <button class="btn btn-red" onclick="resetLocalData()" style="margin-top: 15px; font-size:10px;">Reset Data Lokal</button>
+            <button class="btn btn-red" onclick="resetLocalData()" style="margin-top: 25px; font-size:10px;">Reset Data Lokal</button>
             
             <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
             <h3 style="color:var(--gold); margin-top:0; font-size:16px; font-weight:800;">LUNA CHAMPIONSHIP</h3>
@@ -433,7 +420,8 @@
         <div class="top-bar">
             <div id="room-code-display" class="joker-info" style="border-color: #3b82f6; color: #93c5fd; background: rgba(59, 130, 246, 0.2);">🏠 ROOM: ----</div>
             
-            <button class="btn-action" id="btn-end-match" style="background:var(--blue); display:none;" onclick="forceEndMatch()">🏁 AKHIRI TURNAMEN</button>
+            <button class="btn-action hidden" id="btn-wake-bot" style="background: var(--gold); color: black;" onclick="playBotTurn()">⚙️ BOT NYANGKUT?</button>
+            <button class="btn-action" id="btn-end-match" style="background:var(--blue); display:none;" onclick="forceEndMatch()">🏁 AKHIRI MATCH</button>
             <button class="btn-action" style="background: var(--gold); color: #000;" onclick="document.getElementById('modal-panduan').classList.remove('hidden')">📖 PANDUAN</button>
             <button class="btn-action" style="background: var(--red-suit); color: white;" onclick="confirmLeaveRoom()">🚪 KELUAR</button>
             
@@ -526,10 +514,7 @@
             apiKey: "AIzaSyBSOOCaSfzAELvbtrEFOxdR8nYsKWlCnag",
             authDomain: "remi-suroboyoan.firebaseapp.com",
             databaseURL: "https://remi-suroboyoan-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "remi-suroboyoan",
-            storageBucket: "remi-suroboyoan.firebasestorage.app",
-            messagingSenderId: "583998906308",
-            appId: "1:583998906308:web:74b40a03cfbd5df5138e91"
+            projectId: "remi-suroboyoan"
         };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -537,6 +522,7 @@
         const suitNames = {'♠': 'Waru', '♣': 'Keriting', '♥': 'Hati', '♦': 'Wajik'};
 
         window.botTurnTimer = null; 
+        window.botStuckTimer = null; // Timer tambahan untuk tombol bantu bot
 
         // ================== AI ENGINE: CARD TRACKER ==================
         class CardTracker {
@@ -925,95 +911,6 @@
             return false;
         }
 
-        // =======================================================
-        // UI & GAME STATE MANAGEMENT
-        // =======================================================
-        window.showTab = function(tabId) {
-            document.getElementById('tab-aturan').classList.add('hidden');
-            document.getElementById('tab-hukuman').classList.add('hidden');
-            document.getElementById('tab-magnet').classList.add('hidden');
-            document.getElementById(tabId).classList.remove('hidden');
-        };
-
-        window.showAlertModal = function(title, htmlContent, buttons = []) {
-            const overlay = document.getElementById('custom-modal-overlay');
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-text').innerHTML = htmlContent;
-            
-            const btnArea = document.getElementById('modal-btn-area');
-            btnArea.innerHTML = ""; 
-            
-            if(buttons.length === 0) {
-                btnArea.innerHTML = `<button class="btn btn-gold" onclick="document.getElementById('custom-modal-overlay').classList.add('hidden')">OK</button>`;
-            } else {
-                buttons.forEach(b => {
-                    const btn = document.createElement('button');
-                    btn.className = `btn ${b.class || 'btn-gold'}`;
-                    btn.innerText = b.text;
-                    btn.onclick = () => { overlay.classList.add('hidden'); if(b.action) b.action(); };
-                    btnArea.appendChild(btn);
-                });
-            }
-            overlay.classList.remove('hidden');
-        };
-
-        window.showConfirmModal = function(title, text, onConfirm) {
-            showAlertModal(title, text, [
-                { text: "YA", class: "btn-gold", action: onConfirm },
-                { text: "BATAL", class: "btn-red" }
-            ]);
-        };
-
-        window.blastConfetti = function() {
-            const container = document.getElementById('confetti-container');
-            container.classList.remove('hidden');
-            container.innerHTML = '';
-            const colors = ['#fbbf24', '#f59e0b', '#fff'];
-            for(let i=0; i<70; i++) {
-                let conf = document.createElement('div');
-                conf.style.position = 'absolute'; conf.style.width = '8px'; conf.style.height = '15px';
-                conf.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
-                conf.style.left = Math.random() * 100 + 'vw';
-                conf.style.top = '-20px';
-                conf.style.opacity = Math.random();
-                conf.style.transform = `rotate(${Math.random()*360}deg)`;
-                conf.style.animation = `fall ${Math.random()*2+2}s linear forwards`;
-                container.appendChild(conf);
-            }
-            setTimeout(() => { container.classList.add('hidden'); container.innerHTML=''; }, 4000);
-        };
-
-        // KLASEMEN AKHIR KETIKA GAME BERAKHIR (MODIFIED)
-        window.showMatchWinner = function(game, isFromEvent = false) {
-            let sortedPlayers = [...game.players].sort((a,b) => (game.globalScores[b.id]||0) - (game.globalScores[a.id]||0));
-            let winner = sortedPlayers[0];
-            
-            let html = `<div style="font-size:36px; margin-bottom:10px;">👑</div>
-                        <div style="font-size:22px; color:var(--gold); font-weight:900; margin-bottom:5px;">${winner.name}</div>
-                        <div style="color:var(--neon-green); font-size:16px; font-weight:bold; margin-bottom:20px;">Skor Akhir: ${game.globalScores[winner.id]}</div>
-                        <div style="text-align:left; background:rgba(0,0,0,0.5); padding:10px; border-radius:10px;">`;
-            
-            sortedPlayers.forEach((p, i) => {
-                html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12px;">
-                            <span>${i+1}. ${p.name}</span>
-                            <b style="color:${game.globalScores[p.id] < 0 ? 'var(--red-suit)' : 'var(--neon-green)'}">${game.globalScores[p.id]} Poin</b>
-                         </div>`;
-            });
-            html += `</div>`;
-
-            showAlertModal("🏆 TURNAMEN SELESAI!", html, [
-                { text: "KEMBALI KE MENU", class: "btn-blue", action: () => resetLocalData() }
-            ]);
-            
-            // Host mengupdate status ke ENDED jika belum (agar player lain ditarik ke tampilan ini)
-            if (amIHost && !isFromEvent && game.status !== "ENDED") {
-                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (g) => {
-                    if (g) g.status = "ENDED";
-                    return g;
-                });
-            }
-        }
-
         window.findValidSweep = function(baseCards, sweptCards, jokerRank) {
             let validMelds = [];
             let n = sweptCards.length;
@@ -1352,6 +1249,7 @@
             return game;
         }
 
+        // ================== UI & STATE RENDERING ==================
         function renderShowdown(game) {
             let html = `<div style="text-align:center; font-size:14px; margin-bottom:15px; color:var(--neon-green); font-weight:800;">${game.roundReason}</div>`;
             
@@ -1416,8 +1314,9 @@
             let hasReadied = (game.readyList && game.readyList.includes(myPlayerId));
             let btns = [];
             
+            // JIKA TARGET POINT TERCAPAI, TAMPILKAN TOMBOL KLASEMEN AKHIR
             if (game.isMatchOver) {
-                btns.push({ text: "🏆 LIHAT JUARA", class: "btn-gold", action: () => showMatchWinner(game) });
+                btns.push({ text: "🏆 LIHAT KLASEMEN AKHIR", class: "btn-gold", action: () => showMatchWinner(game) });
             } else {
                 if(!hasReadied && mySlotIndex !== -1) {
                     btns.push({ text: "SAYA SIAP LANJUT", class: "btn-green", action: () => setPlayerReady() });
@@ -1430,281 +1329,14 @@
             showAlertModal("HASIL RONDE", html, btns);
         }
 
-        window.setPlayerReady = () => {
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                if(game) {
-                    if(!game.readyList) game.readyList = [];
-                    if(!game.readyList.includes(myPlayerId)) {
-                        game.readyList.push(myPlayerId);
-                        game.readyCount = game.readyList.length;
-                    }
-                    
-                    let humanCount = game.players.filter(p => !p.isBot).length;
-                    if(game.readyCount >= humanCount) {
-                        let lowestScore = Infinity; let startingIdx = 0;
-                        game.players.forEach((p, i) => {
-                            if((game.globalScores[p.id]||0) < lowestScore) { lowestScore = game.globalScores[p.id]; startingIdx = i; }
-                        });
-                        
-                        setupDeckAndDeal(game);
-                        game.currentTurnSlot = startingIdx; 
-                        game.playDirection = game.playDirection || 1;
-                        game.readyList = []; game.readyCount = 0;
-                        game.status = "PLAYING";
-                        game.jokerCursed = game.jokerCursed || []; 
-                    }
-                }
-                return game;
-            });
-        };
-
-        window.forceEndMatch = () => {
-            showConfirmModal("AKHIRI TURNAMEN?", "Selesaikan turnamen sekarang dan lihat klasemen akhirnya?", () => {
-                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                    if(game) {
-                        game.isMatchOver = true;
-                        game.status = "ENDED"; // MEMICU PENUTUPAN LANGSUNG
-                    }
-                    return game;
-                });
-            });
-        };
-
-        window.takeOverBot = (botIndex) => {
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                if(game && game.players[botIndex] && game.players[botIndex].isBot) {
-                    let oldBotId = game.players[botIndex].id;
-                    game.players[botIndex].id = myPlayerId;
-                    game.players[botIndex].name = myName;
-                    game.players[botIndex].isBot = false;
-                    
-                    if(game.globalScores) {
-                        game.globalScores[myPlayerId] = 0; 
-                        delete game.globalScores[oldBotId];
-                    }
-                }
-                return game;
-            }).then(() => {
-                location.reload(); 
-            });
-        };
-
-        let myName = localStorage.getItem("luna_global_name") || localStorage.getItem("ut_name") || "";
-        let myPlayerId = localStorage.getItem("remi_pid");
-        let currentRoomId = localStorage.getItem("remi_room");
-        let amIHost = false; 
-        let mySlotIndex = -1; 
-        let selectedCardIndices = []; 
-        let isMyTurn = false;
-        let turnPhase = ""; 
-        let currentJokerRank = "";
-        let hasFlashedBlood = false; 
-
-        const BOT_NAMES = ["MANUTH 🤖", "BU DEWI 👾", "MAS UUTH 👽"];
-        const SUITS = ['♥', '♦', '♠', '♣'];
-        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-
-        window.onload = () => {
-            if (myName) document.getElementById('input-nama').value = myName;
-            if (currentRoomId && myPlayerId) {
-                get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                    if (snap.exists() && snap.val().status !== "ENDED") {
-                        enterLobby(currentRoomId, snap.val().host === myPlayerId);
-                    } else resetLocalData();
-                }).catch(() => resetLocalData());
-            }
-        };
-
-        window.resetLocalData = () => {
-            showConfirmModal("RESET DATA?", "Kembali ke halaman utama dan hapus sesi?", () => {
-                localStorage.removeItem("remi_pid"); localStorage.removeItem("remi_room"); location.reload();
-            });
-        };
-
-        window.createRoom = () => {
-            myName = document.getElementById('input-nama').value.trim();
-            if (!myName) return showAlertModal("PERHATIAN", "Isi namamu dulu!");
-            localStorage.setItem("luna_global_name", myName);
-            myPlayerId = "p_" + Date.now();
-            const roomId = Math.random().toString(36).substring(2,6).toUpperCase();
-            set(ref(db, `remi_rooms/${roomId}`), {
-                status: "LOBBY", host: myPlayerId, deckMultiplier: 1,
-                players: [{ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [], hasDrawnFromDeck: false, pendingPenalties: [] }],
-                playDirection: 1, currentTurnSlot: 0, jokerCursed: []
-            }).then(() => {
-                localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", roomId);
-                enterLobby(roomId, true);
-            });
-        };
-
-        window.joinRoom = () => {
-            myName = document.getElementById('input-nama').value.trim();
-            const code = document.getElementById('input-kode').value.trim().toUpperCase();
-            if (!myName || !code) return showAlertModal("PERHATIAN", "Lengkapi nama dan kode room!");
-            get(ref(db, `remi_rooms/${code}`)).then(snap => {
-                if (snap.exists()) {
-                    const roomData = snap.val();
-                    if (roomData.status === "LOBBY") {
-                        if(roomData.players.length >= 4) return showAlertModal("MAAF", "Room Penuh!");
-                        myPlayerId = "p_" + Date.now();
-                        localStorage.setItem("luna_global_name", myName);
-                        let updatedPlayers = roomData.players || [];
-                        updatedPlayers.push({ id: myPlayerId, name: myName, isBot: false, hand: [], discard: [], melds: [], score: 0, knockVictims: [], hasDrawnFromDeck: false, pendingPenalties: [] });
-                        update(ref(db, `remi_rooms/${code}`), { players: updatedPlayers }).then(() => {
-                            localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", code);
-                            enterLobby(code, false);
-                        });
-                    } else if (roomData.status === "PLAYING") {
-                        let hasBot = roomData.players.some(p => p.isBot);
-                        if (hasBot) {
-                            myPlayerId = "p_" + Date.now();
-                            localStorage.setItem("luna_global_name", myName);
-                            localStorage.setItem("remi_pid", myPlayerId); localStorage.setItem("remi_room", code);
-                            enterLobby(code, false);
-                        } else {
-                            showAlertModal("MAAF", "Room sedang bermain dan sudah penuh dengan pemain asli!");
-                        }
-                    }
-                } else showAlertModal("GAGAL", "Room tidak tersedia!");
-            });
-        };
-
-        function enterLobby(roomId, isHost) {
-            currentRoomId = roomId; amIHost = isHost;
-            document.getElementById('panel-login').classList.add('hidden');
-            document.getElementById('panel-lobby').classList.remove('hidden');
-            document.getElementById('display-kode-room').innerText = roomId;
-
-            if (amIHost) { document.getElementById('host-controls').classList.remove('hidden'); }
-            else { document.getElementById('waiting-msg').classList.remove('hidden'); }
-
-            onValue(ref(db, `remi_rooms/${roomId}`), snap => {
-                if(!snap.exists()) { resetLocalData(); return; }
-                const game = snap.val();
-                
-                const list = document.getElementById('player-list'); list.innerHTML = "";
-                if(game.players) {
-                    game.players.forEach((p, idx) => {
-                        list.innerHTML += `<li style="padding:8px 0; font-weight:600; color:#cbd5e1; border-bottom:1px solid rgba(255,255,255,0.1);">${idx+1}. ${p.name} ${p.id === game.host ? '👑' : ''}</li>`;
-                    });
-                }
-
-                if (game.status === "PLAYING") startGameUI(game);
-                
-                if (game.status === "ROUND_ENDED") {
-                    document.getElementById('game-ui').classList.add('hidden');
-                    renderShowdown(game);
-                }
-
-                if (game.status === "ENDED") { 
-                    // SAAT GAME OVER (BAIK MENCAPAI TARGET ATAU DITEKAN 'AKHIRI TURNAMEN'), 
-                    // SEMUA PEMAIN AKAN MELIHAT KLASEMEN AKHIR (BUKAN GAME DIBUBARKAN).
-                    document.getElementById('game-ui').classList.add('hidden');
-                    document.getElementById('panel-lobby').classList.add('hidden');
-                    showMatchWinner(game, true); 
-                }
-            });
-        }
-
-        window.confirmLeaveRoom = () => { showConfirmModal("KELUAR?", "Keluar dari room ini?", () => { resetLocalData(); }); };
-        window.confirmStartGame = () => { showConfirmModal("MULAI?", "Semua slot kosong akan otomatis diisi Bot.", executeStartGame); };
-
-        function setupDeckAndDeal(game) {
-            let deck = [];
-            let multiplier = game.deckMultiplier || 1;
-            
-            for(let d=0; d<multiplier; d++) {
-                for (let suit of SUITS) {
-                    for (let rank of RANKS) { deck.push({ suit: suit, rank: rank, color: (suit === '♥' || suit === '♦') ? 'red' : 'black', isFallen: false }); }
-                }
-            }
-            
-            for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
-
-            let jokerCard = deck.pop(); 
-            game.jokerRank = jokerCard.rank; 
-            game.jokerMasterCard = jokerCard;
-            
-            for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
-
-            game.players.forEach(p => { p.hand = []; p.discard = []; p.melds = []; p.knockVictims = []; p.hasDrawnFromDeck = false; p.pendingPenalties = []; });
-            game.jokerCursed = [];
-
-            for(let i=0; i<7; i++) { for(let p=0; p<4; p++) { game.players[p].hand.push(deck.pop()); } }
-            
-            game.players.forEach(p => {
-                let jokerCount = p.hand.filter(c => c.rank === game.jokerRank).length;
-                if (jokerCount >= 4) {
-                    if(!game.globalScores) game.globalScores = {};
-                    if(game.globalScores[p.id] === undefined) game.globalScores[p.id] = 0;
-                    game.globalScores[p.id] -= 250;
-                    game.jokerCursed.push(p.id); 
-                }
-            });
-
-            game.deck = deck;
-            game.turnPhase = 'DRAW';
-            hasFlashedBlood = false; 
-        }
-
-        function executeStartGame() {
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                if (game) {
-                    game.targetScore = parseInt(document.getElementById('target-score').value) || 250;
-                    game.deckMultiplier = parseInt(document.getElementById('deck-multiplier').value) || 1;
-                    game.globalScores = {};
-                    let botsAdded = 0;
-                    while(game.players.length < 4) {
-                        game.players.push({ id: `bot_${botsAdded}`, name: BOT_NAMES[botsAdded], isBot: true, hand: [], discard: [], melds: [], knockVictims:[], hasDrawnFromDeck: false, pendingPenalties: [] });
-                        botsAdded++;
-                    }
-                    game.players.forEach(p => { game.globalScores[p.id] = 0; });
-                    game.playDirection = 1;
-                    game.currentTurnSlot = 0;
-                    setupDeckAndDeal(game);
-                    
-                    game.status = "PLAYING";
-                }
-                return game;
-            });
-        }
-
-        function renderCardHTML(card, isTrueJoker = false) {
-            let s = card.suit;
-            let p = `<div class="pip">${s}</div>`;   
-            let pd = `<div class="pip pd">${s}</div>`; 
-            let centerContent = '';
-
-            if (['J', 'Q', 'K'].includes(card.rank)) {
-                let face = card.rank === 'K' ? '🤴' : (card.rank === 'Q' ? '👸' : '💂');
-                centerContent = `<div class="card-face-icon">${face}</div>`;
-            } 
-            else if (card.rank === 'A') {
-                centerContent = `<div class="card-ace-icon">${s}</div>`;
-            } 
-            else {
-                let count = parseInt(card.rank);
-                if(count === 2) centerContent = `<div class="pip-col center-col">${p}${pd}</div>`;
-                else if(count === 3) centerContent = `<div class="pip-col center-col">${p}${p}${pd}</div>`;
-                else if(count === 4) centerContent = `<div class="pip-col">${p}${pd}</div><div class="pip-col">${p}${pd}</div>`;
-                else if(count === 5) centerContent = `<div class="pip-col">${p}${pd}</div><div class="pip-abs" style="top:50%; transform:translate(-50%, -50%);">${p}</div><div class="pip-col">${p}${pd}</div>`;
-                else if(count === 6) centerContent = `<div class="pip-col">${p}${p}${pd}</div><div class="pip-col">${p}${p}${pd}</div>`;
-                else if(count === 7) centerContent = `<div class="pip-col">${p}${p}${pd}</div><div class="pip-abs" style="top:25%;">${p}</div><div class="pip-col">${p}${p}${pd}</div>`;
-                else if(count === 8) centerContent = `<div class="pip-col">${p}${p}${pd}</div><div class="pip-abs" style="top:25%;">${p}</div><div class="pip-abs" style="bottom:25%;">${pd}</div><div class="pip-col">${p}${p}${pd}</div>`;
-                else if(count === 9) centerContent = `<div class="pip-col">${p}${p}${pd}${pd}</div><div class="pip-abs" style="top:50%; transform:translate(-50%, -50%);">${p}</div><div class="pip-col">${p}${p}${pd}${pd}</div>`;
-                else if(count === 10) centerContent = `<div class="pip-col">${p}${p}${pd}${pd}</div><div class="pip-abs" style="top:18%;">${p}</div><div class="pip-abs" style="bottom:18%;">${pd}</div><div class="pip-col">${p}${p}${pd}${pd}</div>`;
-                centerContent = `<div class="card-center pips-container">${centerContent}</div>`;
-            }
-
-            return `<div class="card-top">${card.rank}<br>${s}</div>
-                    ${centerContent}
-                    <div class="card-bottom">${card.rank}<br>${s}</div>`;
-        }
-
         function startGameUI(game) {
             document.getElementById('screen-menu').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
             document.getElementById('custom-modal-overlay').classList.add('hidden');
+            
+            // RECOVERY: Bersihkan State Kartu Terpilih & UI Lama saat Refresh
+            selectedCardIndices = [];
+            document.getElementById('action-buttons').classList.remove('active');
 
             currentJokerRank = game.jokerRank;
             let jName = game.jokerMasterCard ? ` (${game.jokerMasterCard.rank} ${suitNames[game.jokerMasterCard.suit]})` : "";
@@ -1744,17 +1376,32 @@
             if(amIHost) { document.getElementById('btn-end-match').style.display = 'block'; }
 
             const activePlayer = game.players[game.currentTurnSlot];
+            const btnWakeBot = document.getElementById('btn-wake-bot');
+
             if (isMyTurn) {
                 document.getElementById('turn-display').innerText = turnPhase === 'DRAW' ? "Giliranmu! Ambil Kartu." : "Giliranmu! Buang 1 Kartu.";
                 document.getElementById('turn-display').style.color = "var(--neon-green)";
                 document.getElementById('turn-display').style.borderColor = "var(--neon-green)";
                 document.getElementById('btn-buang').style.display = turnPhase === 'DISCARD' ? 'block' : 'none';
+                btnWakeBot.classList.add('hidden');
             } else {
                 let pName = activePlayer ? activePlayer.name : "Pemain";
                 document.getElementById('turn-display').innerText = `Giliran ${pName}...`;
                 document.getElementById('turn-display').style.color = "var(--gold)";
                 document.getElementById('turn-display').style.borderColor = "var(--gold)";
-                selectedCardIndices = []; 
+                
+                // MUNCULKAN TOMBOL BANTU BOT JIKA BOT SEDANG JALAN
+                if (activePlayer && activePlayer.isBot) {
+                    if (window.botStuckTimer) clearTimeout(window.botStuckTimer);
+                    window.botStuckTimer = setTimeout(() => {
+                        // Tampilkan tombol bantu bot jika > 4 detik belum jalan
+                        if (game.currentTurnSlot !== mySlotIndex) {
+                            btnWakeBot.classList.remove('hidden');
+                        }
+                    }, 4000);
+                } else {
+                    btnWakeBot.classList.add('hidden');
+                }
             }
 
             const positions = ['bottom', 'left', 'top', 'right'];
@@ -1857,6 +1504,7 @@
                 myHandDiv.appendChild(cardElement);
             });
 
+            // Rebind action buttons
             const actionBtns = document.getElementById('action-buttons');
             const btnGeserL = document.getElementById('btn-geser-kiri');
             const btnGeserR = document.getElementById('btn-geser-kanan');
@@ -1881,338 +1529,23 @@
                     btnGeserL.style.display = 'block'; btnGeserR.style.display = 'block'; 
                     btnBuang.style.display = (isMyTurn && turnPhase === 'DISCARD') ? 'block' : 'none';
                 }
-            } else { actionBtns.classList.remove('active'); }
+            } else { 
+                actionBtns.classList.remove('active'); 
+            }
 
             if (window.botTurnTimer) clearTimeout(window.botTurnTimer);
-            if(amIHost && activePlayer && activePlayer.isBot && game.status === "PLAYING") { 
+            if (amIHost && activePlayer && activePlayer.isBot && game.status === "PLAYING") { 
                 window.botTurnTimer = setTimeout(() => { 
                     playBotTurn(); 
                 }, 800); 
             }
         }
 
-        window.selectCard = (index) => {
-            let pos = selectedCardIndices.indexOf(index);
-            if (pos > -1) selectedCardIndices.splice(pos, 1); else selectedCardIndices.push(index);
-            get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => startGameUI(snap.val())); 
-        };
-
-        window.moveCard = (direction) => {
-            if (selectedCardIndices.length !== 1) return;
-            let sIndex = selectedCardIndices[0];
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
-                if(game) {
-                    let hand = game.players[mySlotIndex].hand;
-                    let targetIndex = (direction === 'left') ? sIndex - 1 : sIndex + 1;
-                    if (targetIndex >= 0 && targetIndex < hand.length) {
-                        [hand[sIndex], hand[targetIndex]] = [hand[targetIndex], hand[sIndex]];
-                        selectedCardIndices = [targetIndex]; 
-                    }
-                }
-                return game;
-            });
-        };
-
-        window.turunCards = () => {
-            if (!isMyTurn || selectedCardIndices.length < 3) return;
-
-            get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = snap.val();
-                let pData = game.players[mySlotIndex];
-                let myHand = pData.hand;
-                let selectedCards = selectedCardIndices.map(i => myHand[i]);
-
-                let isOnlyAces = selectedCards.every(c => c.rank === 'A');
-                if (isOnlyAces && (!pData.melds || pData.melds.length === 0)) {
-                    showAlertModal("HUKUM KARTU AS", "TIDAK BISA TURUN! Tris AS dilarang turun pertama! Kamu harus memiliki minimal 1 pasangan lain yang sudah turun di meja.");
-                    return;
-                }
-
-                if (!isValidSingleGroup(selectedCards, game.jokerRank)) {
-                    showAlertModal("KARTU TIDAK SAH", "Kombinasi kartu ini melanggar Hukum Kasta Joker/Tris!");
-                    return;
-                }
-
-                let testHand = [...myHand];
-                let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
-                indicesToRemove.forEach(idx => { testHand.splice(idx, 1); });
-                
-                if (testHand.length <= 1) {
-                    if (!pData.knockVictims || pData.knockVictims.length === 0) {
-                        showAlertModal("HUKUM TUTUP", "DILARANG KERAS! Kamu belum nembak lawan, jadi wajib menyisakan minimal 2 kartu (1 ditahan, 1 dibuang). Formasi 100% jadi akan aman tersimpan sebagai Gantung di tanganmu!");
-                        return;
-                    }
-                }
-
-                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
-                    if(gameTx) {
-                        let txPData = gameTx.players[mySlotIndex];
-                        let indicesRem = [...selectedCardIndices].sort((a,b) => b-a);
-                        let meldCards = [];
-                        
-                        indicesRem.forEach(idx => { meldCards.push(txPData.hand.splice(idx, 1)[0]); });
-
-                        if(!txPData.melds) txPData.melds = [];
-                        txPData.melds.push(meldCards);
-
-                        selectedCardIndices = [];
-                    }
-                    return gameTx;
-                });
-            });
-        };
-
-        window.drawFromDeck = () => {
-            if (!isMyTurn) return;
-            get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = snap.val();
-                let pData = game.players[mySlotIndex];
-                
-                if (turnPhase !== 'DRAW') {
-                    showAlertModal("PERHATIAN", "Kamu sudah mengambil kartu. Silakan buang 1 kartu.");
-                    return;
-                }
-                
-                if (pData.knockVictims && pData.knockVictims.length > 0) {
-                    showAlertModal("TIDAK BISA", "Kamu sudah menembak kartu musuh! Silakan buang kartu untuk mengakhiri giliran.");
-                    return;
-                }
-
-                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
-                    if(gameTx && gameTx.deck && gameTx.deck.length > 0) {
-                        let drawnCard = gameTx.deck.pop();
-                        gameTx.players[mySlotIndex].hand.push(drawnCard);
-                        gameTx.players[mySlotIndex].hasDrawnFromDeck = true; 
-                        gameTx.turnPhase = 'DISCARD'; 
-                    } else if (gameTx) {
-                        gameTx = handleRoundEnd(gameTx, null, []);
-                    }
-                    return gameTx;
-                });
-            });
-        };
-
-        window.drawFromDiscard = (posStr) => {
-            if (!isMyTurn) return;
-            
-            let targetPIndex = ['bottom', 'left', 'top', 'right'].indexOf(posStr);
-            let actualTargetIdx = (mySlotIndex + targetPIndex) % 4;
-
-            if (actualTargetIdx === mySlotIndex) return; 
-
-            if (selectedCardIndices.length < 2) {
-                showAlertModal("NEMBAK KARTU", "Pilih minimal 2 kartu di tangan yang pasangannya cocok dengan kartu buangan ini.");
-                return;
-            }
-
-            get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = snap.val();
-                let pData = game.players[mySlotIndex];
-
-                if (!game.deck || game.deck.length === 0) {
-                    showAlertModal("STOK HABIS!", "Tumpukan LUNA sudah 0! Kamu tidak bisa memakan kartu buangan. Klik tumpukan tengah untuk mengakhiri ronde!");
-                    return;
-                }
-                
-                if (turnPhase === 'DISCARD' && pData.hasDrawnFromDeck) {
-                    showAlertModal("TIDAK BISA", "Kamu sudah mengambil kartu dari LUNA.");
-                    return;
-                }
-
-                let targetPlayer = game.players[actualTargetIdx];
-                if(!targetPlayer || !targetPlayer.discard || targetPlayer.discard.length === 0) return;
-                
-                let topCard = targetPlayer.discard[targetPlayer.discard.length - 1];
-                
-                if (topCard.rank === 'A' && (!pData.melds || pData.melds.length === 0)) {
-                    showAlertModal("HUKUM KARTU AS", "HARAM! Kamu belum punya formasi pasangan di meja, tidak diizinkan mengambil AS buangan lawan.");
-                    return;
-                }
-
-                let myHand = pData.hand;
-                let selectedCards = selectedCardIndices.map(i => myHand[i]);
-                let simMeld = [...selectedCards, topCard];
-                
-                if (!isValidSingleGroup(simMeld, game.jokerRank)) {
-                    showAlertModal("KOMBINASI SALAH", "Kartu di tangan yang kamu pilih tidak membentuk pasangan yang sah jika digabung dengan kartu buangan ini.");
-                    return;
-                }
-
-                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
-                    if(gameTx) {
-                        let txPData = gameTx.players[mySlotIndex];
-                        if (gameTx.turnPhase === 'DISCARD' && txPData.hasDrawnFromDeck) return gameTx; 
-                        
-                        let tPlayer = gameTx.players[actualTargetIdx];
-                        if(!tPlayer || !tPlayer.discard || tPlayer.discard.length === 0) return gameTx;
-
-                        tPlayer.discard.pop(); 
-                        
-                        let pendingPen = [];
-                        let p1 = 50;
-                        if (topCard.rank === gameTx.jokerRank && !topCard.isFallen) p1 = 250;
-                        else if (topCard.rank === 'A') p1 = 150;
-                        else if (['J', 'Q', 'K'].includes(topCard.rank)) p1 = 100;
-                        pendingPen.push({ victimIdx: actualTargetIdx, card: topCard, penalty: p1 });
-
-                        let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
-                        indicesToRemove.forEach(idx => { txPData.hand.splice(idx, 1); });
-
-                        if(!txPData.knockVictims) txPData.knockVictims = [];
-                        if(!txPData.knockVictims.includes(actualTargetIdx)) txPData.knockVictims.push(actualTargetIdx);
-
-                        let baseMeld = simMeld; 
-                        let sweptToHand = [];
-                        let sweepTarget = actualTargetIdx;
-                        let dir = gameTx.playDirection || 1;
-                        
-                        let sweepSteps = [];
-                        let currentStepTarget = actualTargetIdx;
-                        while (currentStepTarget !== mySlotIndex) {
-                            currentStepTarget = (currentStepTarget + dir + 4) % 4;
-                            if (currentStepTarget === mySlotIndex) break;
-                            sweepSteps.push(currentStepTarget);
-                        }
-
-                        sweepSteps.forEach(stepIdx => {
-                            let iterPlayer = gameTx.players[stepIdx];
-                            if(iterPlayer.discard && iterPlayer.discard.length > 0) {
-                                let sweptCard = iterPlayer.discard.pop();
-                                sweptToHand.push(sweptCard); 
-                                
-                                let p2 = 50;
-                                if (sweptCard.rank === gameTx.jokerRank && !sweptCard.isFallen) p2 = 250;
-                                else if (sweptCard.rank === 'A') p2 = 150;
-                                else if (['J', 'Q', 'K'].includes(sweptCard.rank)) p2 = 100;
-                                pendingPen.push({ victimIdx: stepIdx, card: sweptCard, penalty: p2 });
-                            }
-                        });
-                        
-                        txPData.pendingPenalties = pendingPen; 
-                        
-                        if(!txPData.melds) txPData.melds = []; 
-                        txPData.melds.push(baseMeld);
-                        txPData.hand.push(...sweptToHand);
-                        
-                        cardTracker.trackPickup(mySlotIndex, topCard);
-
-                        if (txPData.hand.length === 0) {
-                            let knockC = baseMeld[baseMeld.length - 1]; 
-                            gameTx = handleRoundEnd(gameTx, mySlotIndex, txPData.knockVictims, knockC);
-                        } else {
-                            gameTx.turnPhase = 'DISCARD'; 
-                            selectedCardIndices = [];
-                        }
-                    }
-                    return gameTx;
-                });
-            });
-        };
-
-        window.discardSelectedCard = () => {
-            if (selectedCardIndices.length !== 1 || !isMyTurn || turnPhase !== 'DISCARD') return;
-            let sIndex = selectedCardIndices[0];
-            
-            get(ref(db, `remi_rooms/${currentRoomId}`)).then(snap => {
-                let game = snap.val();
-                let pData = game.players[mySlotIndex];
-                let myHand = pData.hand;
-                let myMelds = pData.melds;
-                let cardToThrow = myHand[sIndex];
-                
-                if (cardToThrow.rank === 'A' && (!myMelds || myMelds.length === 0)) {
-                    showAlertModal("HUKUM KARTU AS!", "Kamu HARUS punya minimal 1 grup kartu yang sudah diturunkan di meja sebelum bisa membuang kartu AS. Mejamu masih kosong!");
-                    return;
-                }
-
-                let testHand = [...myHand];
-                testHand.splice(sIndex, 1); 
-                let hasVictim = pData.knockVictims && pData.knockVictims.length > 0;
-                
-                if (testHand.length === 0 && !hasVictim) {
-                    showAlertModal("HUKUM TUTUP", "Kamu tidak bisa membuang kartu terakhirmu! Kamu harus menyisakan minimal 1 kartu di tangan jika belum nembak lawan.");
-                    return;
-                }
-
-                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
-                    if(gameTx) {
-                        let txPData = gameTx.players[mySlotIndex];
-                        let thrownCard = txPData.hand.splice(sIndex, 1)[0];
-                        
-                        let txChkInfo = evaluateHand(txPData.hand, txPData.melds, gameTx.jokerRank);
-                        let txHasVictim = txPData.knockVictims && txPData.knockVictims.length > 0;
-
-                        if (txHasVictim && (txPData.hand.length === 0 || txChkInfo.isAllPaired)) {
-                            if (!txPData.discard) txPData.discard = [];
-                            txPData.discard.push(thrownCard);
-                            gameTx = handleRoundEnd(gameTx, mySlotIndex, txPData.knockVictims, thrownCard);
-                            return gameTx;
-                        }
-
-                        let isTrueJoker = (thrownCard.rank === gameTx.jokerRank && !thrownCard.isFallen);
-                        if (isTrueJoker) {
-                            thrownCard.isFallen = true; 
-                            if(!gameTx.globalScores) gameTx.globalScores = {};
-                            if(gameTx.globalScores[txPData.id] === undefined) gameTx.globalScores[txPData.id] = 0;
-                            gameTx.globalScores[txPData.id] -= 250;
-                        }
-
-                        if(!txPData.discard) txPData.discard = [];
-                        txPData.discard.push(thrownCard);
-                        
-                        txPData.knockVictims = [];
-                        txPData.hasDrawnFromDeck = false;
-                        txPData.pendingPenalties = []; 
-
-                        selectedCardIndices = [];
-                        let dir = gameTx.playDirection || 1;
-                        gameTx.currentTurnSlot = (gameTx.currentTurnSlot + dir + 4) % 4;
-                        let nextIdx = gameTx.currentTurnSlot;
-                        gameTx.players[nextIdx].knockVictims = [];
-                        gameTx.players[nextIdx].hasDrawnFromDeck = false;
-                        gameTx.players[nextIdx].pendingPenalties = []; 
-                        gameTx.turnPhase = 'DRAW'; 
-                    }
-                    return gameTx;
-                });
-            });
-        };
-
-        // KLASEMEN AKHIR GAME
-        window.showMatchWinner = function(game, isFromEvent = false) {
-            let sortedPlayers = [...game.players].sort((a,b) => (game.globalScores[b.id]||0) - (game.globalScores[a.id]||0));
-            let winner = sortedPlayers[0];
-            
-            let html = `<div style="font-size:36px; margin-bottom:10px;">👑</div>
-                        <div style="font-size:22px; color:var(--gold); font-weight:900; margin-bottom:5px;">${winner.name}</div>
-                        <div style="color:var(--neon-green); font-size:16px; font-weight:bold; margin-bottom:20px;">Skor Akhir: ${game.globalScores[winner.id]}</div>
-                        <div style="text-align:left; background:rgba(0,0,0,0.5); padding:10px; border-radius:10px;">`;
-            
-            sortedPlayers.forEach((p, i) => {
-                html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12px;">
-                            <span>${i+1}. ${p.name}</span>
-                            <b style="color:${game.globalScores[p.id] < 0 ? 'var(--red-suit)' : 'var(--neon-green)'}">${game.globalScores[p.id]} Poin</b>
-                         </div>`;
-            });
-            html += `</div>`;
-
-            showAlertModal("🏆 TURNAMEN SELESAI!", html, [
-                { text: "KEMBALI KE MENU", class: "btn-blue", action: () => resetLocalData() }
-            ]);
-            
-            // Host menyalakan status ENDED ke database HANYA jika belum berstatus ENDED
-            if (amIHost && !isFromEvent && game.status !== "ENDED") {
-                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (g) => {
-                    if (g) g.status = "ENDED";
-                    return g;
-                });
-            }
-        }
-
         // =======================================================
-        // BOT AI V7.0 (BUAS) - FULL PATCHED LOGIC & RULES
+        // BOT AI ENGINE 
         // =======================================================
-        function playBotTurn() {
+        window.playBotTurn = function() {
+            document.getElementById('btn-wake-bot').classList.add('hidden'); // Sembunyikan jika manual diklik
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                 try {
                     if (!game || game.status !== "PLAYING" || !game.players || !game.players[game.currentTurnSlot] || !game.players[game.currentTurnSlot].isBot) {
