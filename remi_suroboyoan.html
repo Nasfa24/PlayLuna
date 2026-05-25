@@ -434,6 +434,7 @@
             <div id="room-code-display" class="joker-info" style="border-color: #3b82f6; color: #93c5fd; background: rgba(59, 130, 246, 0.2);">🏠 ROOM: ----</div>
             
             <button class="btn-action" id="btn-end-match" style="background:var(--blue); display:none;" onclick="forceEndMatch()">🏁 AKHIRI TURNAMEN</button>
+            <button class="btn-action" style="background: var(--neon-green); color: black;" onclick="refreshGame()">🔄 REFRESH</button>
             <button class="btn-action" style="background: var(--gold); color: #000;" onclick="document.getElementById('modal-panduan').classList.remove('hidden')">📖 PANDUAN</button>
             <button class="btn-action" style="background: var(--red-suit); color: white;" onclick="confirmLeaveRoom()">🚪 KELUAR</button>
             
@@ -537,6 +538,11 @@
         const suitNames = {'♠': 'Waru', '♣': 'Keriting', '♥': 'Hati', '♦': 'Wajik'};
 
         window.botTurnTimer = null; 
+
+        // ================== LOGIKA REFRESH PAGE ==================
+        window.refreshGame = function() {
+            location.reload();
+        };
 
         // ================== AI ENGINE: CARD TRACKER ==================
         class CardTracker {
