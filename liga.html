@@ -6,7 +6,6 @@
     <title>LUNA CHAMPIONSHIP | Lobby</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        /* Menggunakan style dasar yang sama agar senada */
         :root {
             --bg-dark: #0f172a; --bg-light: #1e293b;
             --gold: #fbbf24; --panel-bg: rgba(30, 41, 59, 0.85);
@@ -42,9 +41,8 @@
 </head>
 <body>
 
-    <!-- PANEL PENDAFTARAN / LOGIN -->
     <div class="panel" id="panel-register">
-        <h2 style="color:var(--gold); margin-top:0;">LIGA LUNA</h2>
+        <h2 style="color:var(--gold); margin-top:0;">LI<span onclick="window.location.href='liga_admin.html'" style="cursor:default; color:inherit;">G</span>A LUNA</h2>
         <p style="font-size:12px; color:#cbd5e1;">Daftar atau Masuk menggunakan Username dan PIN yang sama.</p>
         
         <input type="text" id="input-username" placeholder="Username (Tidak bisa diubah)" maxlength="15">
@@ -54,7 +52,6 @@
         <button class="btn" style="background: transparent; border: 1px solid white; color: white;" onclick="window.location.href='remi_suroboyoan.html'">KEMBALI</button>
     </div>
 
-    <!-- PANEL LOBBY (WAITING ROOM) -->
     <div class="panel hidden" id="panel-lobby">
         <h2 style="color:var(--gold); margin-top:0;">RUANG TUNGGU</h2>
         <h3 id="display-nama" style="margin: 5px 0;">Pemain</h3>
@@ -72,7 +69,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // Ganti dengan Config Firebase kamu yang ada di remi_suroboyoan.html
         const firebaseConfig = {
             apiKey: "AIzaSyBSOOCaSfzAELvbtrEFOxdR8nYsKWlCnag",
             authDomain: "remi-suroboyoan.firebaseapp.com",
@@ -85,14 +81,13 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Cek LocalStorage jika sudah pernah login
         window.onload = () => {
             const savedUser = localStorage.getItem("liga_username");
             const savedPin = localStorage.getItem("liga_pin");
             if (savedUser && savedPin) {
                 document.getElementById("input-username").value = savedUser;
                 document.getElementById("input-pin").value = savedPin;
-                loginOrRegister(); // Auto login
+                loginOrRegister(); 
             }
         };
 
@@ -109,17 +104,15 @@
             
             get(userRef).then((snap) => {
                 if (snap.exists()) {
-                    // Akun sudah ada, cek PIN
                     if (snap.val().pin === pin) {
                         enterLobby(username, pin);
                     } else {
                         alert("Username sudah terdaftar dan PIN SALAH!");
                     }
                 } else {
-                    // Akun belum ada, Daftarkan!
                     set(userRef, {
                         pin: pin,
-                        status: "pending", // pending, approved, rejected
+                        status: "pending", 
                         total_score: 0,
                         is_eliminated: false,
                         current_room: ""
@@ -131,7 +124,6 @@
         };
 
         function enterLobby(username, pin) {
-            // Simpan di LocalStorage agar aman jika terefresh
             localStorage.setItem("liga_username", username);
             localStorage.setItem("liga_pin", pin);
 
@@ -139,7 +131,6 @@
             document.getElementById('panel-lobby').classList.remove('hidden');
             document.getElementById('display-nama').innerText = username;
 
-            // Pantau status pemain secara Realtime
             const userRef = ref(db, `luna_liga/participants/${username}`);
             onValue(userRef, (snap) => {
                 if (!snap.exists()) return;
@@ -163,7 +154,6 @@
                     statusBadge.innerText = "STATUS: PENDAFTARAN DITOLAK!";
                 }
 
-                // Jika Panitia sudah memasukkan pemain ke Room, lempar ke arena!
                 if (data.current_room !== "" && data.status === "approved") {
                     localStorage.setItem("remi_liga_room", data.current_room);
                     window.location.href = "liga_arena.html";
