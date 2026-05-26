@@ -403,7 +403,6 @@
         <div class="panel" id="panel-lobby">
             <h3 style="color:var(--gold); margin-top:0; font-weight:800;">LOBBY ARENA</h3>
             <h1 id="display-kode-room" style="letter-spacing: 6px; margin: 5px 0; color:white;">----</h1>
-            <ul id="player-list" style="list-style:none; padding:10px; text-align:left; font-size:14px; background:rgba(0,0,0,0.3); border-radius:10px;"></ul>
             <p id="waiting-msg" style="font-size:12px; color:var(--neon-green); font-weight:600;">Menunggu Panitia Memulai Liga...</p>
             <button class="btn btn-red" onclick="resetLocalData()" style="margin-top: 15px;">Kembali ke Lobby Liga</button>
         </div>
@@ -412,11 +411,9 @@
     <div id="game-ui" class="hidden">
         <div class="top-bar">
             <div id="room-code-display" class="joker-info" style="border-color: #3b82f6; color: #93c5fd; background: rgba(59, 130, 246, 0.2);">🏠 ROOM: ----</div>
-            
             <button class="btn-action" style="background: var(--neon-green); color: black;" onclick="refreshGame()">🔄 REFRESH</button>
             <button class="btn-action" style="background: var(--gold); color: #000;" onclick="document.getElementById('modal-panduan').classList.remove('hidden')">📖 PANDUAN</button>
             <button class="btn-action" style="background: var(--red-suit); color: white;" onclick="resetLocalData()">🚪 KELUAR</button>
-            
             <div id="joker-display" class="joker-info">🃏 JOKER: -</div>
             <div id="turn-display" class="status-info" style="flex:1;">Menunggu...</div>
         </div>
@@ -427,7 +424,6 @@
         </div>
 
         <div class="game-table">
-            
             <div id="slot-top" class="player-area player-top">
                 <div class="avatar-container">
                     <div class="avatar" id="ava-top">🤖</div><div class="player-name" id="name-top">Bot 1</div>
@@ -464,7 +460,6 @@
             </div>
 
             <div id="slot-bottom" class="player-area player-bottom">
-                
                 <div class="bottom-right-ui">
                     <div class="score-display" id="my-score-display" style="margin-bottom: 5px;">
                         <div>Ronde: <span id="my-score-val">0</span></div>
@@ -481,9 +476,7 @@
                 </div>
 
                 <div style="display: flex; flex-direction: column; align-items: center; width: 100%; position:relative; z-index: 10;">
-                    
                     <div class="discard-pile" id="discard-bottom" style="margin-bottom: 20px; z-index: 5;"></div>
-                    
                     <div class="my-hand-container">
                         <div id="action-buttons" class="action-buttons">
                             <button class="btn-action" id="btn-geser-kiri" onclick="moveCard('left')">◀</button>
@@ -515,392 +508,23 @@
         const db = getDatabase(app);
 
         const suitNames = {'♠': 'Waru', '♣': 'Keriting', '♥': 'Hati', '♦': 'Wajik'};
-
         window.botTurnTimer = null; 
 
-        // ================== LOGIKA REFRESH PAGE ==================
-        window.refreshGame = function() {
-            location.reload();
-        };
+        window.refreshGame = function() { location.reload(); };
 
         // ================== AI ENGINE: CARD TRACKER ==================
         class CardTracker {
-            constructor() {
-                this.visibleCards = []; 
-                this.playerPickups = {}; 
-                this.suspectedHands = {}; 
-            }
-
-            updateFromGameState(game) {
-                this.visibleCards = [];
-                game.players.forEach(p => {
-                    (p.melds || []).flat().forEach(c => this.visibleCards.push(c));
-                    (p.discard || []).forEach(c => this.visibleCards.push(c));
-                });
-            }
-
-            getRemainingCount(rank, suit) {
-                const totalInDeck = 1;
-                const visible = this.visibleCards.filter(c => c.rank === rank && c.suit === suit).length;
-                return totalInDeck - visible;
-            }
-
-            isCardDead(rank, suit) {
-                return this.getRemainingCount(rank, suit) <= 0;
-            }
-
-            isSequenceImpossible(rank1, suit, rank2) {
-                const v1 = getNumVal(rank1), v2 = getNumVal(rank2);
-                if (v1 === null || v2 === null) return false;
-                const minV = Math.min(v1, v2), maxV = Math.max(v1, v2);
-                for (let v = minV + 1; v < maxV; v++) {
-                    const middleRank = valToRank(v);
-                    if (middleRank && this.getRemainingCount(middleRank, suit) <= 0) {
-                        return true; 
-                    }
-                }
-                return false;
-            }
-
-            trackPickup(playerIdx, card) {
-                if (!this.playerPickups[playerIdx]) this.playerPickups[playerIdx] = [];
-                this.playerPickups[playerIdx].push(card);
-            }
+            constructor() { this.visibleCards = []; this.playerPickups = {}; this.suspectedHands = {}; }
+            updateFromGameState(game) { this.visibleCards = []; game.players.forEach(p => { (p.melds || []).flat().forEach(c => this.visibleCards.push(c)); (p.discard || []).forEach(c => this.visibleCards.push(c)); }); }
+            getRemainingCount(rank, suit) { const visible = this.visibleCards.filter(c => c.rank === rank && c.suit === suit).length; return 1 - visible; }
+            isCardDead(rank, suit) { return this.getRemainingCount(rank, suit) <= 0; }
+            trackPickup(playerIdx, card) { if (!this.playerPickups[playerIdx]) this.playerPickups[playerIdx] = []; this.playerPickups[playerIdx].push(card); }
         }
-
         const cardTracker = new CardTracker();
 
-        // ================== HELPER FUNCTIONS ==================
-        function getNumVal(rank) {
-            if (rank === 'A') return 1;
-            if (rank === 'J') return 11;
-            if (rank === 'Q') return 12;
-            if (rank === 'K') return 13;
-            const num = parseInt(rank);
-            return isNaN(num) ? null : num;
-        }
-
-        function valToRank(val) {
-            if (val === 1) return 'A';
-            if (val === 11) return 'J';
-            if (val === 12) return 'Q';
-            if (val === 13) return 'K';
-            if (val >= 2 && val <= 10) return String(val);
-            return null;
-        }
-
-        function getCardPoints(rank, isJoker) {
-            if (isJoker) return 25;
-            if (rank === 'A') return 15;
-            if (['J', 'Q', 'K'].includes(rank)) return 10;
-            return 5;
-        }
-
-        // ================== STRATEGY SCORING ENGINE ==================
-        function calculateDiscardScore(card, hand, melds, game, botIdx) {
-            let score = 0;
-            const jokerRank = game.jokerRank;
-            const dir = game.playDirection || 1;
-            const deckRemaining = game.deck ? game.deck.length : 0;
-
-            const sameRankSuitCount = cardTracker.visibleCards.filter(c => c.rank === card.rank && c.suit === card.suit).length;
-            if (sameRankSuitCount >= 3) {
-                score -= 500; 
-            } else if (sameRankSuitCount >= 2) {
-                score -= 150;
-            }
-
-            if (card.rank === jokerRank && !card.isFallen) {
-                score += 10000;
-            }
-
-            const handInfo = evaluateHand(hand, melds, jokerRank);
-            const cardIndex = hand.findIndex(c => c.suit === card.suit && c.rank === card.rank && c.isFallen === card.isFallen);
-            if (cardIndex !== -1 && handInfo.groupedIndices.has(cardIndex)) {
-                score += 200;
-            }
-
-            const sameSuitCards = hand.filter(c => c.suit === card.suit && c !== card && !c.isFallen);
-            const hasGap = sameSuitCards.some(c => {
-                const v1 = getNumVal(c.rank), v2 = getNumVal(card.rank);
-                return v1 !== null && v2 !== null && Math.abs(v1 - v2) === 2;
-            });
-            if (hasGap) score += 15;
-
-            const hasAdjacent = sameSuitCards.some(c => {
-                const v1 = getNumVal(c.rank), v2 = getNumVal(card.rank);
-                return v1 !== null && v2 !== null && Math.abs(v1 - v2) === 1;
-            });
-            if (hasAdjacent) score += 40;
-
-            if (['J', 'Q', 'K'].includes(card.rank)) {
-                const faceSameSuit = sameSuitCards.filter(c => ['J','Q','K'].includes(c.rank));
-                if (faceSameSuit.length >= 1) score += 25;
-            }
-
-            if (card.rank === 'A') {
-                if (!melds || melds.length === 0) {
-                    score += 5000; 
-                }
-                const aceCount = hand.filter(c => c.rank === 'A').length;
-                if (aceCount >= 3 && melds && melds.length > 0) score += 30;
-            }
-
-            if (deckRemaining <= 15) {
-                if (card.rank === 'A' && melds && melds.length > 0) score -= 80;
-                if (['J', 'Q', 'K'].includes(card.rank)) score -= 50;
-                if (['5','6','7','8'].includes(card.rank)) score += 15; 
-            }
-
-            const prevPlayerIdx = (botIdx - dir + 4) % 4;
-            const prevPlayer = game.players[prevPlayerIdx];
-            if (prevPlayer && prevPlayer.knockVictims && prevPlayer.knockVictims.length > 0) {
-                const prevDiscard = prevPlayer.discard;
-                if (prevDiscard && prevDiscard.length > 0) {
-                    const topSwept = prevDiscard[prevDiscard.length - 1];
-                    if (card.suit === topSwept.suit && Math.abs((getNumVal(card.rank)||0) - (getNumVal(topSwept.rank)||0)) <= 2) {
-                        score += 150;
-                    }
-                }
-            }
-
-            const turnBeforePrev = (botIdx - 2*dir + 4) % 4;
-            const playerBeforePrev = game.players[turnBeforePrev];
-            if (playerBeforePrev && playerBeforePrev.discard && playerBeforePrev.discard.length > 0) {
-                const lastDiscard = playerBeforePrev.discard[playerBeforePrev.discard.length - 1];
-                if (lastDiscard.rank === card.rank && lastDiscard.suit === card.suit) {
-                    score -= 100;
-                }
-            }
-
-            if (score <= 0) {
-                const allDiscards = game.players.flatMap(p => p.discard || []);
-                let minDist = 999;
-                const cardVal = getNumVal(card.rank) || 0;
-                allDiscards.forEach(d => {
-                    const dVal = getNumVal(d.rank) || 0;
-                    minDist = Math.min(minDist, Math.abs(cardVal - dVal));
-                });
-                if (minDist <= 2) score -= 30; 
-                else score += 10;
-            }
-
-            return score;
-        }
-
-        function executeFeedingTechnique1(game, botIdx, hand) {
-            const dir = game.playDirection || 1;
-            const nextPlayer = (botIdx + dir + 4) % 4;
-            const nextPlayerMelds = game.players[nextPlayer].melds || [];
-            const nextPlayerAllCards = [
-                ...(game.players[nextPlayer].hand || []),
-                ...nextPlayerMelds.flat()
-            ];
-            const suitFrequency = {};
-            nextPlayerAllCards.forEach(c => { suitFrequency[c.suit] = (suitFrequency[c.suit] || 0) + 1; });
-            const mostNeededSuit = Object.keys(suitFrequency).sort((a,b) => suitFrequency[b] - suitFrequency[a])[0];
-            
-            const rankGroups = {};
-            hand.forEach(c => { if (!c.isFallen) { rankGroups[c.rank] = [...(rankGroups[c.rank] || []), c]; } });
-            
-            for (const [rank, cards] of Object.entries(rankGroups)) {
-                if (cards.length >= 3) {
-                    const baitCard = cards.find(c => c.suit === mostNeededSuit);
-                    if (baitCard) return baitCard;
-                }
-            }
-            return null;
-        }
-
-        function executeFeedingTechnique2(game, botIdx, hand) {
-            if (!game.deck || game.deck.length <= 20) return null;
-            for (let i = 0; i < hand.length; i++) {
-                for (let j = i+1; j < hand.length; j++) {
-                    const c1 = hand[i], c2 = hand[j];
-                    if (c1.suit === c2.suit && !c1.isFallen && !c2.isFallen) {
-                        const v1 = getNumVal(c1.rank), v2 = getNumVal(c2.rank);
-                        if (v1 !== null && v2 !== null && Math.abs(v1 - v2) === 2) {
-                            const middleVal = (v1 + v2) / 2;
-                            const middleRank = valToRank(middleVal);
-                            if (!middleRank) continue;
-                            const baitCard = hand.find(c => c.rank === middleRank && c.suit !== c1.suit && !c.isFallen);
-                            if (baitCard) return baitCard;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-
-        function executeFeedingTechnique3(game, botIdx, hand) {
-            const jokerRank = game.jokerRank;
-            const hasJoker = hand.some(c => c.rank === jokerRank && !c.isFallen);
-            if (!hasJoker) return null;
-
-            const rankCount = {};
-            hand.forEach(c => {
-                if (c.rank !== jokerRank && !c.isFallen) {
-                    if (!rankCount[c.rank]) rankCount[c.rank] = [];
-                    rankCount[c.rank].push(c);
-                }
-            });
-            for (const [rank, cards] of Object.entries(rankCount)) {
-                if (cards.length >= 2 && cards[0].suit !== cards[1].suit) {
-                    return cards[0];
-                }
-            }
-            return null;
-        }
-
-        function emergencyDumpStrategy(game, botIdx, hand, melds) {
-            const deckRemaining = game.deck ? game.deck.length : 0;
-            const jokerRank = game.jokerRank;
-            let totalDeadwood = 0;
-            const handInfo = evaluateHand(hand, melds, jokerRank);
-            hand.forEach((c, i) => {
-                if (!handInfo.groupedIndices.has(i)) {
-                    totalDeadwood += getCardPoints(c.rank, c.rank === jokerRank && !c.isFallen);
-                }
-            });
-
-            if (totalDeadwood > 40 && deckRemaining <= 10) {
-                const candidates = hand
-                    .map(c => ({ card: c, points: getCardPoints(c.rank, c.rank === jokerRank && !c.isFallen) }))
-                    .filter(item => item.points >= 10)
-                    .sort((a,b) => b.points - a.points);
-                if (candidates.length > 0) {
-                    const dead = candidates.find(item => cardTracker.isCardDead(item.card.rank, item.card.suit));
-                    if (dead) return dead.card;
-                    return candidates[0].card;
-                }
-            }
-
-            if (deckRemaining <= 15) {
-                const faceCards = hand.filter(c => ['J','Q','K'].includes(c.rank) && !c.isFallen && c.rank !== jokerRank);
-                const deadFaces = faceCards.filter(c => cardTracker.isCardDead(c.rank, c.suit));
-                if (deadFaces.length > 0) return deadFaces[0];
-            }
-            return null;
-        }
-
-        function autoMeldStrategy(game, botIdx, handInfo) {
-            const pData = game.players[botIdx];
-            if (!handInfo.formedGroups || handInfo.formedGroups.length === 0) return;
-            const hasShot = pData.knockVictims && pData.knockVictims.length > 0;
-
-            handInfo.formedGroups.forEach(group => {
-                const tempHand = [...pData.hand];
-                const remainingAfterMeld = tempHand.length - group.length;
-
-                if (!hasShot && remainingAfterMeld <= 1) {
-                    return; 
-                }
-                
-                if (!pData.melds) pData.melds = [];
-                pData.melds.push(group);
-                group.forEach(gc => {
-                    const idx = pData.hand.findIndex(hc => hc.suit === gc.suit && hc.rank === gc.rank && hc.isFallen === gc.isFallen);
-                    if (idx !== -1) pData.hand.splice(idx, 1);
-                });
-            });
-        }
-
-        function canKnock(game, botIdx) {
-            const pData = game.players[botIdx];
-            const hasVictim = pData.knockVictims && pData.knockVictims.length > 0;
-            if (!hasVictim) return false;
-            if (pData.hand.length === 0) return true;
-
-            for (let i = 0; i < pData.hand.length; i++) {
-                const testHand = [...pData.hand];
-                testHand.splice(i, 1);
-                const testInfo = evaluateHand(testHand, pData.melds, game.jokerRank);
-                if (testInfo.isAllPaired || testHand.length === 0) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        // =======================================================
-        // UI & GAME STATE MANAGEMENT
-        // =======================================================
-        window.showTab = function(tabId) {
-            document.getElementById('tab-aturan').classList.add('hidden');
-            document.getElementById('tab-hukuman').classList.add('hidden');
-            document.getElementById('tab-magnet').classList.add('hidden');
-            document.getElementById(tabId).classList.remove('hidden');
-        };
-
-        window.showAlertModal = function(title, htmlContent, buttons = []) {
-            const overlay = document.getElementById('custom-modal-overlay');
-            document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-text').innerHTML = htmlContent;
-            
-            const btnArea = document.getElementById('modal-btn-area');
-            btnArea.innerHTML = ""; 
-            
-            if(buttons.length === 0) {
-                btnArea.innerHTML = `<button class="btn btn-gold" onclick="document.getElementById('custom-modal-overlay').classList.add('hidden')">OK</button>`;
-            } else {
-                buttons.forEach(b => {
-                    const btn = document.createElement('button');
-                    btn.className = `btn ${b.class || 'btn-gold'}`;
-                    btn.innerText = b.text;
-                    btn.onclick = () => { overlay.classList.add('hidden'); if(b.action) b.action(); };
-                    btnArea.appendChild(btn);
-                });
-            }
-            overlay.classList.remove('hidden');
-        };
-
-        window.showConfirmModal = function(title, text, onConfirm) {
-            showAlertModal(title, text, [
-                { text: "YA", class: "btn-gold", action: onConfirm },
-                { text: "BATAL", class: "btn-red" }
-            ]);
-        };
-
-        window.blastConfetti = function() {
-            const container = document.getElementById('confetti-container');
-            container.classList.remove('hidden');
-            container.innerHTML = '';
-            const colors = ['#fbbf24', '#f59e0b', '#fff'];
-            for(let i=0; i<70; i++) {
-                let conf = document.createElement('div');
-                conf.style.position = 'absolute'; conf.style.width = '8px'; conf.style.height = '15px';
-                conf.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
-                conf.style.left = Math.random() * 100 + 'vw';
-                conf.style.top = '-20px';
-                conf.style.opacity = Math.random();
-                conf.style.transform = `rotate(${Math.random()*360}deg)`;
-                conf.style.animation = `fall ${Math.random()*2+2}s linear forwards`;
-                container.appendChild(conf);
-            }
-            setTimeout(() => { container.classList.add('hidden'); container.innerHTML=''; }, 4000);
-        };
-
-        window.showMatchWinner = function(game, isFromEvent = false) {
-            let sortedPlayers = [...game.players].sort((a,b) => (game.globalScores[b.id]||0) - (game.globalScores[a.id]||0));
-            let winner = sortedPlayers[0];
-            
-            let html = `<div style="font-size:36px; margin-bottom:10px;">👑</div>
-                        <div style="font-size:22px; color:var(--gold); font-weight:900; margin-bottom:5px;">${winner.name}</div>
-                        <div style="color:var(--neon-green); font-size:16px; font-weight:bold; margin-bottom:20px;">Skor Akhir: ${game.globalScores[winner.id]}</div>
-                        <div style="text-align:left; background:rgba(0,0,0,0.5); padding:10px; border-radius:10px;">`;
-            
-            sortedPlayers.forEach((p, i) => {
-                html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12px;">
-                            <span>${i+1}. ${p.name}</span>
-                            <b style="color:${game.globalScores[p.id] < 0 ? 'var(--red-suit)' : 'var(--neon-green)'}">${game.globalScores[p.id]} Poin</b>
-                         </div>`;
-            });
-            html += `</div>`;
-
-            showAlertModal("🏆 TURNAMEN SELESAI!", html, [
-                { text: "KEMBALI KE LOBBY LIGA", class: "btn-blue", action: () => resetLocalData() }
-            ]);
-        }
+        function getNumVal(rank) { if (rank === 'A') return 1; if (rank === 'J') return 11; if (rank === 'Q') return 12; if (rank === 'K') return 13; const num = parseInt(rank); return isNaN(num) ? null : num; }
+        function valToRank(val) { if (val === 1) return 'A'; if (val === 11) return 'J'; if (val === 12) return 'Q'; if (val === 13) return 'K'; if (val >= 2 && val <= 10) return String(val); return null; }
+        function getCardPoints(rank, isJoker) { if (isJoker) return 25; if (rank === 'A') return 15; if (['J', 'Q', 'K'].includes(rank)) return 10; return 5; }
 
         window.findValidSweep = function(baseCards, sweptCards, jokerRank) {
             let validMelds = [];
@@ -921,320 +545,151 @@
         };
 
         function isValidSingleGroup(cards, jokerRank) {
-            if (cards.length < 3) return false;
-            let jokers = cards.filter(c => c.rank === jokerRank && !c.isFallen);
-            let normals = cards.filter(c => c.rank !== jokerRank || c.isFallen);
-            if (normals.length === 0) return false; 
-            
-            let hasAce = normals.some(c => c.rank === 'A');
-            if (hasAce && jokers.length > 0) return false;
-
-            let isTris = normals.every(c => c.rank === normals[0].rank);
-            if (isTris) { 
-                if (normals[0].rank !== 'A') return false; 
-                return jokers.length === 0; 
-            }
-
-            let suit = normals[0].suit;
-            if (!normals.every(c => c.suit === suit)) return false;
-            
-            let isFaces = normals.every(c => ['J','Q','K'].includes(c.rank)); 
-            let isNumbers = normals.every(c => !['J','Q','K','A'].includes(c.rank)); 
-            if (!isFaces && !isNumbers) return false;
-
+            if (cards.length < 3) return false; let jokers = cards.filter(c => c.rank === jokerRank && !c.isFallen); let normals = cards.filter(c => c.rank !== jokerRank || c.isFallen); if (normals.length === 0) return false; 
+            let hasAce = normals.some(c => c.rank === 'A'); if (hasAce && jokers.length > 0) return false;
+            let isTris = normals.every(c => c.rank === normals[0].rank); if (isTris) { if (normals[0].rank !== 'A') return false; return jokers.length === 0; }
+            let suit = normals[0].suit; if (!normals.every(c => c.suit === suit)) return false;
+            let isFaces = normals.every(c => ['J','Q','K'].includes(c.rank)); let isNumbers = normals.every(c => !['J','Q','K','A'].includes(c.rank)); if (!isFaces && !isNumbers) return false;
             let isJokerFace = ['J', 'Q', 'K'].includes(jokerRank);
-
-            if (isFaces) {
-                if (jokers.length > 0) {
-                    if (!isJokerFace) return false;
-                    if (jokers.some(j => j.suit !== suit)) return false; 
-                }
-                let present = normals.map(c => c.rank);
-                let missing = 3 - present.length;
-                if (new Set(present).size !== present.length) return false;
-                return missing === jokers.length;
-            }
-
-            if (isNumbers) {
-                let vals = normals.map(c => parseInt(c.rank)).sort((a,b)=>a-b);
-                let needed = 0;
-                for(let i=0; i<vals.length-1; i++) {
-                    let diff = vals[i+1] - vals[i];
-                    if (diff === 0) return false; 
-                    needed += (diff - 1);
-                }
-                return needed <= jokers.length;
-            }
-            return false;
+            if (isFaces) { if (jokers.length > 0) { if (!isJokerFace) return false; if (jokers.some(j => j.suit !== suit)) return false; } let present = normals.map(c => c.rank); let missing = 3 - present.length; if (new Set(present).size !== present.length) return false; return missing === jokers.length; }
+            if (isNumbers) { let vals = normals.map(c => parseInt(c.rank)).sort((a,b)=>a-b); let needed = 0; for(let i=0; i<vals.length-1; i++) { let diff = vals[i+1] - vals[i]; if (diff === 0) return false; needed += (diff - 1); } return needed <= jokers.length; } return false;
         }
 
         function evaluateHand(handCards, melds, jokerRank, isSimulatingPickup = false) {
             let score = 0; let groupedIndices = new Set();
-            let jokers = []; let nonJokers = [];
-            let formedGroups = [];
-
-            handCards.forEach((c, i) => {
-                if (c.rank === jokerRank && !c.isFallen) jokers.push({ ...c, index: i });
-                else nonJokers.push({ ...c, index: i, val: getNumVal(c.rank) });
-            });
-
+            let jokers = []; let nonJokers = []; let formedGroups = [];
+            handCards.forEach((c, i) => { if (c.rank === jokerRank && !c.isFallen) jokers.push({ ...c, index: i }); else nonJokers.push({ ...c, index: i, val: getNumVal(c.rank) }); });
             const SUITS = ['♥', '♦', '♠', '♣'];
-            
             let rankGroups = {};
-            nonJokers.forEach(c => {
-                if(!rankGroups[c.rank]) rankGroups[c.rank] = [];
-                rankGroups[c.rank].push(c);
-            });
-            
-            if(rankGroups['A'] && rankGroups['A'].length >= 3) {
-                let g = [];
-                rankGroups['A'].forEach(c => {
-                    groupedIndices.add(c.index);
-                    g.push(handCards[c.index]);
-                });
-                formedGroups.push(g);
-            }
-
+            nonJokers.forEach(c => { if(!rankGroups[c.rank]) rankGroups[c.rank] = []; rankGroups[c.rank].push(c); });
+            if(rankGroups['A'] && rankGroups['A'].length >= 3) { let g = []; rankGroups['A'].forEach(c => { groupedIndices.add(c.index); g.push(handCards[c.index]); }); formedGroups.push(g); }
             let canJokerHelpFaces = ['J', 'Q', 'K'].includes(jokerRank);
             SUITS.forEach(suit => {
-                let hasJ = nonJokers.find(c => c.suit === suit && c.rank === 'J' && !groupedIndices.has(c.index));
-                let hasQ = nonJokers.find(c => c.suit === suit && c.rank === 'Q' && !groupedIndices.has(c.index));
-                let hasK = nonJokers.find(c => c.suit === suit && c.rank === 'K' && !groupedIndices.has(c.index));
-                let present = [];
-                if (hasJ) present.push(hasJ);
-                if (hasQ) present.push(hasQ);
-                if (hasK) present.push(hasK);
+                let hasJ = nonJokers.find(c => c.suit === suit && c.rank === 'J' && !groupedIndices.has(c.index)); let hasQ = nonJokers.find(c => c.suit === suit && c.rank === 'Q' && !groupedIndices.has(c.index)); let hasK = nonJokers.find(c => c.suit === suit && c.rank === 'K' && !groupedIndices.has(c.index));
+                let present = []; if (hasJ) present.push(hasJ); if (hasQ) present.push(hasQ); if (hasK) present.push(hasK);
                 let missing = 3 - present.length;
-                
-                if (present.length > 0) {
-                    let validJokers = jokers.filter(j => j.suit === suit && !groupedIndices.has(j.index));
-                    if (missing === 0 || (missing > 0 && canJokerHelpFaces && validJokers.length >= missing)) {
-                        let g = present.map(c => handCards[c.index]);
-                        present.forEach(c => groupedIndices.add(c.index));
-                        if(missing > 0) {
-                            for(let k=0; k < missing; k++) {
-                                groupedIndices.add(validJokers[k].index);
-                                g.push(handCards[validJokers[k].index]);
-                            }
-                        }
-                        formedGroups.push(g);
-                    }
-                }
+                if (present.length > 0) { let validJokers = jokers.filter(j => j.suit === suit && !groupedIndices.has(j.index)); if (missing === 0 || (missing > 0 && canJokerHelpFaces && validJokers.length >= missing)) { let g = present.map(c => handCards[c.index]); present.forEach(c => groupedIndices.add(c.index)); if(missing > 0) { for(let k=0; k < missing; k++) { groupedIndices.add(validJokers[k].index); g.push(handCards[validJokers[k].index]); } } formedGroups.push(g); } }
             });
-
             SUITS.forEach(suit => {
                 let nums = nonJokers.filter(c => c.suit === suit && c.val >= 2 && c.val <= 10 && !groupedIndices.has(c.index)).sort((a, b) => a.val - b.val);
                 if(nums.length === 0) return;
-                
                 let usedInThisSuit = new Set();
                 for (let i = 0; i < nums.length; i++) {
                     if (usedInThisSuit.has(nums[i].index)) continue;
-                    let currentRun = [nums[i].index];
-                    let currentJokersNeeded = 0;
-                    let lastVal = nums[i].val;
-
+                    let currentRun = [nums[i].index]; let currentJokersNeeded = 0; let lastVal = nums[i].val;
                     for (let j = i + 1; j < nums.length; j++) {
-                        if (usedInThisSuit.has(nums[j].index)) continue;
-                        let diff = nums[j].val - lastVal;
-                        if (diff === 0) continue; 
-                        
+                        if (usedInThisSuit.has(nums[j].index)) continue; let diff = nums[j].val - lastVal; if (diff === 0) continue; 
                         let availableJokers = jokers.filter(j => !groupedIndices.has(j.index)).length;
-                        
-                        if (diff === 1) { 
-                            currentRun.push(nums[j].index); lastVal = nums[j].val; 
-                        } else if (diff - 1 <= (availableJokers - currentJokersNeeded)) {
-                            currentJokersNeeded += (diff - 1); currentRun.push(nums[j].index); lastVal = nums[j].val;
-                        } else { break; }
+                        if (diff === 1) { currentRun.push(nums[j].index); lastVal = nums[j].val; } else if (diff - 1 <= (availableJokers - currentJokersNeeded)) { currentJokersNeeded += (diff - 1); currentRun.push(nums[j].index); lastVal = nums[j].val; } else { break; }
                     }
-                    
-                    let totalLength = currentRun.length + currentJokersNeeded;
-                    let extraJokersNeeded = Math.max(0, 3 - totalLength);
-                    let totalAvailJokers = jokers.filter(j => !groupedIndices.has(j.index));
-
+                    let totalLength = currentRun.length + currentJokersNeeded; let extraJokersNeeded = Math.max(0, 3 - totalLength); let totalAvailJokers = jokers.filter(j => !groupedIndices.has(j.index));
                     if (currentJokersNeeded + extraJokersNeeded <= totalAvailJokers.length) {
-                        let g = [];
-                        currentRun.forEach(idx => { groupedIndices.add(idx); usedInThisSuit.add(idx); g.push(handCards[idx]); });
-                        
-                        let totalJokersToTake = currentJokersNeeded + extraJokersNeeded;
-                        for(let k=0; k < totalJokersToTake; k++) {
-                            groupedIndices.add(totalAvailJokers[k].index);
-                            g.push(handCards[totalAvailJokers[k].index]);
-                        }
-                        formedGroups.push(g);
+                        let g = []; currentRun.forEach(idx => { groupedIndices.add(idx); usedInThisSuit.add(idx); g.push(handCards[idx]); });
+                        let totalJokersToTake = currentJokersNeeded + extraJokersNeeded; for(let k=0; k < totalJokersToTake; k++) { groupedIndices.add(totalAvailJokers[k].index); g.push(handCards[totalAvailJokers[k].index]); } formedGroups.push(g);
                     }
                 }
             });
-
             let remainingJokers = jokers.filter(j => !groupedIndices.has(j.index));
             remainingJokers.forEach(jObj => {
                 let jCard = handCards[jObj.index];
                 for (let g of formedGroups) {
-                    let normals = g.filter(c => c.rank !== jokerRank || c.isFallen);
-                    if (normals.length === 0) continue;
-                    
-                    let isAceGroup = normals.some(c => c.rank === 'A');
-                    let isFaceGroup = normals.some(c => ['J','Q','K'].includes(c.rank));
-                    let isJokerFace = ['J','Q','K'].includes(jokerRank);
-
-                    if (isAceGroup) continue; 
-                    if (isFaceGroup && !isJokerFace) continue; 
-                    if (isFaceGroup && isJokerFace && jCard.suit !== normals[0].suit) continue; 
-
-                    groupedIndices.add(jObj.index);
-                    g.push(jCard);
-                    break; 
+                    let normals = g.filter(c => c.rank !== jokerRank || c.isFallen); if (normals.length === 0) continue;
+                    let isAceGroup = normals.some(c => c.rank === 'A'); let isFaceGroup = normals.some(c => ['J','Q','K'].includes(c.rank)); let isJokerFace = ['J','Q','K'].includes(jokerRank);
+                    if (isAceGroup) continue; if (isFaceGroup && !isJokerFace) continue; if (isFaceGroup && isJokerFace && jCard.suit !== normals[0].suit) continue; 
+                    groupedIndices.add(jObj.index); g.push(jCard); break; 
                 }
             });
-
             let hasOtherMeld = (melds && melds.length > 0) || formedGroups.filter(g => !g.some(c => c.rank === 'A')).length > 0 || isSimulatingPickup;
-            if (!hasOtherMeld) {
-                formedGroups = formedGroups.filter(g => {
-                    let isAceGroup = g.some(c => c.rank === 'A');
-                    if(isAceGroup) {
-                        g.forEach(c => {
-                            let origIdx = handCards.findIndex(hc => hc === c);
-                            groupedIndices.delete(origIdx);
-                        });
-                        return false; 
-                    }
-                    return true;
-                });
-            }
-
+            if (!hasOtherMeld) { formedGroups = formedGroups.filter(g => { let isAceGroup = g.some(c => c.rank === 'A'); if(isAceGroup) { g.forEach(c => { let origIdx = handCards.findIndex(hc => hc === c); groupedIndices.delete(origIdx); }); return false; } return true; }); }
             function scoreGroup(groupCards) {
-                let normals = groupCards.filter(c => c.rank !== jokerRank || c.isFallen);
-                if (normals.length === 0) return 0;
-                let isTris = normals.every(c => c.rank === normals[0].rank);
-                if (isTris) {
-                    let rank = normals[0].rank;
-                    let val = (rank === 'A') ? 15 : (['J','Q','K'].includes(rank) ? 10 : 5);
-                    return groupCards.length * val; 
-                }
-                let hasGambar = normals.some(c => ['J','Q','K'].includes(c.rank));
-                let valPerJoker = hasGambar ? 10 : 5; 
-                let grpScore = 0;
-                normals.forEach(c => {
-                    if (c.rank === 'A') grpScore += 15;
-                    else if (['J','Q','K'].includes(c.rank)) grpScore += 10;
-                    else grpScore += 5; 
-                });
-                let jokersCount = groupCards.length - normals.length;
-                grpScore += (jokersCount * valPerJoker);
-                return grpScore;
+                let normals = groupCards.filter(c => c.rank !== jokerRank || c.isFallen); if (normals.length === 0) return 0; let isTris = normals.every(c => c.rank === normals[0].rank);
+                if (isTris) { let rank = normals[0].rank; let val = (rank === 'A') ? 15 : (['J','Q','K'].includes(rank) ? 10 : 5); return groupCards.length * val; }
+                let hasGambar = normals.some(c => ['J','Q','K'].includes(c.rank)); let valPerJoker = hasGambar ? 10 : 5; let grpScore = 0;
+                normals.forEach(c => { if (c.rank === 'A') grpScore += 15; else if (['J','Q','K'].includes(c.rank)) grpScore += 10; else grpScore += 5; });
+                let jokersCount = groupCards.length - normals.length; grpScore += (jokersCount * valPerJoker); return grpScore;
             }
-
-            if (melds) melds.forEach(g => score += scoreGroup(g));
-            formedGroups.forEach(g => score += scoreGroup(g));
-
-            handCards.forEach((c, i) => {
-                if (!groupedIndices.has(i)) {
-                    if (c.rank === jokerRank && !c.isFallen) score -= 25; 
-                    else if (c.rank === 'A') score -= 15;
-                    else if (['J','Q','K'].includes(c.rank)) score -= 10; 
-                    else score -= 5; 
-                }
-            });
-
-            let hasValidGroup = groupedIndices.size > 0;
-            let totalCardsCount = handCards.length + (melds ? melds.reduce((acc, curr) => acc + curr.length, 0) : 0);
-            let isAllPaired = (groupedIndices.size === handCards.length && totalCardsCount >= 7);
-
+            if (melds) melds.forEach(g => score += scoreGroup(g)); formedGroups.forEach(g => score += scoreGroup(g));
+            handCards.forEach((c, i) => { if (!groupedIndices.has(i)) { if (c.rank === jokerRank && !c.isFallen) score -= 25; else if (c.rank === 'A') score -= 15; else if (['J','Q','K'].includes(c.rank)) score -= 10; else score -= 5; } });
+            let hasValidGroup = groupedIndices.size > 0; let totalCardsCount = handCards.length + (melds ? melds.reduce((acc, curr) => acc + curr.length, 0) : 0); let isAllPaired = (groupedIndices.size === handCards.length && totalCardsCount >= 7);
             return { score, hasValidGroup, isAllPaired, groupedIndices, formedGroups };
         }
 
+        function calculateDiscardScore(card, hand, melds, game, botIdx) {
+            let score = 0; const jokerRank = game.jokerRank; const dir = game.playDirection || 1; const deckRemaining = game.deck ? game.deck.length : 0;
+            const sameRankSuitCount = cardTracker.visibleCards.filter(c => c.rank === card.rank && c.suit === card.suit).length;
+            if (sameRankSuitCount >= 3) { score -= 500; } else if (sameRankSuitCount >= 2) { score -= 150; }
+            if (card.rank === jokerRank && !card.isFallen) { score += 10000; }
+            const handInfo = evaluateHand(hand, melds, jokerRank); const cardIndex = hand.findIndex(c => c.suit === card.suit && c.rank === card.rank && c.isFallen === card.isFallen);
+            if (cardIndex !== -1 && handInfo.groupedIndices.has(cardIndex)) { score += 200; }
+            const sameSuitCards = hand.filter(c => c.suit === card.suit && c !== card && !c.isFallen);
+            const hasGap = sameSuitCards.some(c => { const v1 = getNumVal(c.rank), v2 = getNumVal(card.rank); return v1 !== null && v2 !== null && Math.abs(v1 - v2) === 2; }); if (hasGap) score += 15;
+            const hasAdjacent = sameSuitCards.some(c => { const v1 = getNumVal(c.rank), v2 = getNumVal(card.rank); return v1 !== null && v2 !== null && Math.abs(v1 - v2) === 1; }); if (hasAdjacent) score += 40;
+            if (['J', 'Q', 'K'].includes(card.rank)) { const faceSameSuit = sameSuitCards.filter(c => ['J','Q','K'].includes(c.rank)); if (faceSameSuit.length >= 1) score += 25; }
+            if (card.rank === 'A') { if (!melds || melds.length === 0) { score += 5000; } const aceCount = hand.filter(c => c.rank === 'A').length; if (aceCount >= 3 && melds && melds.length > 0) score += 30; }
+            if (deckRemaining <= 15) { if (card.rank === 'A' && melds && melds.length > 0) score -= 80; if (['J', 'Q', 'K'].includes(card.rank)) score -= 50; if (['5','6','7','8'].includes(card.rank)) score += 15; }
+            const prevPlayerIdx = (botIdx - dir + 4) % 4; const prevPlayer = game.players[prevPlayerIdx];
+            if (prevPlayer && prevPlayer.knockVictims && prevPlayer.knockVictims.length > 0) { const prevDiscard = prevPlayer.discard; if (prevDiscard && prevDiscard.length > 0) { const topSwept = prevDiscard[prevDiscard.length - 1]; if (card.suit === topSwept.suit && Math.abs((getNumVal(card.rank)||0) - (getNumVal(topSwept.rank)||0)) <= 2) { score += 150; } } }
+            const turnBeforePrev = (botIdx - 2*dir + 4) % 4; const playerBeforePrev = game.players[turnBeforePrev];
+            if (playerBeforePrev && playerBeforePrev.discard && playerBeforePrev.discard.length > 0) { const lastDiscard = playerBeforePrev.discard[playerBeforePrev.discard.length - 1]; if (lastDiscard.rank === card.rank && lastDiscard.suit === card.suit) { score -= 100; } }
+            if (score <= 0) { const allDiscards = game.players.flatMap(p => p.discard || []); let minDist = 999; const cardVal = getNumVal(card.rank) || 0; allDiscards.forEach(d => { const dVal = getNumVal(d.rank) || 0; minDist = Math.min(minDist, Math.abs(cardVal - dVal)); }); if (minDist <= 2) score -= 30; else score += 10; }
+            return score;
+        }
+
+        function executeFeedingTechnique1(game, botIdx, hand) { const dir = game.playDirection || 1; const nextPlayer = (botIdx + dir + 4) % 4; const nextPlayerMelds = game.players[nextPlayer].melds || []; const nextPlayerAllCards = [ ...(game.players[nextPlayer].hand || []), ...nextPlayerMelds.flat() ]; const suitFrequency = {}; nextPlayerAllCards.forEach(c => { suitFrequency[c.suit] = (suitFrequency[c.suit] || 0) + 1; }); const mostNeededSuit = Object.keys(suitFrequency).sort((a,b) => suitFrequency[b] - suitFrequency[a])[0]; const rankGroups = {}; hand.forEach(c => { if (!c.isFallen) { rankGroups[c.rank] = [...(rankGroups[c.rank] || []), c]; } }); for (const [rank, cards] of Object.entries(rankGroups)) { if (cards.length >= 3) { const baitCard = cards.find(c => c.suit === mostNeededSuit); if (baitCard) return baitCard; } } return null; }
+        function executeFeedingTechnique2(game, botIdx, hand) { if (!game.deck || game.deck.length <= 20) return null; for (let i = 0; i < hand.length; i++) { for (let j = i+1; j < hand.length; j++) { const c1 = hand[i], c2 = hand[j]; if (c1.suit === c2.suit && !c1.isFallen && !c2.isFallen) { const v1 = getNumVal(c1.rank), v2 = getNumVal(c2.rank); if (v1 !== null && v2 !== null && Math.abs(v1 - v2) === 2) { const middleVal = (v1 + v2) / 2; const middleRank = valToRank(middleVal); if (!middleRank) continue; const baitCard = hand.find(c => c.rank === middleRank && c.suit !== c1.suit && !c.isFallen); if (baitCard) return baitCard; } } } } return null; }
+        function executeFeedingTechnique3(game, botIdx, hand) { const jokerRank = game.jokerRank; const hasJoker = hand.some(c => c.rank === jokerRank && !c.isFallen); if (!hasJoker) return null; const rankCount = {}; hand.forEach(c => { if (c.rank !== jokerRank && !c.isFallen) { if (!rankCount[c.rank]) rankCount[c.rank] = []; rankCount[c.rank].push(c); } }); for (const [rank, cards] of Object.entries(rankCount)) { if (cards.length >= 2 && cards[0].suit !== cards[1].suit) { return cards[0]; } } return null; }
+        
+        function emergencyDumpStrategy(game, botIdx, hand, melds) {
+            const deckRemaining = game.deck ? game.deck.length : 0; const jokerRank = game.jokerRank; let totalDeadwood = 0; const handInfo = evaluateHand(hand, melds, jokerRank); hand.forEach((c, i) => { if (!handInfo.groupedIndices.has(i)) { totalDeadwood += getCardPoints(c.rank, c.rank === jokerRank && !c.isFallen); } });
+            if (totalDeadwood > 40 && deckRemaining <= 10) { const candidates = hand .map(c => ({ card: c, points: getCardPoints(c.rank, c.rank === jokerRank && !c.isFallen) })) .filter(item => item.points >= 10) .sort((a,b) => b.points - a.points); if (candidates.length > 0) { const dead = candidates.find(item => cardTracker.isCardDead(item.card.rank, item.card.suit)); if (dead) return dead.card; return candidates[0].card; } }
+            if (deckRemaining <= 15) { const faceCards = hand.filter(c => ['J','Q','K'].includes(c.rank) && !c.isFallen && c.rank !== jokerRank); const deadFaces = faceCards.filter(c => cardTracker.isCardDead(c.rank, c.suit)); if (deadFaces.length > 0) return deadFaces[0]; } return null;
+        }
+
+        function autoMeldStrategy(game, botIdx, handInfo) {
+            const pData = game.players[botIdx]; if (!handInfo.formedGroups || handInfo.formedGroups.length === 0) return; const hasShot = pData.knockVictims && pData.knockVictims.length > 0;
+            handInfo.formedGroups.forEach(group => { const tempHand = [...pData.hand]; const remainingAfterMeld = tempHand.length - group.length; if (!hasShot && remainingAfterMeld <= 1) { return; } if (!pData.melds) pData.melds = []; pData.melds.push(group); group.forEach(gc => { const idx = pData.hand.findIndex(hc => hc.suit === gc.suit && hc.rank === gc.rank && hc.isFallen === gc.isFallen); if (idx !== -1) pData.hand.splice(idx, 1); }); });
+        }
+
+        function canKnock(game, botIdx) {
+            const pData = game.players[botIdx]; const hasVictim = pData.knockVictims && pData.knockVictims.length > 0; if (!hasVictim) return false; if (pData.hand.length === 0) return true;
+            for (let i = 0; i < pData.hand.length; i++) { const testHand = [...pData.hand]; testHand.splice(i, 1); const testInfo = evaluateHand(testHand, pData.melds, game.jokerRank); if (testInfo.isAllPaired || testHand.length === 0) { return true; } } return false;
+        }
+
         function handleRoundEnd(game, knockerIdx, victims, customKnockCard = null) {
-            if (!game.globalScores) game.globalScores = {};
-            
-            let baseKnockValue = 0;
-            let knockMsg = "";
-
+            if (!game.globalScores) game.globalScores = {}; let baseKnockValue = 0; let knockMsg = "";
             if (knockerIdx !== null) {
-                let knocker = game.players[knockerIdx];
-                let knockCard = customKnockCard;
-                
-                if (!knockCard && knocker.discard && knocker.discard.length > 0) {
-                    knockCard = knocker.discard[knocker.discard.length - 1];
-                }
+                let knocker = game.players[knockerIdx]; let knockCard = customKnockCard;
+                if (!knockCard && knocker.discard && knocker.discard.length > 0) { knockCard = knocker.discard[knocker.discard.length - 1]; }
                 if (!knockCard) { knockCard = { rank: '2', suit: '♠', isFallen: false }; } 
-                
                 let isTrueJoker = (knockCard.rank === game.jokerRank && !knockCard.isFallen);
-                
-                if (isTrueJoker) { baseKnockValue = 250; }
-                else if (knockCard.rank === 'A') { baseKnockValue = 150; }
-                else if (['J', 'Q', 'K'].includes(knockCard.rank)) { baseKnockValue = 100; }
-                else { baseKnockValue = 50; } 
-                
+                if (isTrueJoker) { baseKnockValue = 250; } else if (knockCard.rank === 'A') { baseKnockValue = 150; } else if (['J', 'Q', 'K'].includes(knockCard.rank)) { baseKnockValue = 100; } else { baseKnockValue = 50; } 
                 knockMsg = `🎉 ${knocker.name} MENUTUP DENGAN KARTU ${isTrueJoker ? 'JOKER' : knockCard.rank}!`;
-
-                let allValidMelds = [];
-                if (knocker.melds) knocker.melds.forEach(m => allValidMelds.push(...m));
-                
-                let handInfo = evaluateHand(knocker.hand || [], knocker.melds || [], game.jokerRank);
-                if (handInfo.formedGroups) handInfo.formedGroups.forEach(m => allValidMelds.push(...m));
-
-                let confirmedVictimIndices = [];
-                let confirmedVictimNames = [];
-
+                let allValidMelds = []; if (knocker.melds) knocker.melds.forEach(m => allValidMelds.push(...m));
+                let handInfo = evaluateHand(knocker.hand || [], knocker.melds || [], game.jokerRank); if (handInfo.formedGroups) handInfo.formedGroups.forEach(m => allValidMelds.push(...m));
+                let confirmedVictimIndices = []; let confirmedVictimNames = [];
                 if (knocker.pendingPenalties && knocker.pendingPenalties.length > 0) {
                     knocker.pendingPenalties.forEach(pen => {
                         let isUsedInMeld = allValidMelds.some(mc => mc.rank === pen.card.rank && mc.suit === pen.card.suit && mc.isFallen === pen.card.isFallen);
-                        
                         if (isUsedInMeld) {
-                            let vId = game.players[pen.victimIdx].id;
-                            game.globalScores[vId] -= pen.penalty;
-                            
-                            if (!confirmedVictimIndices.includes(pen.victimIdx)) {
-                                confirmedVictimIndices.push(pen.victimIdx);
-                                confirmedVictimNames.push(game.players[pen.victimIdx].name);
-                            }
+                            let vId = game.players[pen.victimIdx].id; game.globalScores[vId] -= pen.penalty;
+                            if (!confirmedVictimIndices.includes(pen.victimIdx)) { confirmedVictimIndices.push(pen.victimIdx); confirmedVictimNames.push(game.players[pen.victimIdx].name); }
                         }
                     });
                 }
-
                 victims = confirmedVictimIndices;
-                
-                if (victims && victims.length > 0) {
-                    knockMsg += `<br><span style="color:var(--red-suit); font-size:11px; display:block; margin-top:5px;">(Denda Nembak & Tutup ditanggung: ${confirmedVictimNames.join(', ')})</span>`;
-                }
-            } else {
-                knockMsg = "⚠️ STOK KARTU HABIS! SKOR NORMAL DITERAPKAN!";
-            }
-            
+                if (victims && victims.length > 0) { knockMsg += `<br><span style="color:var(--red-suit); font-size:11px; display:block; margin-top:5px;">(Denda Nembak & Tutup ditanggung: ${confirmedVictimNames.join(', ')})</span>`; }
+            } else { knockMsg = "⚠️ STOK KARTU HABIS! SKOR NORMAL DITERAPKAN!"; }
             game.players.forEach((p, idx) => {
                 if (game.globalScores[p.id] === undefined) game.globalScores[p.id] = 0;
-                let handInfo = evaluateHand(p.hand || [], p.melds || [], game.jokerRank);
-                
-                let rScore = handInfo.score; 
-                
-                if (knockerIdx !== null) {
-                    if (idx === knockerIdx) {
-                        rScore += baseKnockValue; 
-                    } else {
-                        if (victims && victims.includes(idx)) {
-                            rScore -= baseKnockValue; 
-                        }
-                    }
-                }
-                
-                game.globalScores[p.id] += rScore;
-                p.lastRoundScore = rScore; 
+                let handInfo = evaluateHand(p.hand || [], p.melds || [], game.jokerRank); let rScore = handInfo.score; 
+                if (knockerIdx !== null) { if (idx === knockerIdx) { rScore += baseKnockValue; } else { if (victims && victims.includes(idx)) { rScore -= baseKnockValue; } } }
+                game.globalScores[p.id] += rScore; p.lastRoundScore = rScore; 
             });
-            
-            if (knockerIdx !== null) { game.playDirection = (game.playDirection || 1) * -1; } 
-            else { game.playDirection = game.playDirection || 1; }
-
-            game.status = "ROUND_ENDED";
-            game.roundReason = knockMsg;
-            game.readyCount = 0; 
-            game.readyList = [];
-
+            if (knockerIdx !== null) { game.playDirection = (game.playDirection || 1) * -1; } else { game.playDirection = game.playDirection || 1; }
+            game.status = "ROUND_ENDED"; game.roundReason = knockMsg; game.readyCount = 0; game.readyList = [];
             let maxScore = -9999; let winner = ""; let isMatchOver = false;
-            for (let pid in game.globalScores) {
-                if (game.globalScores[pid] >= (game.targetScore || 250)) isMatchOver = true;
-                if (game.globalScores[pid] > maxScore) { maxScore = game.globalScores[pid]; winner = game.players.find(x=>x.id===pid).name; }
-            }
-            game.isMatchOver = isMatchOver;
-            return game;
+            for (let pid in game.globalScores) { if (game.globalScores[pid] >= (game.targetScore || 250)) isMatchOver = true; if (game.globalScores[pid] > maxScore) { maxScore = game.globalScores[pid]; winner = game.players.find(x=>x.id===pid).name; } }
+            game.isMatchOver = isMatchOver; return game;
         }
 
         // ================== LOGIKA NEW WORKFLOW LIGA ==================
@@ -1322,7 +777,6 @@
                 if(!snap.exists()) { resetLocalData(); return; }
                 const game = snap.val();
 
-                // HANDLE KONFIRMASI / TAKEOVER SEBELUM RENDER MEJA
                 if (game.status === "LOBBY_LIGA" || game.status === "PLAYING") {
                     mySlotIndex = game.players.findIndex(p => p.id === myPlayerId);
                     if (mySlotIndex !== -1) {
@@ -1331,7 +785,7 @@
                             document.getElementById('screen-menu').classList.add('hidden');
                             document.getElementById('game-ui').classList.add('hidden');
                             showPreGameOverlay(myStatus);
-                            return; // Stop rendering table until confirmed
+                            return; 
                         } else {
                             document.getElementById('pre-game-overlay').classList.add('hidden');
                         }
@@ -1449,6 +903,26 @@
             });
         };
 
+        function renderCardHTML(card, isTrueJoker = false) {
+            let s = card.suit; let p = `<div class="pip">${s}</div>`; let pd = `<div class="pip pd">${s}</div>`; let centerContent = '';
+            if (['J', 'Q', 'K'].includes(card.rank)) { let face = card.rank === 'K' ? '🤴' : (card.rank === 'Q' ? '👸' : '💂'); centerContent = `<div class="card-face-icon">${face}</div>`; } 
+            else if (card.rank === 'A') { centerContent = `<div class="card-ace-icon">${s}</div>`; } 
+            else {
+                let count = parseInt(card.rank);
+                if(count === 2) centerContent = `<div class="pip-col center-col">${p}${pd}</div>`;
+                else if(count === 3) centerContent = `<div class="pip-col center-col">${p}${p}${pd}</div>`;
+                else if(count === 4) centerContent = `<div class="pip-col">${p}${pd}</div><div class="pip-col">${p}${pd}</div>`;
+                else if(count === 5) centerContent = `<div class="pip-col">${p}${pd}</div><div class="pip-abs" style="top:50%; transform:translate(-50%, -50%);">${p}</div><div class="pip-col">${p}${pd}</div>`;
+                else if(count === 6) centerContent = `<div class="pip-col">${p}${p}${pd}</div><div class="pip-col">${p}${p}${pd}</div>`;
+                else if(count === 7) centerContent = `<div class="pip-col">${p}${p}${pd}</div><div class="pip-abs" style="top:25%;">${p}</div><div class="pip-col">${p}${p}${pd}</div>`;
+                else if(count === 8) centerContent = `<div class="pip-col">${p}${p}${pd}</div><div class="pip-abs" style="top:25%;">${p}</div><div class="pip-abs" style="bottom:25%;">${pd}</div><div class="pip-col">${p}${p}${pd}</div>`;
+                else if(count === 9) centerContent = `<div class="pip-col">${p}${p}${pd}${pd}</div><div class="pip-abs" style="top:50%; transform:translate(-50%, -50%);">${p}</div><div class="pip-col">${p}${p}${pd}${pd}</div>`;
+                else if(count === 10) centerContent = `<div class="pip-col">${p}${p}${pd}${pd}</div><div class="pip-abs" style="top:18%;">${p}</div><div class="pip-abs" style="bottom:18%;">${pd}</div><div class="pip-col">${p}${p}${pd}${pd}</div>`;
+                centerContent = `<div class="card-center pips-container">${centerContent}</div>`;
+            }
+            return `<div class="card-top">${card.rank}<br>${s}</div>${centerContent}<div class="card-bottom">${card.rank}<br>${s}</div>`;
+        }
+
         function startGameUI(game) {
             document.getElementById('screen-menu').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
@@ -1506,7 +980,6 @@
                 
                 let pHandLength = pData.hand ? pData.hand.length : 0;
 
-                // TAMBAHAN VISUAL LABEL UNTUK PEMAIN AFK YANG DIGANTIKAN BOT
                 let afkLabel = (pData.isBot && pData.bot_substituted) ? `<br><span style="color:var(--red-suit); font-size:8px;">[AFK - BOT]</span>` : '';
 
                 if(pos !== 'bottom') { 
@@ -1598,8 +1071,6 @@
 
             if (window.botTurnTimer) clearTimeout(window.botTurnTimer);
             
-            // LOGIKA BOT EXECUTION DI LIGA: 
-            // Karena Panitia (Host) tidak ada di ruangan, maka Pemain Manusia Pertama yang AKTIF yang mengeksekusi bot
             let isBotRunner = false;
             let activeHumans = game.players.filter(p => !p.isBot && p.status_aktivasi === 'active');
             if(activeHumans.length > 0 && activeHumans[0].id === myPlayerId) {
@@ -1810,6 +1281,31 @@
                         
                         txPData.pendingPenalties = pendingPen; 
                         
+                        // --- FOCUSED MAGNET LOGIC UNTUK PEMAIN HUMAN ---
+                        let bestSweepMeld = window.findValidSweep(baseMeld, sweptToHand, gameTx.jokerRank);
+                        if (bestSweepMeld && bestSweepMeld.length > baseMeld.length) {
+                            let newSweptToHand = [];
+                            let tempBest = [...bestSweepMeld];
+                            
+                            baseMeld.forEach(bc => {
+                                let idx = tempBest.findIndex(tc => tc.rank === bc.rank && tc.suit === bc.suit && tc.isFallen === bc.isFallen);
+                                if (idx !== -1) tempBest.splice(idx, 1);
+                            });
+                            
+                            sweptToHand.forEach(sc => {
+                                let idx = tempBest.findIndex(tc => tc.rank === sc.rank && tc.suit === sc.suit && tc.isFallen === sc.isFallen);
+                                if (idx !== -1) {
+                                    tempBest.splice(idx, 1);
+                                } else {
+                                    newSweptToHand.push(sc);
+                                }
+                            });
+                            
+                            baseMeld = bestSweepMeld;
+                            sweptToHand = newSweptToHand;
+                        }
+                        // ------------------------------------------------
+
                         if(!txPData.melds) txPData.melds = []; 
                         txPData.melds.push(baseMeld);
                         txPData.hand.push(...sweptToHand);
@@ -1898,7 +1394,6 @@
             });
         };
 
-        // BOT AI V7.0
         function playBotTurn() {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (game) => {
                 try {
@@ -2125,7 +1620,6 @@
             }).then((result) => {
                 if (result.committed && result.snapshot.exists()) {
                     let updatedGame = result.snapshot.val();
-                    // Karena ini di LIGA, botRunner yang menjalankan turn lanjutan
                     let isBotRunner = false;
                     let activeHumans = updatedGame.players.filter(p => !p.isBot && p.status_aktivasi === 'active');
                     if(activeHumans.length > 0 && activeHumans[0].id === myPlayerId) isBotRunner = true;

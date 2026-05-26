@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LUNA | Dashboard Panitia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a; --bg-light: #1e293b;
+            --gold: #fbbf24; --panel-bg: rgba(30, 41, 59, 0.85);
+            --neon-green: #10b981; --red-suit: #ef4444; --blue: #3b82f6;
+        }
+        body {
+            margin: 0; padding: 20px; 
+            background: radial-gradient(circle at top, var(--bg-light) 0%, var(--bg-dark) 100%);
+            font-family: 'Poppins', sans-serif; color: white; min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;}
+        .header h1 { color: var(--gold); margin: 0; font-weight: 800; letter-spacing: 2px;}
+        
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1200px; margin: 0 auto; }
+        @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        
+        .panel {
+            background: var(--panel-bg); padding: 20px; border-radius: 15px; 
+            border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-height: 70vh; overflow-y: auto;
+        }
+        .panel-title { color: var(--gold); margin-top: 0; font-size: 18px; font-weight: 800; display: flex; justify-content: space-between; align-items: center;}
+        
+        .player-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.4); padding: 10px 15px; border-radius: 10px; margin-bottom: 8px;
+            border-left: 4px solid gray;
+        }
+        .player-item.pending { border-left-color: var(--gold); }
+        .player-item.approved { border-left-color: var(--neon-green); }
+        
+        .player-info { display: flex; flex-direction: column; }
+        .player-name { font-weight: 800; font-size: 14px; }
+        .player-pin { font-size: 11px; color: #94a3b8; }
+        
+        .action-btns { display: flex; gap: 5px; }
+        .btn {
+            padding: 6px 12px; border: none; border-radius: 8px;
+            font-weight: 800; font-family: 'Poppins'; cursor: pointer; transition: 0.2s; font-size: 11px;
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-green { background: var(--neon-green); color: black; }
+        .btn-red { background: var(--red-suit); color: white; }
+        .btn-gold { background: linear-gradient(135deg, #f59e0b, #d97706); color: black; padding: 15px; font-size: 14px; width: 100%; margin-top: 20px;}
+
+        /* Card Meja */
+        .room-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .room-card { background: rgba(0,0,0,0.6); border: 1px solid var(--gold); border-radius: 10px; padding: 15px; }
+        .room-card h4 { margin: 0 0 10px 0; color: var(--gold); font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px;}
+        .room-player-list { font-size: 11px; margin-bottom: 10px; line-height: 1.6; }
+        .room-status { font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 10px; background: #334155; }
+
+        #login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-dark); z-index:9999; display:flex; justify-content:center; align-items:center; }
+        .login-box { background: var(--panel-bg); padding: 30px; border-radius: 15px; text-align: center; border: 1px solid var(--gold); }
+        .login-box input { padding: 10px; border-radius: 8px; border: none; text-align: center; font-weight: bold; margin: 10px 0; outline:none; }
+    </style>
+</head>
+<body>
+
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2 style="color:var(--gold); margin-top:0;">LOGIN PANITIA</h2>
+            <input type="password" id="admin-pass" placeholder="Password Panitia">
+            <br>
+            <button class="btn btn-green" onclick="checkAdmin()">MASUK</button>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>DASHBOARD PANITIA</h1>
+        <p style="margin: 5px 0 0 0; font-size: 14px; color: #cbd5e1;">Total Terverifikasi: <span id="count-approved" style="color:var(--neon-green); font-weight:bold;">0</span> Pemain</p>
+    </div>
+
+    <div class="dashboard-grid">
+        <div>
+            <div class="panel" style="margin-bottom: 20px; max-height: 40vh;">
+                <div class="panel-title">
+                    MENUNGGU VERIFIKASI
+                    <span id="count-pending" style="background:var(--gold); color:black; padding:2px 8px; border-radius:10px; font-size:12px;">0</span>
+                </div>
+                <div id="list-pending"></div>
+            </div>
+
+            <div class="panel" style="margin-bottom: 20px; max-height: 40vh;">
+                <div class="panel-title">
+                    SIAP BERTANDING
+                    <span id="count-ready" style="background:var(--neon-green); color:black; padding:2px 8px; border-radius:10px; font-size:12px;">0</span>
+                </div>
+                <div id="list-approved"></div>
+            </div>
+
+            <div class="panel" style="background: rgba(15, 23, 42, 0.95); border-color: var(--gold);">
+                <h3 style="color:var(--gold); margin-top:0; text-align:center;">KONTROL TURNAMEN</h3>
+                <button class="btn btn-gold" id="btn-start" onclick="mulaiKualifikasi()">🔥 MULAI KUALIFIKASI 🔥</button>
+                <button class="btn btn-red" style="padding: 15px; font-size: 14px; width: 100%; margin-top: 10px;" onclick="tutupLigaPaksa()">🛑 TUTUP LIGA PAKSA (FORCE END)</button>
+            </div>
+        </div>
+
+        <div class="panel" style="max-height: 90vh;">
+            <div class="panel-title">
+                LIVE MONITORING MEJA
+                <span id="count-rooms" style="background:var(--blue); color:white; padding:2px 8px; border-radius:10px; font-size:12px;">0</span>
+            </div>
+            <p style="font-size:11px; color:#cbd5e1; margin-top:5px;">Sistem akan mengalihkan pemain AFK menjadi Bot setelah 15 menit.</p>
+            <div id="room-monitor-container" class="room-grid">
+                </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBSOOCaSfzAELvbtrEFOxdR8nYsKWlCnag",
+            authDomain: "remi-suroboyoan.firebaseapp.com",
+            databaseURL: "https://remi-suroboyoan-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "remi-suroboyoan"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.checkAdmin = () => {
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === "ADMINLUNA") { 
+                document.getElementById('login-overlay').style.display = 'none';
+                startWatchdog(); // Mulai timer 15 menit AFK
+            } else { alert("Password Salah!"); }
+        };
+
+        let approvedPlayersList = [];
+
+        // 1. LISTENER PENDAFTARAN
+        onValue(ref(db, 'luna_liga/participants'), (snap) => {
+            const listPending = document.getElementById('list-pending');
+            const listApproved = document.getElementById('list-approved');
+            
+            listPending.innerHTML = ''; listApproved.innerHTML = '';
+            let countPending = 0; let countApproved = 0;
+            approvedPlayersList = [];
+
+            if (snap.exists()) {
+                const data = snap.val();
+                for (let username in data) {
+                    const p = data[username];
+                    const html = `
+                        <div class="player-item ${p.status}">
+                            <div class="player-info">
+                                <span class="player-name">${username}</span>
+                                <span class="player-pin">PIN: ${p.pin} ${p.current_room ? `| 🏠 ${p.current_room}` : ''}</span>
+                            </div>
+                            <div class="action-btns">
+                                ${p.status === 'pending' ? `<button class="btn btn-green" onclick="updateStatus('${username}', 'approved')">✔</button>` : ''}
+                                <button class="btn btn-red" onclick="hapusPemain('${username}')">✖</button>
+                            </div>
+                        </div>
+                    `;
+                    if (p.status === 'pending') { listPending.innerHTML += html; countPending++; } 
+                    else if (p.status === 'approved') { listApproved.innerHTML += html; countApproved++; approvedPlayersList.push({ username: username, ...p }); }
+                }
+            }
+            document.getElementById('count-pending').innerText = countPending;
+            document.getElementById('count-ready').innerText = countApproved;
+            document.getElementById('count-approved').innerText = countApproved;
+        });
+
+        window.updateStatus = (username, newStatus) => {
+            if(confirm(`Yakin ingin ${newStatus === 'approved' ? 'Menerima' : 'Menolak'} ${username}?`)){
+                update(ref(db, `luna_liga/participants/${username}`), { status: newStatus });
+            }
+        };
+
+        window.hapusPemain = (username) => {
+            if(confirm(`Keluarkan ${username} dari sistem Liga?`)){ remove(ref(db, `luna_liga/participants/${username}`)); }
+        };
+
+        // 2. LISTENER LIVE ROOMS
+        onValue(ref(db, 'remi_rooms'), (snap) => {
+            const container = document.getElementById('room-monitor-container');
+            container.innerHTML = '';
+            let roomCount = 0;
+
+            if (snap.exists()) {
+                snap.forEach(roomSnap => {
+                    if (roomSnap.key.startsWith("KUALIFIKASI_MEJA_")) {
+                        roomCount++;
+                        let room = roomSnap.val();
+                        let pListHtml = "";
+                        
+                        // Sort leaderboard by score
+                        let sortedP = [...(room.players || [])].sort((a,b) => (room.globalScores?.[b.id]||0) - (room.globalScores?.[a.id]||0));
+                        
+                        sortedP.forEach(p => {
+                            let score = room.globalScores ? (room.globalScores[p.id] || 0) : 0;
+                            let statusIkon = "⏳"; // pending
+                            if (p.status_aktivasi === 'active') statusIkon = "🟢"; // main
+                            if (p.status_aktivasi === 'bot_mode') statusIkon = "🤖"; // afk jd bot
+                            
+                            pListHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.05); padding:2px 0;">
+                                <span>${statusIkon} ${p.name}</span> <b style="color:${score < 0 ? 'var(--red-suit)':'var(--neon-green)'}">${score}</b>
+                            </div>`;
+                        });
+
+                        container.innerHTML += `
+                            <div class="room-card">
+                                <h4>${roomSnap.key} <span class="room-status" style="float:right;">${room.status}</span></h4>
+                                <div class="room-player-list">${pListHtml}</div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            document.getElementById('count-rooms').innerText = roomCount;
+        });
+
+        // 3. MULAI LIGA
+        window.mulaiKualifikasi = async () => {
+            if (approvedPlayersList.length === 0) { alert("Belum ada pemain yang terverifikasi!"); return; }
+            if (!confirm(`Mulai kualifikasi untuk ${approvedPlayersList.length} pemain?\nSistem akan membuat meja dan menunggu konfirmasi pemain.`)) return;
+
+            let targetGame = approvedPlayersList.length > 28 ? "12_RONDE" : 250;
+            let shuffled = [...approvedPlayersList].sort(() => Math.random() - 0.5); // Fast shuffle
+            let chunks = [];
+            for (let i = 0; i < shuffled.length; i += 4) chunks.push(shuffled.slice(i, i + 4));
+
+            let updates = {};
+            updates[`luna_liga/status`] = "QUALIFIER";
+            let now = Date.now();
+
+            chunks.forEach((group, index) => {
+                let roomId = `KUALIFIKASI_MEJA_${index + 1}`;
+                let roomPlayers = [];
+                group.forEach(player => {
+                    roomPlayers.push({
+                        id: player.username, name: player.username,
+                        isBot: false, 
+                        status_aktivasi: "pending", // PEMAIN WAJIB KONFIRMASI DULU
+                        bot_substituted: false,
+                        hand: [], discard: [], melds: [], score: 0, knockVictims: [], hasDrawnFromDeck: false, pendingPenalties: []
+                    });
+                    updates[`luna_liga/participants/${player.username}/current_room`] = roomId;
+                });
+
+                updates[`luna_liga/rooms/${roomId}`] = {
+                    status: "LOBBY_LIGA", host: "PANITIA", targetScore: targetGame, deckMultiplier: 1,
+                    players: roomPlayers, playDirection: 1, currentTurnSlot: 0, jokerCursed: [],
+                    waktuMulaiRoom: now // UNTUK MENGHITUNG 15 MENIT AFK
+                };
+            });
+
+            try {
+                await update(ref(db), updates);
+                alert(`BERHASIL!\n${chunks.length} Meja Kualifikasi terbentuk. Menunggu pemain menekan KONFIRMASI di layar mereka.`);
+            } catch (error) { alert("Gagal membuat meja Kualifikasi."); }
+        };
+
+        // 4. TUTUP LIGA PAKSA
+        window.tutupLigaPaksa = () => {
+            if(!confirm("⚠️ PERINGATAN KERAS ⚠️\nYakin ingin menghentikan seluruh pertandingan kualifikasi sekarang juga?")) return;
+            
+            get(ref(db, 'remi_rooms')).then(snap => {
+                let updates = {};
+                snap.forEach(room => {
+                    if (room.key.startsWith("KUALIFIKASI_MEJA_")) {
+                        updates[`remi_rooms/${room.key}/status`] = "ENDED";
+                    }
+                });
+                update(ref(db), updates).then(() => alert("Seluruh Meja berhasil dihentikan."));
+            });
+        };
+
+        // 5. WATCHDOG: AUTO-BOT SETELAH 15 MENIT AFK
+        function startWatchdog() {
+            setInterval(() => {
+                get(ref(db, 'remi_rooms')).then(snap => {
+                    if (!snap.exists()) return;
+                    let updates = {};
+                    let now = Date.now();
+                    const BATAS_WAKTU = 15 * 60 * 1000; // 15 Menit
+
+                    snap.forEach(roomSnap => {
+                        let room = roomSnap.val();
+                        if (roomSnap.key.startsWith("KUALIFIKASI_MEJA_") && room.status !== 'ENDED') {
+                            let roomWaktu = room.waktuMulaiRoom || now;
+                            if (now - roomWaktu > BATAS_WAKTU) {
+                                (room.players || []).forEach((p, idx) => {
+                                    if (p.status_aktivasi === 'pending') {
+                                        // Paksa jadi BOT agar game jalan
+                                        updates[`remi_rooms/${roomSnap.key}/players/${idx}/status_aktivasi`] = 'bot_mode';
+                                        updates[`remi_rooms/${roomSnap.key}/players/${idx}/isBot`] = true;
+                                        updates[`remi_rooms/${roomSnap.key}/players/${idx}/bot_substituted`] = true;
+                                    }
+                                });
+                            }
+                        }
+                    });
+                    if (Object.keys(updates).length > 0) update(ref(db), updates);
+                });
+            }, 30000); // Cek setiap 30 detik
+        }
+    </script>
+</body>
+</html>
