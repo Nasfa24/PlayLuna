@@ -537,11 +537,21 @@
 
         const suitNames = {'♠': 'Waru', '♣': 'Keriting', '♥': 'Hati', '♦': 'Wajik'};
 
+        // ---> TAMBAHAN VARIABEL YANG SEBELUMNYA HILANG <---
+        const SUITS = ['♥', '♦', '♠', '♣'];
+        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const BOT_NAMES = ['LUNA Bot', 'Suro Bot', 'Boyo Bot', 'AI Bot']; 
+
         window.botTurnTimer = null; 
 
         // ================== LOGIKA REFRESH PAGE ==================
         window.refreshGame = function() {
             location.reload();
+        };
+
+        // ---> TAMBAHAN FUNGSI YANG SEBELUMNYA HILANG <---
+        window.takeOverBot = function(botIndex) {
+            showAlertModal("INFO", "Fitur mengambil alih Bot sedang dalam tahap pengembangan.");
         };
 
         // ================== AI ENGINE: CARD TRACKER ==================
