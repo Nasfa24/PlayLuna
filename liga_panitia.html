@@ -20,7 +20,7 @@
         .header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;}
         .header h1 { color: var(--gold); margin: 0; font-weight: 800; letter-spacing: 2px;}
         
-        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1000px; margin: 0 auto; }
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1200px; margin: 0 auto; }
         @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
         
         .panel {
@@ -52,7 +52,13 @@
         .btn-red { background: var(--red-suit); color: white; }
         .btn-gold { background: linear-gradient(135deg, #f59e0b, #d97706); color: black; padding: 15px; font-size: 14px; width: 100%; margin-top: 20px;}
 
-        /* Modal Login Panitia */
+        /* Card Meja */
+        .room-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .room-card { background: rgba(0,0,0,0.6); border: 1px solid var(--gold); border-radius: 10px; padding: 15px; }
+        .room-card h4 { margin: 0 0 10px 0; color: var(--gold); font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 5px;}
+        .room-player-list { font-size: 11px; margin-bottom: 10px; line-height: 1.6; }
+        .room-status { font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 10px; background: #334155; }
+
         #login-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-dark); z-index:9999; display:flex; justify-content:center; align-items:center; }
         .login-box { background: var(--panel-bg); padding: 30px; border-radius: 15px; text-align: center; border: 1px solid var(--gold); }
         .login-box input { padding: 10px; border-radius: 8px; border: none; text-align: center; font-weight: bold; margin: 10px 0; outline:none; }
@@ -60,7 +66,6 @@
 </head>
 <body>
 
-    <!-- Kunci Keamanan Sederhana untuk Panitia -->
     <div id="login-overlay">
         <div class="login-box">
             <h2 style="color:var(--gold); margin-top:0;">LOGIN PANITIA</h2>
@@ -76,36 +81,38 @@
     </div>
 
     <div class="dashboard-grid">
-        <!-- Kolom Pendaftar -->
-        <div class="panel">
-            <div class="panel-title">
-                MENUNGGU VERIFIKASI
-                <span id="count-pending" style="background:var(--gold); color:black; padding:2px 8px; border-radius:10px; font-size:12px;">0</span>
-            </div>
-            <div id="list-pending">
-                <!-- Data di-inject via JS -->
-            </div>
-        </div>
-
-        <!-- Kolom Terverifikasi & Kontrol -->
         <div>
-            <div class="panel" style="margin-bottom: 20px;">
+            <div class="panel" style="margin-bottom: 20px; max-height: 40vh;">
+                <div class="panel-title">
+                    MENUNGGU VERIFIKASI
+                    <span id="count-pending" style="background:var(--gold); color:black; padding:2px 8px; border-radius:10px; font-size:12px;">0</span>
+                </div>
+                <div id="list-pending"></div>
+            </div>
+
+            <div class="panel" style="margin-bottom: 20px; max-height: 40vh;">
                 <div class="panel-title">
                     SIAP BERTANDING
                     <span id="count-ready" style="background:var(--neon-green); color:black; padding:2px 8px; border-radius:10px; font-size:12px;">0</span>
                 </div>
-                <div id="list-approved">
-                    <!-- Data di-inject via JS -->
-                </div>
+                <div id="list-approved"></div>
             </div>
 
             <div class="panel" style="background: rgba(15, 23, 42, 0.95); border-color: var(--gold);">
                 <h3 style="color:var(--gold); margin-top:0; text-align:center;">KONTROL TURNAMEN</h3>
-                <p style="font-size: 11px; color:#cbd5e1; text-align:center;">
-                    Klik tombol di bawah untuk mengacak kelompok, membuat room otomatis, dan melempar pemain ke arena.
-                </p>
                 <button class="btn btn-gold" id="btn-start" onclick="mulaiKualifikasi()">🔥 MULAI KUALIFIKASI 🔥</button>
+                <button class="btn btn-red" style="padding: 15px; font-size: 14px; width: 100%; margin-top: 10px;" onclick="tutupLigaPaksa()">🛑 TUTUP LIGA PAKSA (FORCE END)</button>
             </div>
+        </div>
+
+        <div class="panel" style="max-height: 90vh;">
+            <div class="panel-title">
+                LIVE MONITORING MEJA
+                <span id="count-rooms" style="background:var(--blue); color:white; padding:2px 8px; border-radius:10px; font-size:12px;">0</span>
+            </div>
+            <p style="font-size:11px; color:#cbd5e1; margin-top:5px;">Sistem akan mengalihkan pemain AFK menjadi Bot setelah 15 menit.</p>
+            <div id="room-monitor-container" class="room-grid">
+                </div>
         </div>
     </div>
 
@@ -122,21 +129,18 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // Security Sederhana
         window.checkAdmin = () => {
             const pass = document.getElementById('admin-pass').value;
-            if (pass === "ADMINLUNA") { // Ganti password sesuai keinginanmu
+            if (pass === "ADMINLUNA") { 
                 document.getElementById('login-overlay').style.display = 'none';
-            } else {
-                alert("Password Salah!");
-            }
+                startWatchdog(); // Mulai timer 15 menit AFK
+            } else { alert("Password Salah!"); }
         };
 
         let approvedPlayersList = [];
 
-        // Realtime Listener untuk Participants
-        const participantsRef = ref(db, 'luna_liga/participants');
-        onValue(participantsRef, (snap) => {
+        // 1. LISTENER PENDAFTARAN
+        onValue(ref(db, 'luna_liga/participants'), (snap) => {
             const listPending = document.getElementById('list-pending');
             const listApproved = document.getElementById('list-approved');
             
@@ -160,18 +164,10 @@
                             </div>
                         </div>
                     `;
-
-                    if (p.status === 'pending') {
-                        listPending.innerHTML += html;
-                        countPending++;
-                    } else if (p.status === 'approved') {
-                        listApproved.innerHTML += html;
-                        countApproved++;
-                        approvedPlayersList.push({ username: username, ...p });
-                    }
+                    if (p.status === 'pending') { listPending.innerHTML += html; countPending++; } 
+                    else if (p.status === 'approved') { listApproved.innerHTML += html; countApproved++; approvedPlayersList.push({ username: username, ...p }); }
                 }
             }
-
             document.getElementById('count-pending').innerText = countPending;
             document.getElementById('count-ready').innerText = countApproved;
             document.getElementById('count-approved').innerText = countApproved;
@@ -184,78 +180,133 @@
         };
 
         window.hapusPemain = (username) => {
-            if(confirm(`Keluarkan ${username} dari sistem Liga? Data tidak bisa dikembalikan.`)){
-                remove(ref(db, `luna_liga/participants/${username}`));
-            }
+            if(confirm(`Keluarkan ${username} dari sistem Liga?`)){ remove(ref(db, `luna_liga/participants/${username}`)); }
         };
 
+        // 2. LISTENER LIVE ROOMS
+        onValue(ref(db, 'remi_rooms'), (snap) => {
+            const container = document.getElementById('room-monitor-container');
+            container.innerHTML = '';
+            let roomCount = 0;
+
+            if (snap.exists()) {
+                snap.forEach(roomSnap => {
+                    if (roomSnap.key.startsWith("KUALIFIKASI_MEJA_")) {
+                        roomCount++;
+                        let room = roomSnap.val();
+                        let pListHtml = "";
+                        
+                        // Sort leaderboard by score
+                        let sortedP = [...(room.players || [])].sort((a,b) => (room.globalScores?.[b.id]||0) - (room.globalScores?.[a.id]||0));
+                        
+                        sortedP.forEach(p => {
+                            let score = room.globalScores ? (room.globalScores[p.id] || 0) : 0;
+                            let statusIkon = "⏳"; // pending
+                            if (p.status_aktivasi === 'active') statusIkon = "🟢"; // main
+                            if (p.status_aktivasi === 'bot_mode') statusIkon = "🤖"; // afk jd bot
+                            
+                            pListHtml += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.05); padding:2px 0;">
+                                <span>${statusIkon} ${p.name}</span> <b style="color:${score < 0 ? 'var(--red-suit)':'var(--neon-green)'}">${score}</b>
+                            </div>`;
+                        });
+
+                        container.innerHTML += `
+                            <div class="room-card">
+                                <h4>${roomSnap.key} <span class="room-status" style="float:right;">${room.status}</span></h4>
+                                <div class="room-player-list">${pListHtml}</div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            document.getElementById('count-rooms').innerText = roomCount;
+        });
+
+        // 3. MULAI LIGA
         window.mulaiKualifikasi = async () => {
-            if (approvedPlayersList.length === 0) {
-                alert("Belum ada pemain yang terverifikasi!"); return;
-            }
-            
-            if (!confirm(`Mulai kualifikasi untuk ${approvedPlayersList.length} pemain?\nSistem akan mengacak dan melempar mereka ke Arena.`)) return;
+            if (approvedPlayersList.length === 0) { alert("Belum ada pemain yang terverifikasi!"); return; }
+            if (!confirm(`Mulai kualifikasi untuk ${approvedPlayersList.length} pemain?\nSistem akan membuat meja dan menunggu konfirmasi pemain.`)) return;
 
-            // 1. Tentukan Format berdasarkan Aturan
             let targetGame = approvedPlayersList.length > 28 ? "12_RONDE" : 250;
-            
-            // 2. Acak Pemain (Fisher-Yates Shuffle)
-            let shuffled = [...approvedPlayersList];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-
-            // 3. Bagi ke dalam kelompok maksimal 4 orang
+            let shuffled = [...approvedPlayersList].sort(() => Math.random() - 0.5); // Fast shuffle
             let chunks = [];
-            for (let i = 0; i < shuffled.length; i += 4) {
-                chunks.push(shuffled.slice(i, i + 4));
-            }
+            for (let i = 0; i < shuffled.length; i += 4) chunks.push(shuffled.slice(i, i + 4));
 
-            // 4. Update Database
             let updates = {};
-            
-            // Set status global liga
             updates[`luna_liga/status`] = "QUALIFIER";
+            let now = Date.now();
 
             chunks.forEach((group, index) => {
                 let roomId = `KUALIFIKASI_MEJA_${index + 1}`;
-                
-                // Buat Data Room
                 let roomPlayers = [];
                 group.forEach(player => {
                     roomPlayers.push({
-                        id: player.username, // Gunakan username sbg ID agar sinkron
-                        name: player.username,
-                        isBot: false,
-                        hand: [], discard: [], melds: [], score: 0,
-                        knockVictims: [], hasDrawnFromDeck: false, pendingPenalties: []
+                        id: player.username, name: player.username,
+                        isBot: false, 
+                        status_aktivasi: "pending", // PEMAIN WAJIB KONFIRMASI DULU
+                        bot_substituted: false,
+                        hand: [], discard: [], melds: [], score: 0, knockVictims: [], hasDrawnFromDeck: false, pendingPenalties: []
                     });
-                    
-                    // Update current_room pemain agar layar mereka langsung Pindah!
                     updates[`luna_liga/participants/${player.username}/current_room`] = roomId;
                 });
 
                 updates[`luna_liga/rooms/${roomId}`] = {
-                    status: "LOBBY_LIGA", // Beri waktu sebelum game benar-benar mulai
-                    host: "PANITIA", // Tidak ada host pemain, Panitia yg pegang kendali
-                    targetScore: targetGame,
-                    deckMultiplier: 1, // Kualifikasi cukup 1 Dek
-                    players: roomPlayers,
-                    playDirection: 1,
-                    currentTurnSlot: 0,
-                    jokerCursed: []
+                    status: "LOBBY_LIGA", host: "PANITIA", targetScore: targetGame, deckMultiplier: 1,
+                    players: roomPlayers, playDirection: 1, currentTurnSlot: 0, jokerCursed: [],
+                    waktuMulaiRoom: now // UNTUK MENGHITUNG 15 MENIT AFK
                 };
             });
 
             try {
                 await update(ref(db), updates);
-                alert(`BERHASIL!\n${chunks.length} Meja Kualifikasi terbentuk.\nPemain di Lobby akan otomatis berpindah ke Arena.`);
-            } catch (error) {
-                console.error(error);
-                alert("Gagal membuat meja Kualifikasi.");
-            }
+                alert(`BERHASIL!\n${chunks.length} Meja Kualifikasi terbentuk. Menunggu pemain menekan KONFIRMASI di layar mereka.`);
+            } catch (error) { alert("Gagal membuat meja Kualifikasi."); }
         };
+
+        // 4. TUTUP LIGA PAKSA
+        window.tutupLigaPaksa = () => {
+            if(!confirm("⚠️ PERINGATAN KERAS ⚠️\nYakin ingin menghentikan seluruh pertandingan kualifikasi sekarang juga?")) return;
+            
+            get(ref(db, 'remi_rooms')).then(snap => {
+                let updates = {};
+                snap.forEach(room => {
+                    if (room.key.startsWith("KUALIFIKASI_MEJA_")) {
+                        updates[`remi_rooms/${room.key}/status`] = "ENDED";
+                    }
+                });
+                update(ref(db), updates).then(() => alert("Seluruh Meja berhasil dihentikan."));
+            });
+        };
+
+        // 5. WATCHDOG: AUTO-BOT SETELAH 15 MENIT AFK
+        function startWatchdog() {
+            setInterval(() => {
+                get(ref(db, 'remi_rooms')).then(snap => {
+                    if (!snap.exists()) return;
+                    let updates = {};
+                    let now = Date.now();
+                    const BATAS_WAKTU = 15 * 60 * 1000; // 15 Menit
+
+                    snap.forEach(roomSnap => {
+                        let room = roomSnap.val();
+                        if (roomSnap.key.startsWith("KUALIFIKASI_MEJA_") && room.status !== 'ENDED') {
+                            let roomWaktu = room.waktuMulaiRoom || now;
+                            if (now - roomWaktu > BATAS_WAKTU) {
+                                (room.players || []).forEach((p, idx) => {
+                                    if (p.status_aktivasi === 'pending') {
+                                        // Paksa jadi BOT agar game jalan
+                                        updates[`remi_rooms/${roomSnap.key}/players/${idx}/status_aktivasi`] = 'bot_mode';
+                                        updates[`remi_rooms/${roomSnap.key}/players/${idx}/isBot`] = true;
+                                        updates[`remi_rooms/${roomSnap.key}/players/${idx}/bot_substituted`] = true;
+                                    }
+                                });
+                            }
+                        }
+                    });
+                    if (Object.keys(updates).length > 0) update(ref(db), updates);
+                });
+            }, 30000); // Cek setiap 30 detik
+        }
     </script>
 </body>
 </html>

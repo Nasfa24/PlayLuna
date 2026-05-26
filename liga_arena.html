@@ -82,6 +82,15 @@
         .modal-actions { display: flex; gap: 10px; justify-content: center; }
         .modal-actions .btn { flex: 1; margin: 0; }
 
+        /* PRE-GAME OVERLAY UNTUK KONFIRMASI */
+        #pre-game-overlay { z-index: 9500; }
+        .pre-game-box { padding: 40px 20px; }
+        .pre-game-box input { 
+            width: 100%; padding: 15px; margin: 15px 0; border-radius: 12px; 
+            border: 2px solid var(--gold); background: rgba(0,0,0,0.5); color: white; 
+            text-align: center; font-size: 18px; letter-spacing: 5px; font-weight: bold; outline: none; 
+        }
+
         /* UI SHOWDOWN CARDS */
         .showdown-player { background: rgba(0,0,0,0.4); padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); }
         .showdown-name { font-weight: bold; color: white; font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
@@ -316,6 +325,11 @@
 
     <div id="blood-screen" class="blood-overlay hidden"></div>
     <div id="confetti-container" class="hidden"></div>
+
+    <div id="pre-game-overlay" class="modal-overlay-bg hidden">
+        <div class="custom-modal pre-game-box" id="pre-game-content">
+            </div>
+    </div>
 
     <div id="modal-panduan" class="modal-overlay-bg hidden" style="z-index: 9999;">
         <div class="panel" style="max-width: 400px; text-align: left; padding: 20px; width: 95%;">
@@ -767,39 +781,6 @@
                 if (deadFaces.length > 0) return deadFaces[0];
             }
             return null;
-        }
-
-        function defensiveRadar(game, botIdx, hand) {
-            const forbiddenCards = new Set();
-            const dir = game.playDirection || 1;
-
-            game.players.forEach((p, pIdx) => {
-                if (pIdx === botIdx) return;
-                const pickups = cardTracker.playerPickups[pIdx] || [];
-                pickups.forEach(pickedCard => {
-                    const pickedVal = getNumVal(pickedCard.rank);
-                    if (pickedVal === null) return;
-                    for (let offset = -2; offset <= 2; offset++) {
-                        const neighborRank = valToRank(pickedVal + offset);
-                        if (neighborRank) {
-                            forbiddenCards.add(`${neighborRank}_${pickedCard.suit}`);
-                        }
-                    }
-                });
-            });
-
-            game.players.forEach((p, pIdx) => {
-                if (pIdx === botIdx) return;
-                (p.melds || []).flat().forEach(meldCard => {
-                    forbiddenCards.add(`ANY_${meldCard.suit}`);
-                });
-            });
-
-            return hand.filter(c => {
-                const key1 = `${c.rank}_${c.suit}`;
-                const key2 = `ANY_${c.suit}`;
-                return !forbiddenCards.has(key1) && !forbiddenCards.has(key2);
-            });
         }
 
         function autoMeldStrategy(game, botIdx, handInfo) {
@@ -1256,9 +1237,131 @@
             return game;
         }
 
+        // ================== LOGIKA NEW WORKFLOW LIGA ==================
+        
+        window.konfirmasiMasuk = () => {
+            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), game => {
+                if(game && game.players[mySlotIndex]) {
+                    game.players[mySlotIndex].status_aktivasi = 'active';
+                    game.players[mySlotIndex].waktu_konfirmasi = Date.now();
+                }
+                return game;
+            }).then(() => {
+                document.getElementById('pre-game-overlay').classList.add('hidden');
+            });
+        };
+
+        window.ambilAlihBot = async () => {
+            let pinInput = document.getElementById('takeover-pin').value;
+            let dbPin = (await get(ref(db, `luna_liga/participants/${myName}/pin`))).val();
+            
+            if(pinInput === dbPin) {
+                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), game => {
+                    if(game && game.players[mySlotIndex]) {
+                        game.players[mySlotIndex].status_aktivasi = 'active';
+                        game.players[mySlotIndex].isBot = false;
+                        game.players[mySlotIndex].bot_substituted = false;
+                    }
+                    return game;
+                }).then(() => {
+                    document.getElementById('pre-game-overlay').classList.add('hidden');
+                    alert("Berhasil! Anda kini mengambil alih kursi ini.");
+                });
+            } else { alert("PIN SALAH!"); }
+        };
+
+        function showPreGameOverlay(status) {
+            const overlay = document.getElementById('pre-game-overlay');
+            const content = document.getElementById('pre-game-content');
+            overlay.classList.remove('hidden');
+
+            if (status === 'pending') {
+                content.innerHTML = `
+                    <h2 style="color:var(--neon-green); margin-top:0;">MEJA SIAP!</h2>
+                    <p style="font-size:12px; color:#cbd5e1;">Meja pertandingan Kualifikasi Anda sudah dibuat oleh Panitia. Silakan konfirmasi untuk masuk.</p>
+                    <button class="btn btn-gold" style="padding:15px; font-size:16px;" onclick="konfirmasiMasuk()">MASUK MEJA SEKARANG</button>
+                `;
+            } else if (status === 'bot_mode') {
+                content.innerHTML = `
+                    <h2 style="color:var(--red-suit); margin-top:0;">ANDA TERLAMBAT</h2>
+                    <p style="font-size:12px; color:#cbd5e1;">Karena AFK, Anda sedang digantikan oleh Bot. Masukkan PIN untuk mengambil alih sisa ronde.</p>
+                    <input type="password" id="takeover-pin" placeholder="PIN (4 Angka)" maxlength="4" style="letter-spacing:5px;">
+                    <button class="btn btn-blue" style="padding:15px; font-size:14px;" onclick="ambilAlihBot()">AMBIL ALIH KENDALI</button>
+                    <button class="btn btn-red" onclick="resetLocalData()">KEMBALI KE LOBBY</button>
+                `;
+            }
+        }
+
+        let myName = localStorage.getItem("liga_username");
+        let myPlayerId = myName; 
+        let currentRoomId = localStorage.getItem("remi_liga_room");
+        let amIHost = false; 
+        let mySlotIndex = -1; 
+        let selectedCardIndices = []; 
+        let isMyTurn = false;
+        let turnPhase = ""; 
+        let currentJokerRank = "";
+        let hasFlashedBlood = false; 
+
+        window.onload = () => {
+            if (!myName || !currentRoomId) { window.location.href = "liga.html"; return; }
+            enterLobby(currentRoomId, false);
+        };
+
+        window.resetLocalData = () => {
+            showConfirmModal("KELUAR ARENA?", "Kembali ke Lobby Liga? Anda akan otomatis masuk lagi jika ruangan belum selesai.", () => {
+                localStorage.removeItem("remi_liga_room"); window.location.href = "liga.html";
+            });
+        };
+
+        function enterLobby(roomId, isHost) {
+            currentRoomId = roomId; amIHost = isHost;
+            document.getElementById('display-kode-room').innerText = roomId;
+
+            onValue(ref(db, `remi_rooms/${roomId}`), snap => {
+                if(!snap.exists()) { resetLocalData(); return; }
+                const game = snap.val();
+
+                // HANDLE KONFIRMASI / TAKEOVER SEBELUM RENDER MEJA
+                if (game.status === "LOBBY_LIGA" || game.status === "PLAYING") {
+                    mySlotIndex = game.players.findIndex(p => p.id === myPlayerId);
+                    if (mySlotIndex !== -1) {
+                        let myStatus = game.players[mySlotIndex].status_aktivasi;
+                        if (myStatus === 'pending' || myStatus === 'bot_mode') {
+                            document.getElementById('screen-menu').classList.add('hidden');
+                            document.getElementById('game-ui').classList.add('hidden');
+                            showPreGameOverlay(myStatus);
+                            return; // Stop rendering table until confirmed
+                        } else {
+                            document.getElementById('pre-game-overlay').classList.add('hidden');
+                        }
+                    }
+                }
+                
+                const list = document.getElementById('player-list'); list.innerHTML = "";
+                if(game.players) {
+                    game.players.forEach((p, idx) => {
+                        list.innerHTML += `<li style="padding:8px 0; font-weight:600; color:#cbd5e1; border-bottom:1px solid rgba(255,255,255,0.1);">${idx+1}. ${p.name} ${p.id === game.host ? '👑' : ''}</li>`;
+                    });
+                }
+
+                if (game.status === "PLAYING") startGameUI(game);
+                
+                if (game.status === "ROUND_ENDED") {
+                    document.getElementById('game-ui').classList.add('hidden');
+                    renderShowdown(game);
+                }
+
+                if (game.status === "ENDED") { 
+                    document.getElementById('game-ui').classList.add('hidden');
+                    document.getElementById('screen-menu').classList.add('hidden');
+                    showMatchWinner(game, true); 
+                }
+            });
+        }
+
         function renderShowdown(game) {
             let html = `<div style="text-align:center; font-size:14px; margin-bottom:15px; color:var(--neon-green); font-weight:800;">${game.roundReason}</div>`;
-            
             if(game.roundReason.includes("MENUTUP DENGAN KARTU")) { blastConfetti(); }
 
             let sortedPlayers = [...game.players].sort((a,b) => (b.lastRoundScore||0) - (a.lastRoundScore||0)); 
@@ -1310,7 +1413,6 @@
                     });
                     html += `</div>`;
                 }
-
                 html += `</div></div>`;
             });
 
@@ -1347,94 +1449,6 @@
             });
         };
 
-        let myName = localStorage.getItem("liga_username");
-        let myPlayerId = myName; 
-        let currentRoomId = localStorage.getItem("remi_liga_room");
-        let amIHost = false; 
-        let mySlotIndex = -1; 
-        let selectedCardIndices = []; 
-        let isMyTurn = false;
-        let turnPhase = ""; 
-        let currentJokerRank = "";
-        let hasFlashedBlood = false; 
-
-        window.onload = () => {
-            if (!myName || !currentRoomId) {
-                window.location.href = "liga.html";
-                return;
-            }
-            enterLobby(currentRoomId, false);
-        };
-
-        window.resetLocalData = () => {
-            showConfirmModal("KELUAR ARENA?", "Kembali ke Lobby Liga? Anda akan otomatis masuk lagi jika ruangan belum selesai.", () => {
-                localStorage.removeItem("remi_liga_room");
-                window.location.href = "liga.html";
-            });
-        };
-
-        function enterLobby(roomId, isHost) {
-            currentRoomId = roomId; amIHost = isHost;
-            document.getElementById('display-kode-room').innerText = roomId;
-
-            onValue(ref(db, `remi_rooms/${roomId}`), snap => {
-                if(!snap.exists()) { resetLocalData(); return; }
-                const game = snap.val();
-                
-                const list = document.getElementById('player-list'); list.innerHTML = "";
-                if(game.players) {
-                    game.players.forEach((p, idx) => {
-                        list.innerHTML += `<li style="padding:8px 0; font-weight:600; color:#cbd5e1; border-bottom:1px solid rgba(255,255,255,0.1);">${idx+1}. ${p.name} ${p.id === game.host ? '👑' : ''}</li>`;
-                    });
-                }
-
-                if (game.status === "PLAYING") startGameUI(game);
-                
-                if (game.status === "ROUND_ENDED") {
-                    document.getElementById('game-ui').classList.add('hidden');
-                    renderShowdown(game);
-                }
-
-                if (game.status === "ENDED") { 
-                    document.getElementById('game-ui').classList.add('hidden');
-                    document.getElementById('screen-menu').classList.add('hidden');
-                    showMatchWinner(game, true); 
-                }
-            });
-        }
-
-        function renderCardHTML(card, isTrueJoker = false) {
-            let s = card.suit;
-            let p = `<div class="pip">${s}</div>`;   
-            let pd = `<div class="pip pd">${s}</div>`; 
-            let centerContent = '';
-
-            if (['J', 'Q', 'K'].includes(card.rank)) {
-                let face = card.rank === 'K' ? '🤴' : (card.rank === 'Q' ? '👸' : '💂');
-                centerContent = `<div class="card-face-icon">${face}</div>`;
-            } 
-            else if (card.rank === 'A') {
-                centerContent = `<div class="card-ace-icon">${s}</div>`;
-            } 
-            else {
-                let count = parseInt(card.rank);
-                if(count === 2) centerContent = `<div class="pip-col center-col">${p}${pd}</div>`;
-                else if(count === 3) centerContent = `<div class="pip-col center-col">${p}${p}${pd}</div>`;
-                else if(count === 4) centerContent = `<div class="pip-col">${p}${pd}</div><div class="pip-col">${p}${pd}</div>`;
-                else if(count === 5) centerContent = `<div class="pip-col">${p}${pd}</div><div class="pip-abs" style="top:50%; transform:translate(-50%, -50%);">${p}</div><div class="pip-col">${p}${pd}</div>`;
-                else if(count === 6) centerContent = `<div class="pip-col">${p}${p}${pd}</div><div class="pip-col">${p}${p}${pd}</div>`;
-                else if(count === 7) centerContent = `<div class="pip-col">${p}${p}${pd}</div><div class="pip-abs" style="top:25%;">${p}</div><div class="pip-col">${p}${p}${pd}</div>`;
-                else if(count === 8) centerContent = `<div class="pip-col">${p}${p}${pd}</div><div class="pip-abs" style="top:25%;">${p}</div><div class="pip-abs" style="bottom:25%;">${pd}</div><div class="pip-col">${p}${p}${pd}</div>`;
-                else if(count === 9) centerContent = `<div class="pip-col">${p}${p}${pd}${pd}</div><div class="pip-abs" style="top:50%; transform:translate(-50%, -50%);">${p}</div><div class="pip-col">${p}${p}${pd}${pd}</div>`;
-                else if(count === 10) centerContent = `<div class="pip-col">${p}${p}${pd}${pd}</div><div class="pip-abs" style="top:18%;">${p}</div><div class="pip-abs" style="bottom:18%;">${pd}</div><div class="pip-col">${p}${p}${pd}${pd}</div>`;
-                centerContent = `<div class="card-center pips-container">${centerContent}</div>`;
-            }
-
-            return `<div class="card-top">${card.rank}<br>${s}</div>
-                    ${centerContent}
-                    <div class="card-bottom">${card.rank}<br>${s}</div>`;
-        }
-
         function startGameUI(game) {
             document.getElementById('screen-menu').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
@@ -1445,21 +1459,13 @@
             document.getElementById('joker-display').innerText = `🃏 JOKER: ${game.jokerRank}${game.jokerMasterCard ? game.jokerMasterCard.suit : ""}${jName}`;
             
             if(game.jokerMasterCard) {
-                let jRank = game.jokerMasterCard.rank;
-                let jSuit = game.jokerMasterCard.suit;
+                let jRank = game.jokerMasterCard.rank; let jSuit = game.jokerMasterCard.suit;
                 document.getElementById('deck-joker-display').innerHTML = `<div class="mini-card card-joker" style="transform:scale(0.85)">🃏<br><span style="font-size:10px">${jRank}${jSuit}</span></div>`;
             }
 
             document.getElementById('deck-count').innerText = game.deck ? game.deck.length : 0;
             document.getElementById('room-code-display').innerText = `🏠 ARENA: ${currentRoomId}`;
             document.getElementById('dir-indicator').innerText = (game.playDirection === 1) ? "↻" : "↺";
-
-            if (game.jokerCursed && game.jokerCursed.includes(myPlayerId) && !hasFlashedBlood) {
-                hasFlashedBlood = true;
-                const bloodScreen = document.getElementById('blood-screen');
-                bloodScreen.classList.remove('hidden');
-                setTimeout(() => { bloodScreen.classList.add('hidden'); }, 3000);
-            }
 
             if (game.globalScores) {
                 let sortedLb = [...game.players].sort((a,b) => (game.globalScores[b.id]||0) - (game.globalScores[a.id]||0));
@@ -1500,11 +1506,14 @@
                 
                 let pHandLength = pData.hand ? pData.hand.length : 0;
 
+                // TAMBAHAN VISUAL LABEL UNTUK PEMAIN AFK YANG DIGANTIKAN BOT
+                let afkLabel = (pData.isBot && pData.bot_substituted) ? `<br><span style="color:var(--red-suit); font-size:8px;">[AFK - BOT]</span>` : '';
+
                 if(pos !== 'bottom') { 
-                    let nameHtml = `${pData.name} <span style="color:var(--gold); font-size:11px; font-weight:800;">[${pHandLength}]</span>`;
+                    let nameHtml = `${pData.name} <span style="color:var(--gold); font-size:11px; font-weight:800;">[${pHandLength}]</span>${afkLabel}`;
                     document.getElementById(`name-${pos}`).innerHTML = nameHtml; 
                 } else { 
-                    let nameHtml = pData.name;
+                    let nameHtml = `${pData.name}${afkLabel}`;
                     document.getElementById(`my-name`).innerHTML = nameHtml; 
                 }
 
@@ -1550,7 +1559,6 @@
             const myHandDiv = document.getElementById('my-hand');
             myHandDiv.innerHTML = '';
             let centerIndex = (myHand.length - 1) / 2;
-
             let isMobile = window.innerWidth <= 600;
             let spreadAmt = isMobile ? 26 : 36;
             let liftAmt = isMobile ? -25 : -40;
@@ -1564,19 +1572,9 @@
                 let cardElement = document.createElement('div');
                 cardElement.className = `playing-card ${card.color === 'red' ? 'card-red' : 'card-black'} ${isTrueJoker ? 'card-joker' : ''} ${isSelected ? 'selected' : ''} ${isPaired ? 'paired' : ''} ${isFallen ? 'fallen' : ''}`;
                 
-                let offset = index - centerIndex;
-                let tx = offset * spreadAmt;
-                let ty = Math.abs(offset) * (isMobile ? 1.5 : 2);
-                let rot = offset * 4;
-
-                if (isSelected) {
-                    cardElement.classList.add('selected');
-                    cardElement.style.transform = `translate(${tx}px, ${liftAmt}px) scale(1.15) rotate(${rot/2}deg)`;
-                    cardElement.style.zIndex = index + 100; 
-                } else {
-                    cardElement.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
-                    cardElement.style.zIndex = index + 10;
-                }
+                let offset = index - centerIndex; let tx = offset * spreadAmt; let ty = Math.abs(offset) * (isMobile ? 1.5 : 2); let rot = offset * 4;
+                if (isSelected) { cardElement.classList.add('selected'); cardElement.style.transform = `translate(${tx}px, ${liftAmt}px) scale(1.15) rotate(${rot/2}deg)`; cardElement.style.zIndex = index + 100;  } 
+                else { cardElement.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`; cardElement.style.zIndex = index + 10; }
                 
                 cardElement.innerHTML = renderCardHTML(card, isTrueJoker);
                 cardElement.onclick = () => { selectCard(index); };
@@ -1584,36 +1582,32 @@
             });
 
             const actionBtns = document.getElementById('action-buttons');
-            const btnGeserL = document.getElementById('btn-geser-kiri');
-            const btnGeserR = document.getElementById('btn-geser-kanan');
-            const btnBuang = document.getElementById('btn-buang');
-            const btnTurun = document.getElementById('btn-turun');
+            const btnGeserL = document.getElementById('btn-geser-kiri'); const btnGeserR = document.getElementById('btn-geser-kanan');
+            const btnBuang = document.getElementById('btn-buang'); const btnTurun = document.getElementById('btn-turun');
 
             btnTurun.style.display = 'none'; 
-
             if(selectedCardIndices.length > 0) { 
                 actionBtns.classList.add('active'); 
-                
                 if(selectedCardIndices.length >= 3 && isMyTurn) {
                     let selectedCards = selectedCardIndices.map(i => myHand[i]);
-                    if(isValidSingleGroup(selectedCards, game.jokerRank)) {
-                        btnTurun.style.display = 'block';
-                    }
+                    if(isValidSingleGroup(selectedCards, game.jokerRank)) btnTurun.style.display = 'block';
                 }
-
-                if(selectedCardIndices.length > 1) {
-                    btnGeserL.style.display = 'none'; btnGeserR.style.display = 'none'; btnBuang.style.display = 'none';
-                } else {
-                    btnGeserL.style.display = 'block'; btnGeserR.style.display = 'block'; 
-                    btnBuang.style.display = (isMyTurn && turnPhase === 'DISCARD') ? 'block' : 'none';
-                }
+                if(selectedCardIndices.length > 1) { btnGeserL.style.display = 'none'; btnGeserR.style.display = 'none'; btnBuang.style.display = 'none'; } 
+                else { btnGeserL.style.display = 'block'; btnGeserR.style.display = 'block'; btnBuang.style.display = (isMyTurn && turnPhase === 'DISCARD') ? 'block' : 'none'; }
             } else { actionBtns.classList.remove('active'); }
 
             if (window.botTurnTimer) clearTimeout(window.botTurnTimer);
-            if(amIHost && activePlayer && activePlayer.isBot && game.status === "PLAYING") { 
-                window.botTurnTimer = setTimeout(() => { 
-                    playBotTurn(); 
-                }, 800); 
+            
+            // LOGIKA BOT EXECUTION DI LIGA: 
+            // Karena Panitia (Host) tidak ada di ruangan, maka Pemain Manusia Pertama yang AKTIF yang mengeksekusi bot
+            let isBotRunner = false;
+            let activeHumans = game.players.filter(p => !p.isBot && p.status_aktivasi === 'active');
+            if(activeHumans.length > 0 && activeHumans[0].id === myPlayerId) {
+                isBotRunner = true;
+            }
+
+            if(isBotRunner && activePlayer && activePlayer.isBot && game.status === "PLAYING") { 
+                window.botTurnTimer = setTimeout(() => { playBotTurn(); }, 800); 
             }
         }
 
@@ -2131,7 +2125,12 @@
             }).then((result) => {
                 if (result.committed && result.snapshot.exists()) {
                     let updatedGame = result.snapshot.val();
-                    if (amIHost && updatedGame.status === "PLAYING" && updatedGame.players[updatedGame.currentTurnSlot].isBot) {
+                    // Karena ini di LIGA, botRunner yang menjalankan turn lanjutan
+                    let isBotRunner = false;
+                    let activeHumans = updatedGame.players.filter(p => !p.isBot && p.status_aktivasi === 'active');
+                    if(activeHumans.length > 0 && activeHumans[0].id === myPlayerId) isBotRunner = true;
+
+                    if (isBotRunner && updatedGame.status === "PLAYING" && updatedGame.players[updatedGame.currentTurnSlot].isBot) {
                         setTimeout(() => { startGameUI(updatedGame); }, 50);
                     }
                 }
