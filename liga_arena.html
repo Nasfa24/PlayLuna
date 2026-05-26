@@ -1083,6 +1083,8 @@
 
             if (window.botTurnTimer) clearTimeout(window.botTurnTimer);
             
+            // LOGIKA BOT EXECUTION DI LIGA: 
+            // Karena Panitia (Host) tidak ada di ruangan, maka Pemain Manusia Pertama yang AKTIF yang mengeksekusi bot
             let isBotRunner = false;
             let activeHumans = game.players.filter(p => !p.isBot && p.status_aktivasi === 'active');
             if(activeHumans.length > 0 && activeHumans[0].id === myPlayerId) {
@@ -1136,21 +1138,16 @@
                     return;
                 }
 
-                // --- VALIDASI MENCEGAH AUTO-KNOCK TANPA KARTU BUANG ---
                 let testHand = [...myHand];
                 let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                 indicesToRemove.forEach(idx => { testHand.splice(idx, 1); });
                 
-                if (testHand.length === 0) {
-                    showAlertModal("ATURAN TUTUP", "Kamu tidak bisa menurunkan semua kartu! Wajib menyisakan minimal 1 kartu untuk dibuang (Knock).");
-                    return;
+                if (testHand.length <= 1) {
+                    if (!pData.knockVictims || pData.knockVictims.length === 0) {
+                        showAlertModal("HUKUM TUTUP", "DILARANG KERAS! Kamu belum nembak lawan, jadi wajib menyisakan minimal 2 kartu (1 ditahan, 1 dibuang). Formasi 100% jadi akan aman tersimpan sebagai Gantung di tanganmu!");
+                        return;
+                    }
                 }
-                
-                if (testHand.length === 1 && (!pData.knockVictims || pData.knockVictims.length === 0)) {
-                    showAlertModal("HUKUM TUTUP", "DILARANG KERAS! Kamu belum nembak lawan, jadi wajib menahan Gantung (minimal sisa 2 kartu).");
-                    return;
-                }
-                // --------------------------------------------------------
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
                     if(gameTx) {
