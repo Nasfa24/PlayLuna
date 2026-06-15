@@ -537,7 +537,6 @@
 
         const suitNames = {'♠': 'Waru', '♣': 'Keriting', '♥': 'Hati', '♦': 'Wajik'};
 
-        // ---> TAMBAHAN VARIABEL YANG SEBELUMNYA HILANG <---
         const SUITS = ['♥', '♦', '♠', '♣'];
         const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         const BOT_NAMES = ['MANUTH', 'BU DEWI', 'MAS UUTH', 'KAISAR']; 
@@ -549,7 +548,6 @@
             location.reload();
         };
 
-        // ---> TAMBAHAN FUNGSI YANG SEBELUMNYA HILANG <---
         window.takeOverBot = function(botIndex) {
             showAlertModal("INFO", "Fitur mengambil alih Bot sedang dalam tahap pengembangan.");
         };
@@ -1021,7 +1019,6 @@
                 { text: "KEMBALI KE MENU", class: "btn-blue", action: () => resetLocalData() }
             ]);
             
-            // Host mengupdate status ke ENDED jika belum (agar player lain ditarik ke tampilan ini)
             if (amIHost && !isFromEvent && game.status !== "ENDED") {
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (g) => {
                     if (g) g.status = "ENDED";
@@ -1271,13 +1268,14 @@
         }
 
         // =======================================================
-        // LOGIKA BARU: EKSEKUSI DENDA SAAT KNOCK
+        // PERBAIKAN LOGIKA: EKSEKUSI DENDA SAAT KNOCK
         // =======================================================
         function handleRoundEnd(game, knockerIdx, victims, customKnockCard = null) {
             if (!game.globalScores) game.globalScores = {};
             
             let baseKnockValue = 0;
             let knockMsg = "";
+            let dendaNembakMap = {}; // Untuk melacak denda pending tiap pemain
 
             if (knockerIdx !== null) {
                 let knocker = game.players[knockerIdx];
@@ -1311,8 +1309,9 @@
                         let isUsedInMeld = allValidMelds.some(mc => mc.rank === pen.card.rank && mc.suit === pen.card.suit && mc.isFallen === pen.card.isFallen);
                         
                         if (isUsedInMeld) {
-                            let vId = game.players[pen.victimIdx].id;
-                            game.globalScores[vId] -= pen.penalty; // Potong Denda Nembak!
+                            // FIX: Kita melacak potongan denda di sini untuk dieksekusi bersama rScore nanti
+                            if (!dendaNembakMap[pen.victimIdx]) dendaNembakMap[pen.victimIdx] = 0;
+                            dendaNembakMap[pen.victimIdx] += pen.penalty;
                             
                             if (!confirmedVictimIndices.includes(pen.victimIdx)) {
                                 confirmedVictimIndices.push(pen.victimIdx);
@@ -1344,11 +1343,15 @@
                         if (victims && victims.includes(idx)) {
                             rScore -= baseKnockValue; 
                         }
+                        // FIX: Memasukkan denda potong langsung ke rScore agar akumulasi di UI akurat!
+                        if (dendaNembakMap[idx]) {
+                            rScore -= dendaNembakMap[idx];
+                        }
                     }
                 }
                 
                 game.globalScores[p.id] += rScore;
-                p.lastRoundScore = rScore; 
+                p.lastRoundScore = rScore; // Sekarang ini merepresentasikan total denda + sisa kartu sepenuhnya!
             });
             
             if (knockerIdx !== null) { game.playDirection = (game.playDirection || 1) * -1; } 
@@ -1912,7 +1915,6 @@
                     return;
                 }
 
-                // --- VALIDASI MENCEGAH AUTO-KNOCK TANPA KARTU BUANG ---
                 let testHand = [...myHand];
                 let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                 indicesToRemove.forEach(idx => { testHand.splice(idx, 1); });
@@ -1926,7 +1928,6 @@
                     showAlertModal("HUKUM TUTUP", "DILARANG KERAS! Kamu belum nembak lawan, jadi wajib menahan Gantung (minimal sisa 2 kartu).");
                     return;
                 }
-                // --------------------------------------------------------
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
                     if(gameTx) {
@@ -2022,7 +2023,6 @@
                     return;
                 }
 
-                // --- VALIDASI MENCEGAH AUTO-KNOCK (WAJIB SISA 1 KARTU BUANG) ---
                 let dir = game.playDirection || 1;
                 let simSweptCards = [];
                 let currentStepTarget = actualTargetIdx;
@@ -2047,7 +2047,6 @@
                     showAlertModal("ATURAN KNOCK (TUTUP)", "Gagal! Untuk menang, kamu WAJIB menyisakan minimal 1 kartu di tangan untuk DIBUANG ke meja. Jangan rakus!");
                     return;
                 }
-                // -------------------------------------------------------------
 
                 runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (gameTx) => {
                     if(gameTx) {
@@ -2100,7 +2099,6 @@
                         
                         txPData.pendingPenalties = pendingPen; 
                         
-                        // --- FOCUSED MAGNET LOGIC UNTUK PEMAIN HUMAN ---
                         bestSweepMeld = window.findValidSweep(baseMeld, sweptToHand, gameTx.jokerRank);
                         if (bestSweepMeld && bestSweepMeld.length > baseMeld.length) {
                             let newSweptToHand = [];
@@ -2123,7 +2121,6 @@
                             baseMeld = bestSweepMeld;
                             sweptToHand = newSweptToHand;
                         }
-                        // ------------------------------------------------
 
                         if(!txPData.melds) txPData.melds = []; 
                         txPData.melds.push(baseMeld);
@@ -2131,7 +2128,6 @@
                         
                         cardTracker.trackPickup(mySlotIndex, topCard);
 
-                        // Selalu masuk ke fase Discard karena Auto-Knock Dihapus
                         gameTx.turnPhase = 'DISCARD'; 
                         selectedCardIndices = [];
                     }
@@ -2264,7 +2260,6 @@
                                         continue;
                                     }
                                     
-                                    // Validasi Bot: Pastikan sisa kartu di tangan != 0 setelah sweep
                                     let cardsGoingToHand = sweptSoFar.length - (bestMeld.length - testGroup.length);
                                     let remainingCards = hand.length - subset.length + cardsGoingToHand;
                                     if (remainingCards === 0) continue; 
@@ -2332,7 +2327,6 @@
                             }
                         });
                         
-                        // FOCUSED MAGNET UNTUK BOT
                         let bestSweepMeld = window.findValidSweep(baseMeld, sweptToHand, game.jokerRank);
                         if (bestSweepMeld && bestSweepMeld.length > baseMeld.length) {
                             let newSweptToHand = [];
@@ -2355,8 +2349,8 @@
                             baseMeld = bestSweepMeld;
                             sweptToHand = newSweptToHand;
                             
-                            game.players[botIdx].melds.pop(); // Remove old meld
-                            game.players[botIdx].melds.push(baseMeld); // Push merged meld
+                            game.players[botIdx].melds.pop();
+                            game.players[botIdx].melds.push(baseMeld);
                         }
 
                         game.players[botIdx].pendingPenalties = pendingPen;
