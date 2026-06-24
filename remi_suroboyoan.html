@@ -90,7 +90,10 @@
 
         /* UI SHOWDOWN CARDS */
         .showdown-player { background: rgba(0,0,0,0.4); padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); }
-        .showdown-name { font-weight: bold; color: white; font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        .showdown-name { font-weight: bold; color: white; font-size: 13px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start;}
+        .showdown-name-left { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+        .showdown-score-detail { font-size: 10px; color: #94a3b8; font-weight: 600; line-height: 1.3; }
+        .showdown-score-total { font-size: 14px; font-weight: 900; }
         .showdown-cards { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;}
         .showdown-group { display: flex; padding: 3px; border: 1px dashed; border-radius: 6px; flex-wrap: wrap; justify-content: center;}
         .showdown-hand { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
@@ -376,9 +379,10 @@
                     Sengaja/Tidak sengaja membuang kartu Joker ke meja.
                 </div>
                 <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red-suit); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                    <b style="color:var(--red-suit); font-size: 13px;">🔫 DENDA NEMBAK</b><br>
-                    Jika buanganmu diambil musuh untuk PASANGAN (Meld) atau TUTUP, kamu didenda langsung sesuai kasta buanganmu:<br>
-                    • Angka: <b>-50</b><br>• Gambar (J,Q,K): <b>-100</b><br>• AS: <b>-150</b>
+                    <b style="color:var(--red-suit); font-size: 13px;">🔫 HUKUMAN AREA (AoE PENALTY)</b><br>
+                    BRUTAL! Denda bagi para korban (yang kartunya disapu/ditembak) <b>sepenuhnya ditentukan oleh "Senjata Terakhir" (Kartu Tutup)</b> si Pemenang! Tidak peduli kartu apa yang kamu buang, jika tersapu dan musuh Tutup, kamu terkena damage seketika dari kartu Tutup tersebut:<br><br>
+                    • Tutup Angka: <b>-50</b><br>• Tutup Gambar (J,Q,K): <b>-100</b><br>• Tutup AS: <b>-150</b><br>• Tutup Joker: <b>-250</b><br><br>
+                    <i>Contoh: Pemenang menyapu kartumu lalu sengaja Tutup Joker. Kamu langsung didenda -250 Poin sekaligus!</i>
                 </div>
             </div>
 
@@ -417,6 +421,8 @@
                 <select id="target-score" style="color:var(--gold); border-color:var(--gold); background:#0f172a;">
                     <option value="250">🏆 Target 250 Poin</option>
                     <option value="500">🏆 Target 500 Poin</option>
+                    <option value="1000">🏆 Target 1.000 Poin</option>
+                    <option value="2000">🏆 Target 2.000 Poin</option>
                 </select>
                 <select id="deck-multiplier" style="color:var(--neon-green); border-color:var(--neon-green); background:#0f172a;">
                     <option value="1">🃏 1 Dek (52 Kartu)</option>
@@ -812,94 +818,6 @@
             return null;
         }
 
-        function defensiveRadar(game, botIdx, hand) {
-            const forbiddenCards = new Set();
-            const dir = game.playDirection || 1;
-
-            game.players.forEach((p, pIdx) => {
-                if (pIdx === botIdx) return;
-                const pickups = cardTracker.playerPickups[pIdx] || [];
-                pickups.forEach(pickedCard => {
-                    const pickedVal = getNumVal(pickedCard.rank);
-                    if (pickedVal === null) return;
-                    for (let offset = -2; offset <= 2; offset++) {
-                        const neighborRank = valToRank(pickedVal + offset);
-                        if (neighborRank) {
-                            forbiddenCards.add(`${neighborRank}_${pickedCard.suit}`);
-                        }
-                    }
-                });
-            });
-
-            game.players.forEach((p, pIdx) => {
-                if (pIdx === botIdx) return;
-                (p.melds || []).flat().forEach(meldCard => {
-                    forbiddenCards.add(`ANY_${meldCard.suit}`);
-                });
-            });
-
-            return hand.filter(c => {
-                const key1 = `${c.rank}_${c.suit}`;
-                const key2 = `ANY_${c.suit}`;
-                return !forbiddenCards.has(key1) && !forbiddenCards.has(key2);
-            });
-        }
-
-        function jokerManagement(game, botIdx, hand, melds) {
-            const jokerRank = game.jokerRank;
-            const deckRemaining = game.deck ? game.deck.length : 0;
-            const jokers = hand.filter(c => c.rank === jokerRank && !c.isFallen);
-
-            if (game.players[botIdx].knockVictims && game.players[botIdx].knockVictims.length > 0) {
-                return { canUse: false, reason: 'Joker dilarang untuk formasi 3 kartu hasil tembakan' };
-            }
-
-            if (deckRemaining > 10 && jokers.length <= 1) {
-                return { canUse: false, reason: 'Simpan Joker, dek masih banyak' };
-            }
-            if (deckRemaining <= 10 && jokers.length > 0) {
-                return { canUse: true, urgency: 'high', reason: 'Dek menipis, pasang Joker sekarang' };
-            }
-
-            const priorities = analyzeJokerPriorities(hand, jokerRank);
-            if (priorities.lubang.length > 0) {
-                return { canUse: true, target: priorities.lubang[0], priority: 1, reason: 'Lubang tengah, hanya 1 kemungkinan' };
-            }
-            if (priorities.ujung.length > 0 && deckRemaining < 15) {
-                return { canUse: true, target: priorities.ujung[0], priority: 2, reason: 'Ujung urutan, 2 kemungkinan tapi dek menipis' };
-            }
-
-            return { canUse: false };
-        }
-
-        function analyzeJokerPriorities(hand, jokerRank) {
-            const result = { lubang: [], ujung: [] };
-            const nonJokers = hand.filter(c => c.rank !== jokerRank || c.isFallen);
-            const suitGroups = {};
-            nonJokers.forEach(c => {
-                if (!['J','Q','K','A'].includes(c.rank)) {
-                    const val = getNumVal(c.rank);
-                    if (val !== null) {
-                        if (!suitGroups[c.suit]) suitGroups[c.suit] = [];
-                        suitGroups[c.suit].push(val);
-                    }
-                }
-            });
-            for (const [suit, vals] of Object.entries(suitGroups)) {
-                vals.sort((a,b) => a-b);
-                for (let i = 0; i < vals.length - 1; i++) {
-                    const gap = vals[i+1] - vals[i];
-                    if (gap === 2) {
-                        result.lubang.push({ suit, missing: valToRank(vals[i] + 1) });
-                    } else if (gap === 1 && (i === 0 || i === vals.length - 2)) {
-                        const missingRank = i === 0 ? valToRank(vals[0]-1) : valToRank(vals[vals.length-1]+1);
-                        if (missingRank) result.ujung.push({ suit, missing: missingRank });
-                    }
-                }
-            }
-            return result;
-        }
-
         function autoMeldStrategy(game, botIdx, handInfo) {
             const pData = game.players[botIdx];
             if (!handInfo.formedGroups || handInfo.formedGroups.length === 0) return;
@@ -997,7 +915,6 @@
             setTimeout(() => { container.classList.add('hidden'); container.innerHTML=''; }, 4000);
         };
 
-        // KLASEMEN AKHIR KETIKA GAME BERAKHIR (MODIFIED)
         window.showMatchWinner = function(game, isFromEvent = false) {
             let sortedPlayers = [...game.players].sort((a,b) => (game.globalScores[b.id]||0) - (game.globalScores[a.id]||0));
             let winner = sortedPlayers[0];
@@ -1268,26 +1185,27 @@
         }
 
         // =======================================================
-        // PERBAIKAN LOGIKA: EKSEKUSI DENDA SAAT KNOCK
+        // LOGIKA DENDA SAAT KNOCK & NEMBAK (REMASTERED AoE PENALTY)
         // =======================================================
         function handleRoundEnd(game, knockerIdx, victims, customKnockCard = null) {
             if (!game.globalScores) game.globalScores = {};
             
             let baseKnockValue = 0;
             let knockMsg = "";
-            let dendaNembakMap = {}; // Untuk melacak denda pending tiap pemain
+            let isTrueJoker = false;
+            let knockCard = customKnockCard;
 
             if (knockerIdx !== null) {
                 let knocker = game.players[knockerIdx];
-                let knockCard = customKnockCard;
                 
                 if (!knockCard && knocker.discard && knocker.discard.length > 0) {
                     knockCard = knocker.discard[knocker.discard.length - 1];
                 }
                 if (!knockCard) { knockCard = { rank: '2', suit: '♠', isFallen: false }; } 
                 
-                let isTrueJoker = (knockCard.rank === game.jokerRank && !knockCard.isFallen);
+                isTrueJoker = (knockCard.rank === game.jokerRank && !knockCard.isFallen);
                 
+                // === TRUE AREA OF EFFECT VALUE ===
                 if (isTrueJoker) { baseKnockValue = 250; }
                 else if (knockCard.rank === 'A') { baseKnockValue = 150; }
                 else if (['J', 'Q', 'K'].includes(knockCard.rank)) { baseKnockValue = 100; }
@@ -1307,12 +1225,7 @@
                 if (knocker.pendingPenalties && knocker.pendingPenalties.length > 0) {
                     knocker.pendingPenalties.forEach(pen => {
                         let isUsedInMeld = allValidMelds.some(mc => mc.rank === pen.card.rank && mc.suit === pen.card.suit && mc.isFallen === pen.card.isFallen);
-                        
                         if (isUsedInMeld) {
-                            // FIX: Kita melacak potongan denda di sini untuk dieksekusi bersama rScore nanti
-                            if (!dendaNembakMap[pen.victimIdx]) dendaNembakMap[pen.victimIdx] = 0;
-                            dendaNembakMap[pen.victimIdx] += pen.penalty;
-                            
                             if (!confirmedVictimIndices.includes(pen.victimIdx)) {
                                 confirmedVictimIndices.push(pen.victimIdx);
                                 confirmedVictimNames.push(game.players[pen.victimIdx].name);
@@ -1324,7 +1237,7 @@
                 victims = confirmedVictimIndices;
                 
                 if (victims && victims.length > 0) {
-                    knockMsg += `<br><span style="color:var(--red-suit); font-size:11px; display:block; margin-top:5px;">(Denda Nembak & Tutup ditanggung: ${confirmedVictimNames.join(', ')})</span>`;
+                    knockMsg += `<br><span style="color:var(--red-suit); font-size:11px; display:block; margin-top:5px;">(Korban Tersapu: ${confirmedVictimNames.join(', ')})</span>`;
                 }
             } else {
                 knockMsg = "⚠️ STOK KARTU HABIS! SKOR NORMAL DITERAPKAN!";
@@ -1335,23 +1248,28 @@
                 let handInfo = evaluateHand(p.hand || [], p.melds || [], game.jokerRank);
                 
                 let rScore = handInfo.score; 
+                let dendaTersapu = 0;
+                let dendaType = "";
                 
                 if (knockerIdx !== null) {
                     if (idx === knockerIdx) {
-                        rScore += baseKnockValue; 
-                    } else {
-                        if (victims && victims.includes(idx)) {
-                            rScore -= baseKnockValue; 
-                        }
-                        // FIX: Memasukkan denda potong langsung ke rScore agar akumulasi di UI akurat!
-                        if (dendaNembakMap[idx]) {
-                            rScore -= dendaNembakMap[idx];
-                        }
+                        dendaTersapu = baseKnockValue; 
+                        rScore += dendaTersapu;
+                        dendaType = `Bonus Tutup ${isTrueJoker ? 'JOKER' : knockCard.rank}`;
+                    } else if (victims && victims.includes(idx)) {
+                        dendaTersapu = -baseKnockValue; 
+                        rScore += dendaTersapu;
+                        dendaType = `Denda Tersapu (Tutup ${isTrueJoker ? 'JOKER' : knockCard.rank})`;
                     }
                 }
                 
                 game.globalScores[p.id] += rScore;
-                p.lastRoundScore = rScore; // Sekarang ini merepresentasikan total denda + sisa kartu sepenuhnya!
+                p.lastRoundScore = rScore; 
+                p.roundDetails = {
+                    deadwood: handInfo.score,
+                    dendaTersapu: dendaTersapu,
+                    dendaType: dendaType
+                };
             });
             
             if (knockerIdx !== null) { game.playDirection = (game.playDirection || 1) * -1; } 
@@ -1363,8 +1281,9 @@
             game.readyList = [];
 
             let maxScore = -9999; let winner = ""; let isMatchOver = false;
+            let currentTarget = game.targetScore || 250;
             for (let pid in game.globalScores) {
-                if (game.globalScores[pid] >= (game.targetScore || 250)) isMatchOver = true;
+                if (game.globalScores[pid] >= currentTarget) isMatchOver = true;
                 if (game.globalScores[pid] > maxScore) { maxScore = game.globalScores[pid]; winner = game.players.find(x=>x.id===pid).name; }
             }
             game.isMatchOver = isMatchOver;
@@ -1379,9 +1298,19 @@
             let sortedPlayers = [...game.players].sort((a,b) => (b.lastRoundScore||0) - (a.lastRoundScore||0)); 
             
             sortedPlayers.forEach(p => {
-                let colorClass = (p.lastRoundScore||0) < 0 ? 'score-minus' : 'score-plus';
                 html += `<div class="showdown-player">
-                    <div class="showdown-name"><span>${p.name}</span> <span style="color:${(p.lastRoundScore||0) < 0 ? 'var(--red-suit)':'var(--neon-green)'}">${p.lastRoundScore||0} Poin</span></div>
+                    <div class="showdown-name">
+                        <div class="showdown-name-left">
+                            <span>${p.name}</span>
+                            <div class="showdown-score-detail">
+                                Skor Formasi & Beban: <span style="color:${(p.roundDetails?.deadwood || 0) < 0 ? 'var(--red-suit)' : 'var(--neon-green)'}">${p.roundDetails?.deadwood || 0}</span>
+                                ${p.roundDetails?.dendaTersapu ? `<br>${p.roundDetails.dendaType}: <span style="color:${p.roundDetails.dendaTersapu < 0 ? 'var(--red-suit)' : 'var(--neon-green)'}">${p.roundDetails.dendaTersapu}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="showdown-score-total" style="color:${(p.lastRoundScore||0) < 0 ? 'var(--red-suit)':'var(--neon-green)'}">
+                            ${p.lastRoundScore||0} Poin
+                        </div>
+                    </div>
                     <div class="showdown-cards">`;
                 
                 let handInfo = evaluateHand(p.hand || [], p.melds || [], game.jokerRank);
@@ -2059,11 +1988,8 @@
                         tPlayer.discard.pop(); 
                         
                         let pendingPen = [];
-                        let p1 = 50;
-                        if (topCard.rank === gameTx.jokerRank && !topCard.isFallen) p1 = 250;
-                        else if (topCard.rank === 'A') p1 = 150;
-                        else if (['J', 'Q', 'K'].includes(topCard.rank)) p1 = 100;
-                        pendingPen.push({ victimIdx: actualTargetIdx, card: topCard, penalty: p1 });
+                        // AoE tracking logic only needs the victim ID and swept card now
+                        pendingPen.push({ victimIdx: actualTargetIdx, card: topCard });
 
                         let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                         indicesToRemove.forEach(idx => { txPData.hand.splice(idx, 1); });
@@ -2088,12 +2014,7 @@
                             if(iterPlayer.discard && iterPlayer.discard.length > 0) {
                                 let sweptCard = iterPlayer.discard.pop();
                                 sweptToHand.push(sweptCard); 
-                                
-                                let p2 = 50;
-                                if (sweptCard.rank === gameTx.jokerRank && !sweptCard.isFallen) p2 = 250;
-                                else if (sweptCard.rank === 'A') p2 = 150;
-                                else if (['J', 'Q', 'K'].includes(sweptCard.rank)) p2 = 100;
-                                pendingPen.push({ victimIdx: stepIdx, card: sweptCard, penalty: p2 });
+                                pendingPen.push({ victimIdx: stepIdx, card: sweptCard });
                             }
                         });
                         
@@ -2285,11 +2206,8 @@
                         let topD = tPlayer.discard.pop();
                         
                         let pendingPen = [];
-                        let p1 = 50;
-                        if (topD.rank === game.jokerRank && !topD.isFallen) p1 = 250;
-                        else if (topD.rank === 'A') p1 = 150;
-                        else if (['J', 'Q', 'K'].includes(topD.rank)) p1 = 100;
-                        pendingPen.push({ victimIdx: targetP, card: topD, penalty: p1 });
+                        // AoE mapping core logic refactored
+                        pendingPen.push({ victimIdx: targetP, card: topD });
 
                         let sortedRem = cardsToRemoveFromHand.sort((a,b)=>b-a);
                         sortedRem.forEach(idx => hand.splice(idx, 1));
@@ -2318,12 +2236,7 @@
                             if (iterPlayer.discard && iterPlayer.discard.length > 0) {
                                 let sweptCard = iterPlayer.discard.pop();
                                 sweptToHand.push(sweptCard);
-                                
-                                let p2 = 50;
-                                if (sweptCard.rank === game.jokerRank && !sweptCard.isFallen) p2 = 250;
-                                else if (sweptCard.rank === 'A') p2 = 150;
-                                else if (['J', 'Q', 'K'].includes(sweptCard.rank)) p2 = 100;
-                                pendingPen.push({ victimIdx: stepIdx, card: sweptCard, penalty: p2 });
+                                pendingPen.push({ victimIdx: stepIdx, card: sweptCard });
                             }
                         });
                         
