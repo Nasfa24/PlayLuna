@@ -17,7 +17,7 @@
             background: radial-gradient(circle at center, var(--bg-light) 0%, var(--bg-dark) 100%);
             font-family: 'Poppins', sans-serif; color: white; height: 100vh;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            overflow: hidden; user-select: none;
+            overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: manipulation;
         }
         .panel {
             background: var(--panel-bg); padding: 30px; border-radius: 20px; 
@@ -42,7 +42,8 @@
             font-size: 14px; letter-spacing: 1px;
         }
         .btn:active { transform: scale(0.96); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        
         .btn-gold { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
         .btn-red { background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); }
         .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.3); color: #cbd5e1; }
@@ -73,35 +74,37 @@
 </head>
 <body>
 
+    <!-- PANEL LOGIN & REGISTRASI -->
     <div class="panel" id="panel-register">
         <h1 class="logo-text">LUNA <span onclick="window.location.href='liga_admin.html'" style="cursor:default; color:inherit;">L</span>IGA</h1>
         <span class="sub-logo">CHAMPIONSHIP</span>
         
         <p style="font-size:12px; color:#94a3b8; line-height:1.5; margin-bottom: 20px;">Daftar baru atau masuk kembali menggunakan <b>Username</b> dan <b>PIN</b> yang sama.</p>
         
-        <input type="text" id="input-username" placeholder="USERNAME" maxlength="15" autocomplete="off" autocorrect="off">
+        <input type="text" id="input-username" placeholder="USERNAME (Tanpa Spasi)" maxlength="15" autocomplete="off" autocorrect="off">
         <input type="password" id="input-pin" placeholder="PIN" maxlength="4" pattern="\d{4}" autocomplete="off" inputmode="numeric">
         
         <button id="btn-submit" class="btn btn-gold" onclick="loginOrRegister()">DAFTAR / MASUK</button>
-        <button class="btn btn-outline" onclick="window.location.href='index.html'">KEMBALI KE MENU</button>
+        <button class="btn btn-outline" onclick="window.location.href='index.html'" style="font-size: 11px;">KEMBALI KE MENU REGULER</button>
     </div>
 
+    <!-- PANEL LOBBY (MENUNGGU PANITIA) -->
     <div class="panel hidden" id="panel-lobby">
         <h2 style="color:var(--gold); margin-top:0; font-weight: 800;">RUANG TUNGGU</h2>
-        <h3 id="display-nama" style="margin: 5px 0; font-size: 22px; letter-spacing: 1px;">-</h3>
+        <h3 id="display-nama" style="margin: 5px 0; font-size: 22px; letter-spacing: 1px; color: white;">-</h3>
         
         <div id="status-container" class="status-badge" style="background: rgba(239, 68, 68, 0.2); color: var(--red-suit); border-color: var(--red-suit);">
             MENUNGGU VERIFIKASI PANITIA
         </div>
 
         <div class="pin-reminder-box hidden" id="pin-reminder-container">
-            <p>INGAT PIN RAHASIA ANDA:</p>
+            <p>INGAT KODE PIN ANDA:</p>
             <span id="display-pin">----</span>
-            <p>PIN ini wajib digunakan untuk <b>mengambil alih (Rejoin)</b> jika Anda terputus dan digantikan oleh Sistem Bot di dalam Arena Pertandingan.</p>
+            <p>PIN ini mutlak digunakan untuk <b>Mengambil Alih Kembali (Rejoin)</b> jika Anda terputus dan digantikan oleh Sistem Bot di Arena.</p>
         </div>
 
         <p style="font-size: 11px; color:#cbd5e1; margin-top: 20px; line-height: 1.5;">
-            Sistem akan otomatis melemparmu ke Meja Pertandingan jika Panitia sudah memulai Liga. <b>Jangan tutup halaman ini.</b>
+            Sistem akan melemparmu ke Meja Pertandingan secara otomatis saat Panitia memulai Liga. <b>Jangan tutup halaman ini.</b>
         </p>
         
         <button class="btn btn-outline" style="margin-top: 20px; padding: 10px; font-size: 11px;" onclick="gantiAkun()">GANTI AKUN / KELUAR</button>
@@ -130,9 +133,10 @@
             if (savedUser && savedPin) {
                 document.getElementById("input-username").value = savedUser;
                 document.getElementById("input-pin").value = savedPin;
-                // Eksekusi senyap, beri visual loading jika langsung masuk
-                document.getElementById("btn-submit").innerText = "MEMUAT...";
-                document.getElementById("btn-submit").disabled = true;
+                // Kunci tombol & eksekusi login senyap
+                const btnSubmit = document.getElementById("btn-submit");
+                btnSubmit.innerText = "MEMUAT SESI...";
+                btnSubmit.disabled = true;
                 loginOrRegister(); 
             }
         };
@@ -142,14 +146,24 @@
             const pinInput = document.getElementById('input-pin');
             const btnSubmit = document.getElementById('btn-submit');
             
-            const username = usernameInput.value.trim().toUpperCase();
+            let rawUser = usernameInput.value.trim();
+            
+            // Validasi Ruang Kosong (Spasi)
+            if (rawUser.includes(" ")) {
+                alert("Pendaftaran Ditolak: Username TIDAK BOLEH mengandung spasi! Gunakan tanda garis bawah (_) sebagai pemisah.");
+                btnSubmit.innerText = "DAFTAR / MASUK";
+                btnSubmit.disabled = false;
+                return;
+            }
+            
+            const username = rawUser.toUpperCase();
             const pin = pinInput.value.trim();
 
-            if (!username) { alert("Username wajib diisi!"); return; }
-            if (pin.length !== 4 || isNaN(pin)) { alert("PIN wajib diisi dengan 4 angka!"); return; }
+            if (!username) { alert("Username wajib diisi!"); btnSubmit.disabled = false; return; }
+            if (pin.length !== 4 || isNaN(pin)) { alert("PIN wajib diisi dengan 4 digit angka mutlak!"); btnSubmit.disabled = false; return; }
 
-            // Kunci tombol untuk cegah double submit
-            btnSubmit.innerText = "MEMPROSES...";
+            // Kunci tombol untuk mencegah double push (Spam)
+            btnSubmit.innerText = "MEMPROSES DATA...";
             btnSubmit.disabled = true;
 
             const userRef = ref(db, `luna_liga/participants/${username}`);
@@ -159,12 +173,12 @@
                     if (snap.val().pin === pin) {
                         enterLobby(username, pin);
                     } else {
-                        alert("Username ini sudah terdaftar oleh orang lain, atau PIN Anda SALAH!");
+                        alert("Gagal Masuk: Username ini sudah terdaftar oleh orang lain, atau PIN Anda SALAH!");
                         btnSubmit.innerText = "DAFTAR / MASUK";
                         btnSubmit.disabled = false;
                     }
                 } else {
-                    // Register Baru
+                    // Register Entitas Baru
                     set(userRef, {
                         pin: pin,
                         status: "pending", 
@@ -187,7 +201,7 @@
         };
 
         function enterLobby(username, pin) {
-            // Set Storage (Sesi)
+            // Set Storage (Sesi Lokal)
             localStorage.setItem("liga_username", username);
             localStorage.setItem("liga_pin", pin);
 
@@ -196,14 +210,13 @@
             document.getElementById('panel-lobby').classList.remove('hidden');
             
             document.getElementById('display-nama').innerText = username;
-            document.getElementById('display-pin').innerText = pin;
 
             // Dengarkan Perubahan Status dari Dashboard Panitia
             const userRef = ref(db, `luna_liga/participants/${username}`);
             onValue(userRef, (snap) => {
-                // Handle jika akun dihapus oleh panitia
+                // Handle jika akun dihapus oleh panitia secara sepihak
                 if (!snap.exists()) {
-                    alert("Akun Anda telah dihapus oleh Panitia.");
+                    alert("Akun Anda telah dihapus oleh Panitia dari Sistem.");
                     gantiAkun();
                     return;
                 }
@@ -212,40 +225,43 @@
                 const statusBadge = document.getElementById('status-container');
                 const pinReminder = document.getElementById('pin-reminder-container');
                 
-                // Styling Status
+                // Real-Time Status Styling
                 if (data.status === "pending") {
                     statusBadge.style.color = "var(--gold)";
                     statusBadge.style.borderColor = "var(--gold)";
                     statusBadge.style.background = "rgba(251, 191, 36, 0.15)";
-                    statusBadge.innerText = "MENUNGGU VERIFIKASI PANITIA";
+                    statusBadge.innerText = "STATUS: MENUNGGU VERIFIKASI PANITIA";
                     pinReminder.classList.add('hidden');
                 } 
                 else if (data.status === "approved") {
                     statusBadge.style.color = "var(--neon-green)";
                     statusBadge.style.borderColor = "var(--neon-green)";
                     statusBadge.style.background = "rgba(16, 185, 129, 0.15)";
-                    statusBadge.innerText = "TERVERIFIKASI! MENUNGGU LIGA DIMULAI";
-                    pinReminder.classList.remove('hidden'); // Munculkan PIN Reminder
+                    statusBadge.innerText = "STATUS: TERVERIFIKASI! MENUNGGU LIGA DIMULAI";
+                    
+                    // Eksekusi PIN Reminder Box V8.0
+                    pinReminder.classList.remove('hidden');
+                    document.getElementById('display-pin').innerText = data.pin;
                 } 
                 else if (data.status === "rejected") {
                     statusBadge.style.color = "var(--red-suit)";
                     statusBadge.style.borderColor = "var(--red-suit)";
                     statusBadge.style.background = "rgba(239, 68, 68, 0.15)";
-                    statusBadge.innerText = "PENDAFTARAN DITOLAK PANITIA!";
+                    statusBadge.innerText = "STATUS: PENDAFTARAN DITOLAK PANITIA!";
                     pinReminder.classList.add('hidden');
                 }
 
                 // SMART REDIRECT LOGIC V8.0
-                // Jika panitia sudah menembakkan current_room dan statusnya approved
+                // Jika panitia sudah menembakkan parameter current_room dan statusnya approved
                 if (data.current_room && data.current_room !== "" && data.status === "approved") {
                     localStorage.setItem("remi_liga_room", data.current_room);
-                    // Lempar ke Arena tanpa toleransi delay
+                    // Replace History Navigation: Mematikan kemampuan pemain kembali ke layar ini lewat tombol "Back" HP
                     window.location.replace("liga_arena.html");
                 }
             });
         }
 
-        // Graceful Logout / Account Switch
+        // Graceful Logout / Account Switcher
         window.gantiAkun = () => {
             localStorage.removeItem("liga_username");
             localStorage.removeItem("liga_pin");
