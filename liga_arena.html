@@ -82,15 +82,6 @@
         .modal-actions { display: flex; gap: 10px; justify-content: center; }
         .modal-actions .btn { flex: 1; margin: 0; }
 
-        /* PRE-GAME OVERLAY UNTUK KONFIRMASI */
-        #pre-game-overlay { z-index: 9500; }
-        .pre-game-box { padding: 40px 20px; }
-        .pre-game-box input { 
-            width: 100%; padding: 15px; margin: 15px 0; border-radius: 12px; 
-            border: 2px solid var(--gold); background: rgba(0,0,0,0.5); color: white; 
-            text-align: center; font-size: 18px; letter-spacing: 5px; font-weight: bold; outline: none; box-sizing: border-box;
-        }
-
         /* UI SHOWDOWN CARDS */
         .showdown-player { background: rgba(0,0,0,0.4); padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); }
         .showdown-name { font-weight: bold; color: white; font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
@@ -262,10 +253,6 @@
         .my-hand .playing-card .card-face-icon { font-size: 60px; }
         .my-hand .playing-card .card-ace-icon { font-size: 70px; }
 
-        .btn-takeover { background: var(--gold); color: black; border: none; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: bold; cursor: pointer; margin-top: 4px; animation: pulse 1s infinite alternate; }
-        .btn-force-bot { background: var(--red-suit); color: white; animation: none; }
-        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); box-shadow: var(--gold-glow); } }
-
         @media (max-width: 600px) {
             .game-table { 
                 padding-top: 45px; 
@@ -338,10 +325,6 @@
         </div>
     </div>
 
-    <div id="pre-game-overlay" class="modal-overlay-bg hidden">
-        <div class="custom-modal pre-game-box" id="pre-game-content"></div>
-    </div>
-
     <div id="modal-panduan" class="modal-overlay-bg hidden" style="z-index: 9999;">
         <div class="panel" style="max-width: 400px; text-align: left; padding: 20px; width: 95%;">
             <h3 style="color: var(--gold); text-align: center; margin-top: 0; font-weight: 800;">BUKU PANDUAN LUNA</h3>
@@ -360,26 +343,11 @@
                     <div class="mini-card c-red" style="border:1px solid var(--neon-green);">A<br><span style="font-size:8px">♦</span></div>
                     <span style="color:var(--neon-green); margin-left:5px; font-weight:800;">✔ SAH (Tris AS - Jika Ada Pasangan Lain)</span>
                 </div>
-                <div style="display:flex; gap:3px; align-items:center; margin-bottom:12px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 8px;">
-                    <div class="mini-card" style="border:1px solid var(--red-suit);">K<br><span style="font-size:8px">♠</span></div>
-                    <div class="mini-card c-red" style="border:1px solid var(--red-suit);">K<br><span style="font-size:8px">♥</span></div>
-                    <div class="mini-card c-red" style="border:1px solid var(--red-suit);">K<br><span style="font-size:8px">♦</span></div>
-                    <span style="color:var(--red-suit); margin-left:5px; font-weight:800;">✖ HARAM (Gambar & Angka Wajib Seri)</span>
-                </div>
-
-                <p><b style="color:var(--gold);">2. HUKUM KASTA JOKER</b><br>Joker AS & Angka hanya melayani Angka. Joker Gambar melayani Gambar & Angka.</p>
-                <div style="display:flex; gap:3px; align-items:center; margin-bottom:12px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 8px;">
-                    <div class="mini-card c-red" style="border:1px solid var(--neon-green);">8<br><span style="font-size:8px">♥</span></div>
-                    <div class="mini-card c-red" style="border:1px solid var(--neon-green);">9<br><span style="font-size:8px">♥</span></div>
-                    <div class="mini-card card-joker" style="border:1px solid var(--neon-green) !important;">🃏<br><span style="font-size:6px">2♠</span></div>
-                    <span style="color:var(--neon-green); margin-left:5px; font-weight:800;">✔ SAH (Joker Angka u/ Angka)</span>
-                </div>
             </div>
 
             <div id="tab-magnet" class="hidden" style="font-size: 11px; color: #cbd5e1; max-height: 50vh; overflow-y: auto;">
                 <p><b style="color:var(--gold);">TUTUP MURNI DEK DILARANG!</b><br>Menang wajib dengan nembak buangan lawan. <br><br><span style="color:white;">Kamu BEBAS memiliki formasi yang 100% jadi (Gantung) di tanganmu selama permainan berlangsung tanpa harus menutup.</span></p>
                 <p><b style="color:var(--neon-green);">1. EFEK NYAPU:</b><br>Mengambil kartu buangan otomatis menyapu seluruh kartu buangan pemain sebelumnya (Mundur mengikuti arah putaran saat itu).</p>
-                <p><b style="color:var(--neon-green);">2. FOCUSED MAGNET:</b><br>Sistem LUNA AI akan menyortir otomatis. Kartu sapuan yang cocok secara matematis akan otomatis turun (Meld), sisanya menjadi beban di tangan.</p>
             </div>
 
             <div id="tab-hukuman" class="hidden" style="font-size: 11px; color: #cbd5e1; max-height: 50vh; overflow-y: auto;">
@@ -388,14 +356,9 @@
                     Di awal pembagian mendapat 4 buah Joker sekaligus. Darah akan mengalir di layarmu.
                 </div>
                 <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red-suit); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                    <b style="color:var(--red-suit); font-size: 13px;">🔥 SALAH BUANG (-250)</b><br>
-                    Sengaja/Tidak sengaja membuang kartu Joker ke meja.
-                </div>
-                <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red-suit); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                    <b style="color:var(--red-suit); font-size: 13px;">🔫 HUKUMAN AREA (AoE PENALTY)</b><br>
-                    BRUTAL! Denda bagi para korban (yang kartunya disapu/ditembak) <b>sepenuhnya ditentukan oleh "Senjata Terakhir" (Kartu Tutup)</b> si Pemenang! Tidak peduli kartu apa yang kamu buang, jika tersapu dan musuh Tutup, kamu terkena damage seketika dari kartu Tutup tersebut:<br><br>
-                    • Tutup Angka: <b>-50</b><br>• Tutup Gambar (J,Q,K): <b>-100</b><br>• Tutup AS: <b>-150</b><br>• Tutup Joker: <b>-250</b><br><br>
-                    <i>Contoh: Pemenang menyapu kartumu lalu sengaja Tutup Joker. Kamu langsung didenda -250 Poin sekaligus!</i>
+                    <b style="color:var(--red-suit); font-size: 13px;">🔫 DENDA NEMBAK</b><br>
+                    Jika buanganmu diambil musuh untuk PASANGAN (Meld) atau TUTUP, kamu didenda langsung sesuai kasta buanganmu:<br>
+                    • Angka: <b>-50</b><br>• Gambar (J,Q,K): <b>-100</b><br>• AS: <b>-150</b>
                 </div>
             </div>
 
@@ -411,18 +374,9 @@
         </div>
     </div>
 
-    <div id="screen-menu" class="menu-container">
-        <div class="panel" id="panel-lobby">
-            <h3 style="color:var(--gold); margin-top:0; font-weight:800;">LOBBY ARENA</h3>
-            <h1 id="display-kode-room" style="letter-spacing: 6px; margin: 5px 0; color:white;">----</h1>
-            <p id="waiting-msg" style="font-size:12px; color:var(--neon-green); font-weight:600;">Menunggu Panitia Memulai Liga...</p>
-            <button class="btn btn-red" onclick="resetLocalData()" style="margin-top: 15px;">Kembali ke Lobby Liga</button>
-        </div>
-    </div>
-
-    <div id="game-ui" class="hidden">
+    <div id="game-ui">
         <div class="top-bar">
-            <div id="room-code-display" class="joker-info" style="border-color: #3b82f6; color: #93c5fd; background: rgba(59, 130, 246, 0.2);">🏠 ROOM: ----</div>
+            <div id="room-code-display" class="joker-info" style="border-color: #3b82f6; color: #93c5fd; background: rgba(59, 130, 246, 0.2);">🏠 ARENA: ----</div>
             <button class="btn-action" style="background: var(--neon-green); color: black;" onclick="refreshGame()">🔄 REFRESH</button>
             <button class="btn-action" style="background: var(--gold); color: #000;" onclick="document.getElementById('modal-panduan').classList.remove('hidden')">📖 PANDUAN</button>
             <button class="btn-action" style="background: var(--red-suit); color: white;" onclick="confirmLeaveRoom()">🚪 KELUAR</button>
@@ -438,7 +392,7 @@
         <div class="game-table">
             <div id="slot-top" class="player-area player-top">
                 <div class="avatar-container">
-                    <div class="avatar" id="ava-top">🤖</div><div class="player-name" id="name-top">MANUTH</div>
+                    <div class="avatar" id="ava-top">🤖</div><div class="player-name" id="name-top">Pemain 1</div>
                 </div>
                 <div style="display: flex; gap: 15px; align-items: center; justify-content: center;">
                     <div class="melds-area" id="melds-top"></div>
@@ -448,7 +402,7 @@
 
             <div id="slot-left" class="player-area player-left">
                 <div class="avatar-container">
-                    <div class="avatar" id="ava-left">👾</div><div class="player-name" id="name-left">BU DEWI</div>
+                    <div class="avatar" id="ava-left">👾</div><div class="player-name" id="name-left">Pemain 2</div>
                 </div>
                 <div class="melds-area" id="melds-left"></div>
                 <div class="discard-pile" id="discard-left" onclick="drawFromDiscard('left')"></div>
@@ -465,7 +419,7 @@
 
             <div id="slot-right" class="player-area player-right">
                 <div class="avatar-container">
-                    <div class="avatar" id="ava-right">👽</div><div class="player-name" id="name-right">MAS UUTH</div>
+                    <div class="avatar" id="ava-right">👽</div><div class="player-name" id="name-right">Pemain 3</div>
                 </div>
                 <div class="melds-area" id="melds-right"></div>
                 <div class="discard-pile" id="discard-right" onclick="drawFromDiscard('right')"></div>
@@ -505,16 +459,13 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, get, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, onValue, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBSOOCaSfzAELvbtrEFOxdR8nYsKWlCnag",
             authDomain: "remi-suroboyoan.firebaseapp.com",
             databaseURL: "https://remi-suroboyoan-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "remi-suroboyoan",
-            storageBucket: "remi-suroboyoan.firebasestorage.app",
-            messagingSenderId: "583998906308",
-            appId: "1:583998906308:web:74b40a03cfbd5df5138e91"
+            projectId: "remi-suroboyoan"
         };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
@@ -522,7 +473,6 @@
         const suitNames = {'♠': 'Waru', '♣': 'Keriting', '♥': 'Hati', '♦': 'Wajik'};
         const SUITS = ['♥', '♦', '♠', '♣'];
         const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-        const BOT_NAMES = ['MANUTH', 'BU DEWI', 'MAS UUTH', 'KAISAR']; 
 
         window.botTurnTimer = null; 
         window.turnInterval = null;
@@ -532,69 +482,61 @@
 
         window.refreshGame = function() { location.reload(); };
 
-        window.konfirmasiMasuk = () => {
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), game => {
-                if(game && game.players[mySlotIndex]) {
-                    game.players[mySlotIndex].status_aktivasi = 'active';
-                    game.players[mySlotIndex].waktu_konfirmasi = Date.now();
-                }
-                return game;
-            }).then(() => {
-                document.getElementById('pre-game-overlay').classList.add('hidden');
-            });
+        window.showTab = function(tabId) {
+            document.getElementById('tab-aturan').classList.add('hidden');
+            document.getElementById('tab-hukuman').classList.add('hidden');
+            document.getElementById('tab-magnet').classList.add('hidden');
+            document.getElementById(tabId).classList.remove('hidden');
         };
 
-        window.ambilAlihBot = async () => {
-            let pinInput = document.getElementById('takeover-pin').value;
-            let dbPin = (await get(ref(db, `luna_liga/participants/${myName}/pin`))).val();
-            
-            if(pinInput === dbPin || myName === "Panitia") {
-                runTransaction(ref(db, `remi_rooms/${currentRoomId}`), game => {
-                    if(game && game.players[mySlotIndex]) {
-                        game.players[mySlotIndex].status_aktivasi = 'active';
-                        game.players[mySlotIndex].isBot = false;
-                        game.players[mySlotIndex].isAFK = false;
-                        game.players[mySlotIndex].bot_substituted = false;
-                    }
-                    return game;
-                }).then(() => {
-                    document.getElementById('pre-game-overlay').classList.add('hidden');
+        window.showAlertModal = function(title, htmlContent, buttons = []) {
+            const overlay = document.getElementById('custom-modal-overlay');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-text').innerHTML = htmlContent;
+            const btnArea = document.getElementById('modal-btn-area');
+            btnArea.innerHTML = ""; 
+            if(buttons.length === 0) {
+                btnArea.innerHTML = `<button class="btn btn-gold" onclick="document.getElementById('custom-modal-overlay').classList.add('hidden')">OK</button>`;
+            } else {
+                buttons.forEach(b => {
+                    const btn = document.createElement('button');
+                    btn.className = `btn ${b.class || 'btn-gold'}`;
+                    if (b.id) btn.id = b.id;
+                    btn.innerText = b.text;
+                    btn.onclick = () => { overlay.classList.add('hidden'); if(b.action) b.action(); };
+                    btnArea.appendChild(btn);
                 });
-            } else { alert("PIN SALAH!"); }
-        };
-
-        function showPreGameOverlay(status) {
-            const overlay = document.getElementById('pre-game-overlay');
-            const content = document.getElementById('pre-game-content');
-            overlay.classList.remove('hidden');
-
-            if (status === 'pending') {
-                content.innerHTML = `
-                    <h2 style="color:var(--neon-green); margin-top:0;">MEJA SIAP!</h2>
-                    <p style="font-size:12px; color:#cbd5e1;">Meja pertandingan Kualifikasi Anda sudah dibuat oleh Panitia. Silakan konfirmasi untuk masuk.</p>
-                    <button class="btn btn-gold" style="padding:15px; font-size:16px;" onclick="konfirmasiMasuk()">MASUK MEJA SEKARANG</button>
-                `;
-            } else if (status === 'bot_mode') {
-                content.innerHTML = `
-                    <h2 style="color:var(--red-suit); margin-top:0;">ANDA TERLAMBAT</h2>
-                    <p style="font-size:12px; color:#cbd5e1;">Karena Anda belum masuk tepat waktu, Anda sedang digantikan oleh Bot. Masukkan PIN untuk mengambil alih sisa ronde.</p>
-                    <input type="password" id="takeover-pin" placeholder="PIN (4 Angka)" maxlength="4" style="letter-spacing:5px;">
-                    <button class="btn btn-blue" style="padding:15px; font-size:14px;" onclick="ambilAlihBot()">AMBIL ALIH KENDALI</button>
-                    <button class="btn btn-red" onclick="resetLocalData()">KEMBALI KE LOBBY</button>
-                `;
             }
-        }
-
-        window.forceBot = function(targetIdx) {
-            runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (g) => {
-                if (g && g.players && g.players[targetIdx]) {
-                    g.players[targetIdx].isBot = true;
-                    g.players[targetIdx].isAFK = true;
-                }
-                return g;
-            });
+            overlay.classList.remove('hidden');
         };
 
+        window.showConfirmModal = function(title, text, onConfirm) {
+            showAlertModal(title, text, [
+                { text: "YA", class: "btn-gold", action: onConfirm },
+                { text: "BATAL", class: "btn-red" }
+            ]);
+        };
+
+        window.blastConfetti = function() {
+            const container = document.getElementById('confetti-container');
+            container.classList.remove('hidden');
+            container.innerHTML = '';
+            const colors = ['#fbbf24', '#f59e0b', '#fff'];
+            for(let i=0; i<70; i++) {
+                let conf = document.createElement('div');
+                conf.style.position = 'absolute'; conf.style.width = '8px'; conf.style.height = '15px';
+                conf.style.backgroundColor = colors[Math.floor(Math.random()*colors.length)];
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = '-20px';
+                conf.style.opacity = Math.random();
+                conf.style.transform = `rotate(${Math.random()*360}deg)`;
+                conf.style.animation = `fall ${Math.random()*2+2}s linear forwards`;
+                container.appendChild(conf);
+            }
+            setTimeout(() => { container.classList.add('hidden'); container.innerHTML=''; }, 4000);
+        };
+
+        // KICK / RECLAIM V8.0
         window.reclaimSlot = () => {
             runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (g) => {
                 if (g && g.players && g.players[mySlotIndex]) {
@@ -606,7 +548,7 @@
         };
 
         window.confirmLeaveRoom = () => { 
-            showConfirmModal("KELUAR?", "Keluar dari room ini? Posisimu akan digantikan Bot otomatis tanpa merusak poin. (Bisa Rejoin kapan saja)", () => { 
+            showConfirmModal("KELUAR ARENA?", "Keluar dari pertandingan? Posisimu akan dimainkan Bot otomatis agar tidak merusak permainan. (Kamu bisa kembali masuk kapan saja melalui Lobby)", () => { 
                 if (mySlotIndex !== -1) {
                     runTransaction(ref(db, `remi_rooms/${currentRoomId}`), (g) => {
                         if (g && g.players && g.players[mySlotIndex]) {
@@ -615,10 +557,12 @@
                         }
                         return g;
                     }).then(() => {
-                        resetLocalData();
+                        localStorage.removeItem("remi_liga_room"); 
+                        window.location.replace("liga.html");
                     });
                 } else {
-                    resetLocalData();
+                    localStorage.removeItem("remi_liga_room"); 
+                    window.location.replace("liga.html");
                 }
             }); 
         };
@@ -646,9 +590,7 @@
                 for(let j=0; j<n && j<12; j++) {
                     if ((i & (1 << j)) !== 0) testMeld.push(sweptCards[j]);
                 }
-                if (isValidSingleGroup(testMeld, jokerRank)) {
-                    validMelds.push(testMeld);
-                }
+                if (isValidSingleGroup(testMeld, jokerRank)) { validMelds.push(testMeld); }
             }
             if (validMelds.length === 0) return null;
             validMelds.sort((a,b) => b.length - a.length);
@@ -711,7 +653,7 @@
                 }
             });
             
-            // JOKER ACE BUG FIX
+            // JOKER ACE BUG FIX V8.0
             let hasOtherMeld = (melds && melds.length > 0) || formedGroups.filter(g => !g.some(c => c.rank === 'A' && !(c.rank === jokerRank && !c.isFallen))).length > 0 || isSimulatingPickup;
             if (!hasOtherMeld) { formedGroups = formedGroups.filter(g => { let isAceGroup = g.some(c => c.rank === 'A' && !(c.rank === jokerRank && !c.isFallen)); if(isAceGroup) { g.forEach(c => { let origIdx = handCards.findIndex(hc => hc === c); groupedIndices.delete(origIdx); }); return false; } return true; }); }
             
@@ -820,47 +762,25 @@
         let hasFlashedBlood = false; 
 
         window.onload = () => {
-            if (!myName || !currentRoomId) { window.location.href = "liga.html"; return; }
+            if (!myName || !currentRoomId) { window.location.replace("liga.html"); return; }
             enterLobby(currentRoomId, false);
         };
 
-        window.resetLocalData = () => {
-            showConfirmModal("KELUAR ARENA?", "Kembali ke Lobby Liga? Anda akan otomatis masuk lagi jika ruangan belum selesai.", () => {
-                localStorage.removeItem("remi_liga_room"); window.location.href = "liga.html";
-            });
+        // KEMBALI KE LIGA.HTML (TETAP LOGIN)
+        window.exitToLiga = () => {
+            localStorage.removeItem("remi_liga_room"); 
+            window.location.replace("liga.html");
         };
 
         function enterLobby(roomId, isHost) {
             currentRoomId = roomId; amIHost = isHost;
-            document.getElementById('display-kode-room').innerText = roomId;
+            document.getElementById('room-code-display').innerText = `🏠 ARENA: ${roomId}`;
 
             onValue(ref(db, `remi_rooms/${roomId}`), snap => {
-                if(!snap.exists()) { resetLocalData(); return; }
+                if(!snap.exists()) { exitToLiga(); return; }
                 const game = snap.val();
 
-                // HANDLE KONFIRMASI / TAKEOVER SEBELUM RENDER MEJA
-                if (game.status === "LOBBY_LIGA" || game.status === "PLAYING") {
-                    mySlotIndex = game.players.findIndex(p => p.id === myPlayerId);
-                    if (mySlotIndex !== -1) {
-                        let myStatus = game.players[mySlotIndex].status_aktivasi;
-                        if (myStatus === 'pending' || myStatus === 'bot_mode') {
-                            document.getElementById('screen-menu').classList.add('hidden');
-                            document.getElementById('game-ui').classList.add('hidden');
-                            showPreGameOverlay(myStatus);
-                            return; 
-                        } else {
-                            document.getElementById('pre-game-overlay').classList.add('hidden');
-                        }
-                    }
-                }
-                
-                const list = document.getElementById('player-list'); list.innerHTML = "";
-                if(game.players) {
-                    game.players.forEach((p, idx) => {
-                        let afkStatus = (p.isAFK || p.isBot) ? ' <span style="color:var(--red-suit); font-size:10px;">(AFK/BOT)</span>' : '';
-                        list.innerHTML += `<li style="padding:8px 0; font-weight:600; color:#cbd5e1; border-bottom:1px solid rgba(255,255,255,0.1);">${idx+1}. ${p.name} ${p.id === game.host ? '👑' : ''}${afkStatus}</li>`;
-                    });
-                }
+                mySlotIndex = game.players.findIndex(p => p.id === myPlayerId);
 
                 if (game.status === "PLAYING") startGameUI(game);
                 
@@ -871,10 +791,31 @@
 
                 if (game.status === "ENDED") { 
                     document.getElementById('game-ui').classList.add('hidden');
-                    document.getElementById('screen-menu').classList.add('hidden');
-                    showMatchWinner(game, true); 
+                    showMatchWinner(game); 
                 }
             });
+        }
+
+        function showMatchWinner(game) {
+            let sortedPlayers = [...game.players].sort((a,b) => (game.globalScores[b.id]||0) - (game.globalScores[a.id]||0));
+            let winner = sortedPlayers[0];
+            
+            let html = `<div style="font-size:36px; margin-bottom:10px;">👑</div>
+                        <div style="font-size:22px; color:var(--gold); font-weight:900; margin-bottom:5px;">${winner.name}</div>
+                        <div style="color:var(--neon-green); font-size:16px; font-weight:bold; margin-bottom:20px;">Skor Akhir: ${game.globalScores[winner.id]}</div>
+                        <div style="text-align:left; background:rgba(0,0,0,0.5); padding:10px; border-radius:10px;">`;
+            
+            sortedPlayers.forEach((p, i) => {
+                html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12px;">
+                            <span>${i+1}. ${p.name}</span>
+                            <b style="color:${game.globalScores[p.id] < 0 ? 'var(--red-suit)' : 'var(--neon-green)'}">${game.globalScores[p.id]} Poin</b>
+                         </div>`;
+            });
+            html += `</div>`;
+
+            showAlertModal("🏆 TURNAMEN SELESAI!", html, [
+                { text: "KEMBALI KE LOBBY LIGA", class: "btn-blue", action: () => exitToLiga() }
+            ]);
         }
 
         function renderShowdown(game) {
@@ -948,7 +889,7 @@
                 } else if (mySlotIndex !== -1) {
                     btns.push({ text: "MENUNGGU LAINNYA...", class: "btn-gold", action: ()=>{} });
                 }
-                btns.push({ text: "KEMBALI KE LIGA", class: "btn-red", action: () => resetLocalData() });
+                btns.push({ text: "KELUAR ROOM", class: "btn-red", action: () => confirmLeaveRoom() });
             }
 
             showAlertModal("HASIL RONDE", html, btns);
@@ -979,6 +920,7 @@
                                     });
                                     let hCount = g.players.filter(x => !x.isBot && !x.isAFK).length;
                                     let cReady = g.readyList ? g.readyList.length : 0;
+                                    
                                     if (cReady >= hCount || hCount === 0) {
                                         let lowestScore = Infinity; let startingIdx = 0;
                                         g.players.forEach((px, idx) => {
@@ -1013,8 +955,69 @@
             });
         };
 
+        function setupDeckAndDeal(game) {
+            let deck = [];
+            let multiplier = game.deckMultiplier || 1;
+            
+            for(let d=0; d<multiplier; d++) {
+                for (let suit of SUITS) {
+                    for (let rank of RANKS) { deck.push({ suit: suit, rank: rank, color: (suit === '♥' || suit === '♦') ? 'red' : 'black', isFallen: false }); }
+                }
+            }
+            
+            for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+
+            let jokerCard = deck.pop(); 
+            game.jokerRank = jokerCard.rank; 
+            game.jokerMasterCard = jokerCard;
+            
+            for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
+
+            game.players.forEach(p => { 
+                p.hand = []; p.discard = []; p.melds = []; p.knockVictims = []; 
+                p.hasDrawnFromDeck = false; p.hasDrawnFromDiscard = false; 
+                p.pendingPenalties = []; 
+            });
+            game.jokerCursed = [];
+
+            for(let i=0; i<7; i++) { for(let p=0; p<4; p++) { game.players[p].hand.push(deck.pop()); } }
+            
+            game.players.forEach(p => {
+                let jokerCount = p.hand.filter(c => c.rank === game.jokerRank).length;
+                if (jokerCount >= 4) {
+                    if(!game.globalScores) game.globalScores = {};
+                    if(game.globalScores[p.id] === undefined) game.globalScores[p.id] = 0;
+                    game.globalScores[p.id] -= 250;
+                    game.jokerCursed.push(p.id); 
+                }
+            });
+
+            game.deck = deck;
+            game.turnPhase = 'DRAW';
+            hasFlashedBlood = false; 
+        }
+
+        function renderCardHTML(card, isTrueJoker = false) {
+            let s = card.suit; let p = `<div class="pip">${s}</div>`; let pd = `<div class="pip pd">${s}</div>`; let centerContent = '';
+            if (['J', 'Q', 'K'].includes(card.rank)) { let face = card.rank === 'K' ? '🤴' : (card.rank === 'Q' ? '👸' : '💂'); centerContent = `<div class="card-face-icon">${face}</div>`; } 
+            else if (card.rank === 'A') { centerContent = `<div class="card-ace-icon">${s}</div>`; } 
+            else {
+                let count = parseInt(card.rank);
+                if(count === 2) centerContent = `<div class="pip-col center-col">${p}${pd}</div>`;
+                else if(count === 3) centerContent = `<div class="pip-col center-col">${p}${p}${pd}</div>`;
+                else if(count === 4) centerContent = `<div class="pip-col">${p}${pd}</div><div class="pip-col">${p}${pd}</div>`;
+                else if(count === 5) centerContent = `<div class="pip-col">${p}${pd}</div><div class="pip-abs" style="top:50%; transform:translate(-50%, -50%);">${p}</div><div class="pip-col">${p}${pd}</div>`;
+                else if(count === 6) centerContent = `<div class="pip-col">${p}${p}${pd}</div><div class="pip-col">${p}${p}${pd}</div>`;
+                else if(count === 7) centerContent = `<div class="pip-col">${p}${p}${pd}</div><div class="pip-abs" style="top:25%;">${p}</div><div class="pip-col">${p}${p}${pd}</div>`;
+                else if(count === 8) centerContent = `<div class="pip-col">${p}${p}${pd}</div><div class="pip-abs" style="top:25%;">${p}</div><div class="pip-abs" style="bottom:25%;">${pd}</div><div class="pip-col">${p}${p}${pd}</div>`;
+                else if(count === 9) centerContent = `<div class="pip-col">${p}${p}${pd}${pd}</div><div class="pip-abs" style="top:50%; transform:translate(-50%, -50%);">${p}</div><div class="pip-col">${p}${p}${pd}${pd}</div>`;
+                else if(count === 10) centerContent = `<div class="pip-col">${p}${p}${pd}${pd}</div><div class="pip-abs" style="top:18%;">${p}</div><div class="pip-abs" style="bottom:18%;">${pd}</div><div class="pip-col">${p}${p}${pd}${pd}</div>`;
+                centerContent = `<div class="card-center pips-container">${centerContent}</div>`;
+            }
+            return `<div class="card-top">${card.rank}<br>${s}</div>${centerContent}<div class="card-bottom">${card.rank}<br>${s}</div>`;
+        }
+
         function startGameUI(game) {
-            document.getElementById('screen-menu').classList.add('hidden');
             document.getElementById('game-ui').classList.remove('hidden');
             document.getElementById('custom-modal-overlay').classList.add('hidden');
             if(window.showdownInterval) clearInterval(window.showdownInterval);
@@ -1029,7 +1032,6 @@
             }
 
             document.getElementById('deck-count').innerText = game.deck ? game.deck.length : 0;
-            document.getElementById('room-code-display').innerText = `🏠 ARENA: ${currentRoomId}`;
             document.getElementById('dir-indicator').innerText = (game.playDirection === 1) ? "↻" : "↺";
 
             if (game.jokerCursed && game.jokerCursed.includes(myPlayerId) && !hasFlashedBlood) {
@@ -1088,11 +1090,6 @@
                             td.style.borderColor = "var(--gold)";
                         }
                     }
-
-                    if (window.turnCountdown <= 15 && !activePlayer.isBot && !activePlayer.isAFK) {
-                        let kickBtn = document.getElementById(`kick-${game.currentTurnSlot}`);
-                        if (kickBtn) kickBtn.classList.remove('hidden');
-                    }
                     
                     if (window.turnCountdown <= 0) {
                         clearInterval(window.turnInterval);
@@ -1126,9 +1123,6 @@
 
                 if(pos !== 'bottom') { 
                     let nameHtml = `${pData.name} <span style="color:var(--gold); font-size:11px; font-weight:800;">[${pHandLength}]</span>${afkLabel}`;
-                    if (!pData.isBot && !pData.isAFK) {
-                        nameHtml += `<br><button class="btn-takeover btn-force-bot hidden" id="kick-${pIndex}" onclick="forceBot(${pIndex})">🤖 KICK (BOT)</button>`;
-                    }
                     document.getElementById(`name-${pos}`).innerHTML = nameHtml; 
                 } else { 
                     document.getElementById(`my-name`).innerHTML = `${pData.name}${afkLabel}`; 
