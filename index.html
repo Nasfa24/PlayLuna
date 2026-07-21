@@ -19,6 +19,7 @@
             --gw-accent: #00FF9D; 
             --rr-accent: #f43f5e; 
             --rs-accent: #f39c12; /* Warna Oranye/Emas untuk Remi Suroboyoan */
+            --ud-accent: #f59e0b; /* Warna Emas/Royal untuk Undian Berhadiah */
             --text-main: #ffffff;
         }
 
@@ -76,8 +77,14 @@
         .card-info { padding: 20px; text-align: left; }
         .card-title { font-size: 1.5rem; font-weight: 800; margin: 0; text-transform: uppercase; }
         .card-desc { font-size: 0.85rem; opacity: 0.7; margin: 5px 0 15px 0; line-height: 1.4; }
-        .tags { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 600; }
+        .tags { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 600; flex-wrap: wrap; }
         .tag { padding: 4px 10px; border-radius: 5px; background: rgba(255,255,255,0.1); }
+
+        /* TEMA UNDIAN BERHADIAH (BARU) */
+        .theme-ud .card-banner { background: linear-gradient(45deg, #311047, #000); }
+        .theme-ud .card-title { color: var(--ud-accent); }
+        .theme-ud .btn-play { background: var(--ud-accent); color: #000; }
+        .game-card.theme-ud:hover { border-color: var(--ud-accent); box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
 
         /* TEMA WEREWOLF */
         .theme-ww .card-banner { background: linear-gradient(45deg, #2c3e50, #000); }
@@ -97,8 +104,8 @@
         .theme-rr .btn-play { background: var(--rr-accent); color: #fff; }
         .game-card.theme-rr:hover { border-color: var(--rr-accent); box-shadow: 0 0 20px rgba(244, 63, 94, 0.15); }
 
-        /* TEMA REMI SUROBOYOAN (BARU) */
-        .theme-rs .card-banner { background: linear-gradient(45deg, #4a2311, #000); } /* Warna dasar kayu/coklat gelap */
+        /* TEMA REMI SUROBOYOAN */
+        .theme-rs .card-banner { background: linear-gradient(45deg, #4a2311, #000); }
         .theme-rs .card-title { color: var(--rs-accent); }
         .theme-rs .btn-play { background: var(--rs-accent); color: #000; }
         .game-card.theme-rs:hover { border-color: var(--rs-accent); box-shadow: 0 0 20px rgba(243, 156, 18, 0.15); }
@@ -107,9 +114,11 @@
             width: 100%; padding: 12px; border: none; border-radius: 10px;
             font-weight: 800; font-family: 'Poppins'; cursor: pointer; margin-top: 10px;
             display: flex; align-items: center; justify-content: center; gap: 5px;
+            transition: opacity 0.2s ease;
         }
+        .btn-play:hover { opacity: 0.9; }
 
-        .footer { margin-top: auto; font-size: 0.75rem; color: #666; padding-top: 30px; letter-spacing: 1px; }
+        .footer { margin-top: auto; font-size: 0.75rem; color: #666; padding-top: 30px; letter-spacing: 1px; text-align: center; }
         .footer a {
             color: #888; text-decoration: none; font-weight: 600;
             transition: color 0.3s ease;
@@ -135,6 +144,25 @@
 
     <div class="game-grid">
         
+        <!-- KARTU UNDIAN BERHADIAH (INTEGRASI BARU) -->
+        <div class="game-card theme-ud" onclick="launchGame('undian')">
+            <div class="card-banner">
+                <div class="card-bg-glow" style="background: var(--ud-accent);"></div>
+                <span class="material-symbols-rounded card-icon" style="color: var(--ud-accent);">card_giftcard</span>
+            </div>
+            <div class="card-info">
+                <h2 class="card-title">Undian Berhadiah</h2>
+                <p class="card-desc">Platform penentuan pemenang adil & akurat. Acak bulan atau tanggal lahir dengan probabilitas pasti tanpa intervensi.</p>
+                <div class="tags">
+                    <span class="tag">🎁 Semua Orang</span>
+                    <span class="tag">⚖️ 100% Adil</span>
+                    <span class="tag">🛡️ Anti-Cheat</span>
+                </div>
+                <button class="btn-play">BUKA UNDIAN</button>
+            </div>
+        </div>
+
+        <!-- KARTU REMI SUROBOYOAN -->
         <div class="game-card theme-rs" onclick="launchGame('remi')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--rs-accent);"></div>
@@ -151,6 +179,7 @@
             </div>
         </div>
 
+        <!-- KARTU ULAR TANGGA -->
         <div class="game-card theme-gw" onclick="launchGame('geometry')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--gw-accent);"></div>
@@ -167,6 +196,7 @@
             </div>
         </div>
 
+        <!-- KARTU RUANG REFLEKSI -->
         <div class="game-card theme-rr" onclick="launchGame('refleksi')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--rr-accent);"></div>
@@ -183,6 +213,7 @@
             </div>
         </div>
 
+        <!-- KARTU WEREWOLF -->
         <div class="game-card theme-ww" onclick="launchGame('werewolf')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--ww-accent);"></div>
@@ -202,7 +233,7 @@
     </div>
 
     <div class="footer">
-        LUNA HUB v3.2 • Dibuat oleh <a href="https://www.instagram.com/mas_uuth/" target="_blank">Mas Uuth</a>
+        LUNA HUB v3.3 • Dibuat oleh <a href="https://www.instagram.com/mas_uuth/" target="_blank">Mas Uuth</a>
     </div>
 
     <script>
@@ -234,7 +265,8 @@
                 if(game === 'werewolf') window.location.href = "werewolf.html"; 
                 if(game === 'geometry') window.location.href = "ulartangga.html"; 
                 if(game === 'refleksi') window.location.href = "ngobrolyuk.html"; 
-                if(game === 'remi') window.location.href = "remi_suroboyoan.html"; // <-- PENGATURAN ROUTING BARU UNTUK REMI
+                if(game === 'remi') window.location.href = "remi_suroboyoan.html";
+                if(game === 'undian') window.location.href = "undian.html"; // <-- PENGATURAN ROUTING BARU UNTUK UNDIAN BERHADIAH
             }, 100);
         }
 
