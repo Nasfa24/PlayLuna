@@ -6,27 +6,39 @@
     <title>PLAY LUNA - GAMING HUB</title>
 
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#121212">
+    <meta name="theme-color" content="#0a0a0f">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="apple-touch-icon" href="icon.svg">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet">
     
     <style>
         :root {
-            --bg-dark: #121212;
-            --card-bg: #1e1e2e;
-            --ww-accent: #ffd369; 
-            --gw-accent: #00FF9D; 
-            --rr-accent: #f43f5e; 
-            --rs-accent: #f39c12; 
-            --ud-accent: #f59e0b; 
-            --mc-accent: #6366f1; /* Baru: MCGG Tournament Accent */
+            /* Deep, rich dark background */
+            --bg-dark: #0a0a0f;
+            --card-bg: rgba(30, 30, 46, 0.6);
+            
+            /* Theme Accents */
+            --mc-accent: #6366f1; /* Indigo - MCGG */
+            --ud-accent: #f59e0b; /* Amber - Undian */
+            --rs-accent: #f39c12; /* Orange - Remi */
+            --gw-accent: #00FF9D; /* Neon Green - Ular Tangga */
+            --rr-accent: #f43f5e; /* Rose - Refleksi */
+            --ww-accent: #ffd369; /* Gold - Werewolf */
+            
             --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --border-glass: rgba(255, 255, 255, 0.08);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--bg-dark);
+            /* Dynamic Aurora/Mesh Background */
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.12), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(244, 63, 94, 0.12), transparent 25%),
+                radial-gradient(circle at 50% 80%, rgba(0, 255, 157, 0.08), transparent 30%);
+            background-attachment: fixed;
             color: var(--text-main);
             margin: 0;
             display: flex;
@@ -35,111 +47,195 @@
             min-height: 100vh;
             padding: 20px;
             box-sizing: border-box;
+            overflow-x: hidden;
         }
 
-        .header { text-align: center; margin-bottom: 30px; margin-top: 20px; }
+        /* HEADER ANIMATION & STYLING */
+        .header { 
+            text-align: center; margin-bottom: 40px; margin-top: 30px; 
+            animation: fadeInDown 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
         .logo { 
-            font-size: 3rem; font-weight: 800; letter-spacing: 5px; margin: 0;
-            background: linear-gradient(to right, var(--gw-accent), var(--mc-accent), var(--ww-accent));
+            font-size: 3.2rem; font-weight: 800; letter-spacing: 6px; margin: 0;
+            background: linear-gradient(135deg, var(--gw-accent), var(--mc-accent), var(--rr-accent));
+            background-size: 200% auto;
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            animation: shine 5s linear infinite;
         }
-        .subtitle { font-size: 0.9rem; letter-spacing: 2px; opacity: 0.7; }
+        .subtitle { 
+            font-size: 0.95rem; font-weight: 500; letter-spacing: 3px; color: var(--text-muted); 
+            text-transform: uppercase; margin-top: 5px;
+        }
 
+        /* PREMIUM INPUT FIELD */
         .user-setup {
-            width: 100%; max-width: 400px; margin-bottom: 40px;
-            background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.1);
+            width: 100%; max-width: 450px; margin-bottom: 50px;
+            background: var(--card-bg); padding: 25px; border-radius: 20px;
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
+            position: relative;
+            overflow: hidden;
+        }
+        /* Top glowing accent for input box */
+        .user-setup::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--mc-accent), var(--rr-accent));
+        }
+
+        .input-label {
+            font-size: 0.85rem; color: var(--text-muted); display: block; 
+            margin-bottom: 10px; text-align: center; font-weight: 600; letter-spacing: 1px;
         }
         input.player-input {
-            width: 100%; padding: 15px; border-radius: 10px; border: none;
-            background: rgba(0,0,0,0.3); color: white; text-align: center;
-            font-family: 'Poppins', sans-serif; font-size: 1.1rem; outline: none;
-            border: 2px solid transparent; transition: 0.3s; box-sizing: border-box;
+            width: 100%; padding: 18px; border-radius: 12px; border: none;
+            background: rgba(0, 0, 0, 0.4); color: white; text-align: center;
+            font-family: 'Poppins', sans-serif; font-size: 1.2rem; font-weight: 600;
+            outline: none; border: 2px solid rgba(255,255,255,0.05); transition: 0.3s all ease;
+            box-sizing: border-box; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
         }
-        input.player-input:focus { border-color: var(--mc-accent); }
+        input.player-input::placeholder { color: rgba(255,255,255,0.2); font-weight: 400; }
+        input.player-input:focus { 
+            border-color: var(--mc-accent); 
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), inset 0 2px 10px rgba(0,0,0,0.5); 
+            transform: translateY(-2px);
+        }
 
+        /* GRID & CARDS (GLASSMORPHISM) */
         .game-grid {
-            display: grid; grid-template-columns: 1fr; gap: 20px;
-            width: 100%; max-width: 450px;
+            display: grid; grid-template-columns: 1fr; gap: 25px;
+            width: 100%; max-width: 450px; padding-bottom: 40px;
         }
 
         .game-card {
-            background: var(--card-bg); border-radius: 20px; overflow: hidden;
-            position: relative; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.1);
+            background: var(--card-bg); border-radius: 24px; overflow: hidden;
+            position: relative; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            cursor: pointer; border: 1px solid var(--border-glass);
             display: flex; flex-direction: column;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            opacity: 0; /* For staggered animation */
+            animation: fadeUpCard 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
         }
-        .game-card:active { transform: scale(0.98); }
         
-        .card-banner { height: 100px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .card-icon { font-size: 4rem; z-index: 2; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .card-bg-glow { position: absolute; width: 100%; height: 100%; opacity: 0.3; top: 0; left: 0; }
+        /* Staggered entrance delays */
+        .game-card:nth-child(1) { animation-delay: 0.2s; }
+        .game-card:nth-child(2) { animation-delay: 0.3s; }
+        .game-card:nth-child(3) { animation-delay: 0.4s; }
+        .game-card:nth-child(4) { animation-delay: 0.5s; }
+        .game-card:nth-child(5) { animation-delay: 0.6s; }
+        .game-card:nth-child(6) { animation-delay: 0.7s; }
 
-        .card-info { padding: 20px; text-align: left; }
-        .card-title { font-size: 1.5rem; font-weight: 800; margin: 0; text-transform: uppercase; }
-        .card-desc { font-size: 0.85rem; opacity: 0.7; margin: 5px 0 15px 0; line-height: 1.4; }
-        .tags { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 600; flex-wrap: wrap; }
-        .tag { padding: 4px 10px; border-radius: 5px; background: rgba(255,255,255,0.1); }
+        .game-card:hover { transform: translateY(-8px) scale(1.02); }
+        .game-card:active { transform: scale(0.98); transition: 0.1s; }
+        
+        .card-banner { 
+            height: 120px; position: relative; display: flex; align-items: center; 
+            justify-content: center; overflow: hidden; 
+        }
+        .card-icon { 
+            font-size: 4.5rem; z-index: 2; transition: 0.4s;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+        }
+        .game-card:hover .card-icon { transform: scale(1.15) rotate(5deg); }
+        .card-bg-glow { 
+            position: absolute; width: 150%; height: 150%; opacity: 0.4; 
+            top: -25%; left: -25%; filter: blur(40px); transition: 0.4s;
+        }
+        .game-card:hover .card-bg-glow { opacity: 0.7; }
 
-        /* THEMES */
-        .theme-mc .card-banner { background: linear-gradient(45deg, #312e81, #000); }
-        .theme-mc .card-title { color: var(--mc-accent); }
-        .theme-mc .btn-play { background: var(--mc-accent); color: #fff; }
-        .game-card.theme-mc:hover { border-color: var(--mc-accent); box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); }
-
-        .theme-ud .card-banner { background: linear-gradient(45deg, #311047, #000); }
-        .theme-ud .card-title { color: var(--ud-accent); }
-        .theme-ud .btn-play { background: var(--ud-accent); color: #000; }
-        .game-card.theme-ud:hover { border-color: var(--ud-accent); box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
-
-        .theme-ww .card-banner { background: linear-gradient(45deg, #2c3e50, #000); }
-        .theme-ww .card-title { color: var(--ww-accent); }
-        .theme-ww .btn-play { background: var(--ww-accent); color: #000; }
-        .game-card.theme-ww:hover { border-color: var(--ww-accent); box-shadow: 0 0 20px rgba(255, 211, 105, 0.15); }
-
-        .theme-gw .card-banner { background: linear-gradient(45deg, #0f3460, #000); }
-        .theme-gw .card-title { color: var(--gw-accent); }
-        .theme-gw .btn-play { background: var(--gw-accent); color: #000; }
-        .game-card.theme-gw:hover { border-color: var(--gw-accent); box-shadow: 0 0 20px rgba(0, 255, 157, 0.15); }
-
-        .theme-rr .card-banner { background: linear-gradient(45deg, #881337, #000); }
-        .theme-rr .card-title { color: var(--rr-accent); }
-        .theme-rr .btn-play { background: var(--rr-accent); color: #fff; }
-        .game-card.theme-rr:hover { border-color: var(--rr-accent); box-shadow: 0 0 20px rgba(244, 63, 94, 0.15); }
-
-        .theme-rs .card-banner { background: linear-gradient(45deg, #4a2311, #000); }
-        .theme-rs .card-title { color: var(--rs-accent); }
-        .theme-rs .btn-play { background: var(--rs-accent); color: #000; }
-        .game-card.theme-rs:hover { border-color: var(--rs-accent); box-shadow: 0 0 20px rgba(243, 156, 18, 0.15); }
+        .card-info { padding: 25px; text-align: left; position: relative; z-index: 3; }
+        .card-title { font-size: 1.6rem; font-weight: 800; margin: 0; letter-spacing: 0.5px; }
+        .card-desc { font-size: 0.9rem; color: var(--text-muted); margin: 8px 0 20px 0; line-height: 1.5; }
+        
+        .tags { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 600; flex-wrap: wrap; margin-bottom: 20px; }
+        .tag { 
+            padding: 6px 12px; border-radius: 50px; 
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; gap: 4px;
+        }
 
         .btn-play {
-            width: 100%; padding: 12px; border: none; border-radius: 10px;
-            font-weight: 800; font-family: 'Poppins', sans-serif; cursor: pointer; margin-top: 10px;
-            display: flex; align-items: center; justify-content: center; gap: 5px;
-            transition: opacity 0.2s ease;
+            width: 100%; padding: 14px; border: none; border-radius: 12px;
+            font-weight: 800; font-family: 'Poppins', sans-serif; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: all 0.3s ease; font-size: 1rem;
+            position: relative; overflow: hidden;
         }
-        .btn-play:hover { opacity: 0.9; }
+        .btn-play span { font-size: 1.2rem; transition: 0.3s; }
+        .game-card:hover .btn-play { padding-right: 20px; }
+        .game-card:hover .btn-play span { transform: translateX(5px); }
 
-        .footer { margin-top: auto; font-size: 0.75rem; color: #666; padding-top: 30px; letter-spacing: 1px; text-align: center; }
-        .footer a { color: #888; text-decoration: none; font-weight: 600; transition: color 0.3s ease; border-bottom: 1px dotted #555; }
-        .footer a:hover { color: var(--rr-accent); border-bottom-color: var(--rr-accent); }
+        /* THEME SPECIFIC PHYSICS (HOVER BORDERS & GLOWS) */
+        .theme-mc .card-banner { background: linear-gradient(135deg, #1e1b4b, #312e81); }
+        .theme-mc .card-title { color: var(--mc-accent); }
+        .theme-mc .btn-play { background: var(--mc-accent); color: #fff; }
+        .game-card.theme-mc:hover { border-color: var(--mc-accent); box-shadow: 0 15px 35px rgba(99, 102, 241, 0.25); }
+
+        .theme-ud .card-banner { background: linear-gradient(135deg, #4c1d95, #311047); }
+        .theme-ud .card-title { color: var(--ud-accent); }
+        .theme-ud .btn-play { background: var(--ud-accent); color: #000; }
+        .game-card.theme-ud:hover { border-color: var(--ud-accent); box-shadow: 0 15px 35px rgba(245, 158, 11, 0.25); }
+
+        .theme-rs .card-banner { background: linear-gradient(135deg, #78350f, #4a2311); }
+        .theme-rs .card-title { color: var(--rs-accent); }
+        .theme-rs .btn-play { background: var(--rs-accent); color: #000; }
+        .game-card.theme-rs:hover { border-color: var(--rs-accent); box-shadow: 0 15px 35px rgba(243, 156, 18, 0.25); }
+
+        .theme-gw .card-banner { background: linear-gradient(135deg, #064e3b, #0f3460); }
+        .theme-gw .card-title { color: var(--gw-accent); }
+        .theme-gw .btn-play { background: var(--gw-accent); color: #000; }
+        .game-card.theme-gw:hover { border-color: var(--gw-accent); box-shadow: 0 15px 35px rgba(0, 255, 157, 0.25); }
+
+        .theme-rr .card-banner { background: linear-gradient(135deg, #881337, #4c0519); }
+        .theme-rr .card-title { color: var(--rr-accent); }
+        .theme-rr .btn-play { background: var(--rr-accent); color: #fff; }
+        .game-card.theme-rr:hover { border-color: var(--rr-accent); box-shadow: 0 15px 35px rgba(244, 63, 94, 0.25); }
+
+        .theme-ww .card-banner { background: linear-gradient(135deg, #334155, #0f172a); }
+        .theme-ww .card-title { color: var(--ww-accent); }
+        .theme-ww .btn-play { background: var(--ww-accent); color: #000; }
+        .game-card.theme-ww:hover { border-color: var(--ww-accent); box-shadow: 0 15px 35px rgba(255, 211, 105, 0.25); }
+
+        /* FOOTER */
+        .footer { 
+            margin-top: auto; font-size: 0.8rem; color: #64748b; 
+            padding: 30px 0; letter-spacing: 1px; text-align: center; font-weight: 500; 
+        }
+
+        /* CUSTOM TOAST NOTIFICATION */
+        #toast { 
+            visibility: hidden; min-width: 250px; background-color: var(--rr-accent); 
+            color: #fff; text-align: center; border-radius: 12px; padding: 15px 20px; 
+            position: fixed; z-index: 3000; left: 50%; bottom: 30px; transform: translateX(-50%); 
+            font-weight: 600; font-size: 0.95rem; box-shadow: 0 10px 25px rgba(244, 63, 94, 0.4); 
+            opacity: 0; transition: opacity 0.3s, bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        /* KEYFRAMES */
+        @keyframes fadeUpCard { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shine { to { background-position: 200% center; } }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1 class="logo">PLAY LUNA</h1>
-        <div class="subtitle">GAMING & TOURNAMENT HUB</div>
+        <div class="subtitle">Gaming & Tournament Hub</div>
     </div>
 
     <div class="user-setup">
-        <label style="font-size: 0.8rem; color:#aaa; display:block; margin-bottom:8px; text-align:left; font-weight: 600;">PLAYER NAME</label>
-        <input type="text" id="globalName" class="player-input" placeholder="Ketik Nama Kamu..." oninput="saveGlobalName()">
+        <label class="input-label">TENTUKAN PLAYER NAME KAMU</label>
+        <input type="text" id="globalName" class="player-input" placeholder="Ketik namamu di sini..." oninput="saveGlobalName()">
     </div>
 
     <div class="game-grid">
         
-        <!-- KARTU MCGG TOURNAMENT HUB -->
+        <!-- MCGG TOURNAMENT -->
         <div class="game-card theme-mc" onclick="launchGame('mcgg')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--mc-accent);"></div>
@@ -149,30 +245,31 @@
                 <h2 class="card-title">MCGG Turnamen</h2>
                 <p class="card-desc">Portal resmi manajemen Live Score & Turnamen e-sports. Pantau klasemen secara real-time.</p>
                 <div class="tags">
-                    <span class="tag">🔴 Live Score</span>
-                    <span class="tag">🎮 MLBB & Chess</span>
-                    <span class="tag">👑 Admin System</span>
+                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">sensors</span> Live Score</span>
+                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">swords</span> Magic Chess</span>
                 </div>
-                <button class="btn-play">MASUK PORTAL</button>
+                <button class="btn-play">MASUK PORTAL <span class="material-symbols-rounded">arrow_forward</span></button>
             </div>
         </div>
 
+        <!-- UNDIAN BERHADIAH -->
         <div class="game-card theme-ud" onclick="launchGame('undian')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--ud-accent);"></div>
-                <span class="material-symbols-rounded card-icon" style="color: var(--ud-accent);">card_giftcard</span>
+                <span class="material-symbols-rounded card-icon" style="color: var(--ud-accent);">redeem</span>
             </div>
             <div class="card-info">
                 <h2 class="card-title">Undian Berhadiah</h2>
                 <p class="card-desc">Platform penentuan pemenang adil & akurat. Acak bulan atau tanggal lahir tanpa intervensi.</p>
                 <div class="tags">
-                    <span class="tag">🎁 Semua Orang</span>
-                    <span class="tag">⚖️ 100% Adil</span>
+                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">celebration</span> Semua Orang</span>
+                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">balance</span> 100% Adil</span>
                 </div>
-                <button class="btn-play">BUKA UNDIAN</button>
+                <button class="btn-play">BUKA UNDIAN <span class="material-symbols-rounded">arrow_forward</span></button>
             </div>
         </div>
 
+        <!-- REMI SUROBOYOAN -->
         <div class="game-card theme-rs" onclick="launchGame('remi')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--rs-accent);"></div>
@@ -180,31 +277,33 @@
             </div>
             <div class="card-info">
                 <h2 class="card-title">Remi Suroboyoan</h2>
-                <p class="card-desc">Adu mekanik susun kartu di meja warkop. Kumpulkan poin tertinggi atau jadi beban!</p>
+                <p class="card-desc">Adu mekanik susun kartu di meja warkop. Kumpulkan poin tertinggi atau jadi beban temanmu!</p>
                 <div class="tags">
-                    <span class="tag">🃏 1-4 Orang</span>
-                    <span class="tag">🧠 Strategi</span>
+                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">group</span> 1-4 Orang</span>
+                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">psychology</span> Strategi</span>
                 </div>
-                <button class="btn-play">MAIN SEKARANG</button>
+                <button class="btn-play">MAIN SEKARANG <span class="material-symbols-rounded">play_arrow</span></button>
             </div>
         </div>
 
+        <!-- ULAR TANGGA -->
         <div class="game-card theme-gw" onclick="launchGame('geometry')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--gw-accent);"></div>
-                <span class="material-symbols-rounded card-icon" style="color: var(--gw-accent);">token</span>
+                <span class="material-symbols-rounded card-icon" style="color: var(--gw-accent);">casino</span>
             </div>
             <div class="card-info">
                 <h2 class="card-title">Ular Tangga</h2>
-                <p class="card-desc">Ular tangga tempur dengan kartu serangan dan strategi neon.</p>
+                <p class="card-desc">Bukan ular tangga biasa. Tempur dengan kartu serangan dan selamatkan diri dengan strategi neon.</p>
                 <div class="tags">
-                    <span class="tag">🎲 2-12 Orang</span>
-                    <span class="tag">⚡ Casual</span>
+                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">group</span> 2-12 Orang</span>
+                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">bolt</span> Casual</span>
                 </div>
-                <button class="btn-play">MAIN SEKARANG</button>
+                <button class="btn-play">MAIN SEKARANG <span class="material-symbols-rounded">play_arrow</span></button>
             </div>
         </div>
 
+        <!-- RUANG REFLEKSI -->
         <div class="game-card theme-rr" onclick="launchGame('refleksi')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--rr-accent);"></div>
@@ -212,43 +311,49 @@
             </div>
             <div class="card-info">
                 <h2 class="card-title">Ruang Refleksi</h2>
-                <p class="card-desc">Game Deep Talk & Psikologi. Kenali temanmu lebih dalam tanpa penghakiman.</p>
+                <p class="card-desc">Game Deep Talk & Psikologi. Kenali teman dan dirimu sendiri lebih dalam tanpa penghakiman.</p>
                 <div class="tags">
-                    <span class="tag">❤️ Deep Talk</span>
-                    <span class="tag">💬 2+ Orang</span>
+                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">favorite</span> Deep Talk</span>
+                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">forum</span> 2+ Orang</span>
                 </div>
-                <button class="btn-play">MAIN SEKARANG</button>
+                <button class="btn-play">MULAI SESI <span class="material-symbols-rounded">play_arrow</span></button>
             </div>
         </div>
 
+        <!-- WEREWOLF -->
         <div class="game-card theme-ww" onclick="launchGame('werewolf')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--ww-accent);"></div>
-                <span class="material-symbols-rounded card-icon" style="color: var(--ww-accent);">dark_mode</span>
+                <span class="material-symbols-rounded card-icon" style="color: var(--ww-accent);">nightlight_round</span>
             </div>
             <div class="card-info">
                 <h2 class="card-title">Werewolf</h2>
-                <p class="card-desc">Cari pengkhianat di desa atau jadilah pemangsa. Permainan deduksi sosial.</p>
+                <p class="card-desc">Cari pengkhianat di desa atau jadilah pemangsa. Permainan deduksi sosial penuh manipulasi.</p>
                 <div class="tags">
-                    <span class="tag">👥 4-15 Orang</span>
-                    <span class="tag">🎭 Butuh Host</span>
+                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">groups</span> 4-15 Orang</span>
+                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">gavel</span> Butuh Host</span>
                 </div>
-                <button class="btn-play">MAIN SEKARANG</button>
+                <button class="btn-play">MULAI MALAM <span class="material-symbols-rounded">play_arrow</span></button>
             </div>
         </div>
 
     </div>
 
     <div class="footer">
-        LUNA HUB v4.0 • Ecosystem Integrated
+        PLAY LUNA HUB v4.0 • by Mas Uuth
     </div>
 
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast"><span class="material-symbols-rounded">error</span> <span id="toast-msg">Notifikasi</span></div>
+
     <script>
+        // Load Saved Name
         window.onload = () => {
             const savedName = localStorage.getItem("luna_global_name");
             if(savedName) document.getElementById("globalName").value = savedName;
         };
 
+        // Save Name to Ecosystem LocalStorage
         function saveGlobalName() {
             const name = document.getElementById("globalName").value.trim();
             localStorage.setItem("luna_global_name", name);
@@ -257,16 +362,36 @@
             localStorage.setItem("myPlayerName", name);           
         }
 
+        // Custom Toast System (Replaces Alert)
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            document.getElementById("toast-msg").innerText = message;
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // Routing Logic
         function launchGame(game) {
             const name = document.getElementById("globalName").value.trim();
-            if(!name && game !== 'mcgg') { // MCGG allows viewing without strict name setup
-                alert("Isi nama dulu, Player!");
+            
+            // Exception: MCGG Portal doesn't require a strict name on this layer
+            if(!name && game !== 'mcgg') { 
+                showToast("Isi nama Player kamu dulu!");
+                
+                // Add a small shake animation to the input field
+                const input = document.querySelector('.user-setup');
+                input.style.transform = "translateX(-10px)";
+                setTimeout(() => input.style.transform = "translateX(10px)", 100);
+                setTimeout(() => input.style.transform = "translateX(-10px)", 200);
+                setTimeout(() => input.style.transform = "translateX(0)", 300);
+                
                 document.getElementById("globalName").focus();
                 return;
             }
             
             saveGlobalName(); 
             
+            // Visual feedback before jumping (optional button styling change)
             setTimeout(() => {
                 const routes = {
                     'mcgg': 'mcgg.html',
@@ -277,9 +402,10 @@
                     'undian': 'undian.html'
                 };
                 if(routes[game]) window.location.href = routes[game];
-            }, 100);
+            }, 150);
         }
 
+        // Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
