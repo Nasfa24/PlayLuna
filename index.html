@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PLAY LUNA</title>
+    <title>PLAY LUNA - GAMING HUB</title>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#121212">
@@ -18,8 +18,9 @@
             --ww-accent: #ffd369; 
             --gw-accent: #00FF9D; 
             --rr-accent: #f43f5e; 
-            --rs-accent: #f39c12; /* Warna Oranye/Emas untuk Remi Suroboyoan */
-            --ud-accent: #f59e0b; /* Warna Emas/Royal untuk Undian Berhadiah */
+            --rs-accent: #f39c12; 
+            --ud-accent: #f59e0b; 
+            --mc-accent: #6366f1; /* Baru: MCGG Tournament Accent */
             --text-main: #ffffff;
         }
 
@@ -39,7 +40,7 @@
         .header { text-align: center; margin-bottom: 30px; margin-top: 20px; }
         .logo { 
             font-size: 3rem; font-weight: 800; letter-spacing: 5px; margin: 0;
-            background: linear-gradient(to right, var(--gw-accent), var(--rs-accent), var(--ww-accent));
+            background: linear-gradient(to right, var(--gw-accent), var(--mc-accent), var(--ww-accent));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
         .subtitle { font-size: 0.9rem; letter-spacing: 2px; opacity: 0.7; }
@@ -49,13 +50,13 @@
             background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px;
             border: 1px solid rgba(255,255,255,0.1);
         }
-        input {
+        input.player-input {
             width: 100%; padding: 15px; border-radius: 10px; border: none;
             background: rgba(0,0,0,0.3); color: white; text-align: center;
-            font-family: 'Poppins'; font-size: 1.1rem; outline: none;
+            font-family: 'Poppins', sans-serif; font-size: 1.1rem; outline: none;
             border: 2px solid transparent; transition: 0.3s; box-sizing: border-box;
         }
-        input:focus { border-color: var(--rr-accent); }
+        input.player-input:focus { border-color: var(--mc-accent); }
 
         .game-grid {
             display: grid; grid-template-columns: 1fr; gap: 20px;
@@ -80,31 +81,32 @@
         .tags { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 600; flex-wrap: wrap; }
         .tag { padding: 4px 10px; border-radius: 5px; background: rgba(255,255,255,0.1); }
 
-        /* TEMA UNDIAN BERHADIAH (BARU) */
+        /* THEMES */
+        .theme-mc .card-banner { background: linear-gradient(45deg, #312e81, #000); }
+        .theme-mc .card-title { color: var(--mc-accent); }
+        .theme-mc .btn-play { background: var(--mc-accent); color: #fff; }
+        .game-card.theme-mc:hover { border-color: var(--mc-accent); box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); }
+
         .theme-ud .card-banner { background: linear-gradient(45deg, #311047, #000); }
         .theme-ud .card-title { color: var(--ud-accent); }
         .theme-ud .btn-play { background: var(--ud-accent); color: #000; }
         .game-card.theme-ud:hover { border-color: var(--ud-accent); box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
 
-        /* TEMA WEREWOLF */
         .theme-ww .card-banner { background: linear-gradient(45deg, #2c3e50, #000); }
         .theme-ww .card-title { color: var(--ww-accent); }
         .theme-ww .btn-play { background: var(--ww-accent); color: #000; }
         .game-card.theme-ww:hover { border-color: var(--ww-accent); box-shadow: 0 0 20px rgba(255, 211, 105, 0.15); }
 
-        /* TEMA GEOMETRY WAR */
         .theme-gw .card-banner { background: linear-gradient(45deg, #0f3460, #000); }
         .theme-gw .card-title { color: var(--gw-accent); }
         .theme-gw .btn-play { background: var(--gw-accent); color: #000; }
         .game-card.theme-gw:hover { border-color: var(--gw-accent); box-shadow: 0 0 20px rgba(0, 255, 157, 0.15); }
 
-        /* TEMA RUANG REFLEKSI */
         .theme-rr .card-banner { background: linear-gradient(45deg, #881337, #000); }
         .theme-rr .card-title { color: var(--rr-accent); }
         .theme-rr .btn-play { background: var(--rr-accent); color: #fff; }
         .game-card.theme-rr:hover { border-color: var(--rr-accent); box-shadow: 0 0 20px rgba(244, 63, 94, 0.15); }
 
-        /* TEMA REMI SUROBOYOAN */
         .theme-rs .card-banner { background: linear-gradient(45deg, #4a2311, #000); }
         .theme-rs .card-title { color: var(--rs-accent); }
         .theme-rs .btn-play { background: var(--rs-accent); color: #000; }
@@ -112,39 +114,49 @@
 
         .btn-play {
             width: 100%; padding: 12px; border: none; border-radius: 10px;
-            font-weight: 800; font-family: 'Poppins'; cursor: pointer; margin-top: 10px;
+            font-weight: 800; font-family: 'Poppins', sans-serif; cursor: pointer; margin-top: 10px;
             display: flex; align-items: center; justify-content: center; gap: 5px;
             transition: opacity 0.2s ease;
         }
         .btn-play:hover { opacity: 0.9; }
 
         .footer { margin-top: auto; font-size: 0.75rem; color: #666; padding-top: 30px; letter-spacing: 1px; text-align: center; }
-        .footer a {
-            color: #888; text-decoration: none; font-weight: 600;
-            transition: color 0.3s ease;
-            border-bottom: 1px dotted #555;
-        }
-        .footer a:hover {
-            color: var(--rr-accent);
-            border-bottom-color: var(--rr-accent);
-        }
+        .footer a { color: #888; text-decoration: none; font-weight: 600; transition: color 0.3s ease; border-bottom: 1px dotted #555; }
+        .footer a:hover { color: var(--rr-accent); border-bottom-color: var(--rr-accent); }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1 class="logo">PLAY LUNA</h1>
-        <div class="subtitle">GAMING HUB</div>
+        <div class="subtitle">GAMING & TOURNAMENT HUB</div>
     </div>
 
     <div class="user-setup">
-        <label style="font-size: 0.8rem; color:#aaa; display:block; margin-bottom:8px; text-align:left;">PLAYER NAME</label>
-        <input type="text" id="globalName" placeholder="Ketik Nama Kamu..." oninput="saveGlobalName()">
+        <label style="font-size: 0.8rem; color:#aaa; display:block; margin-bottom:8px; text-align:left; font-weight: 600;">PLAYER NAME</label>
+        <input type="text" id="globalName" class="player-input" placeholder="Ketik Nama Kamu..." oninput="saveGlobalName()">
     </div>
 
     <div class="game-grid">
         
-        <!-- KARTU UNDIAN BERHADIAH (INTEGRASI BARU) -->
+        <!-- KARTU MCGG TOURNAMENT HUB -->
+        <div class="game-card theme-mc" onclick="launchGame('mcgg')">
+            <div class="card-banner">
+                <div class="card-bg-glow" style="background: var(--mc-accent);"></div>
+                <span class="material-symbols-rounded card-icon" style="color: var(--mc-accent);">emoji_events</span>
+            </div>
+            <div class="card-info">
+                <h2 class="card-title">MCGG Turnamen</h2>
+                <p class="card-desc">Portal resmi manajemen Live Score & Turnamen e-sports. Pantau klasemen secara real-time.</p>
+                <div class="tags">
+                    <span class="tag">🔴 Live Score</span>
+                    <span class="tag">🎮 MLBB & Chess</span>
+                    <span class="tag">👑 Admin System</span>
+                </div>
+                <button class="btn-play">MASUK PORTAL</button>
+            </div>
+        </div>
+
         <div class="game-card theme-ud" onclick="launchGame('undian')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--ud-accent);"></div>
@@ -152,17 +164,15 @@
             </div>
             <div class="card-info">
                 <h2 class="card-title">Undian Berhadiah</h2>
-                <p class="card-desc">Platform penentuan pemenang adil & akurat. Acak bulan atau tanggal lahir dengan probabilitas pasti tanpa intervensi.</p>
+                <p class="card-desc">Platform penentuan pemenang adil & akurat. Acak bulan atau tanggal lahir tanpa intervensi.</p>
                 <div class="tags">
                     <span class="tag">🎁 Semua Orang</span>
                     <span class="tag">⚖️ 100% Adil</span>
-                    <span class="tag">🛡️ Anti-Cheat</span>
                 </div>
                 <button class="btn-play">BUKA UNDIAN</button>
             </div>
         </div>
 
-        <!-- KARTU REMI SUROBOYOAN -->
         <div class="game-card theme-rs" onclick="launchGame('remi')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--rs-accent);"></div>
@@ -179,7 +189,6 @@
             </div>
         </div>
 
-        <!-- KARTU ULAR TANGGA -->
         <div class="game-card theme-gw" onclick="launchGame('geometry')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--gw-accent);"></div>
@@ -196,7 +205,6 @@
             </div>
         </div>
 
-        <!-- KARTU RUANG REFLEKSI -->
         <div class="game-card theme-rr" onclick="launchGame('refleksi')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--rr-accent);"></div>
@@ -213,7 +221,6 @@
             </div>
         </div>
 
-        <!-- KARTU WEREWOLF -->
         <div class="game-card theme-ww" onclick="launchGame('werewolf')">
             <div class="card-banner">
                 <div class="card-bg-glow" style="background: var(--ww-accent);"></div>
@@ -233,7 +240,7 @@
     </div>
 
     <div class="footer">
-        LUNA HUB v3.3 • Dibuat oleh <a href="https://www.instagram.com/mas_uuth/" target="_blank">Mas Uuth</a>
+        LUNA HUB v4.0 • Ecosystem Integrated
     </div>
 
     <script>
@@ -252,29 +259,31 @@
 
         function launchGame(game) {
             const name = document.getElementById("globalName").value.trim();
-            if(!name) {
+            if(!name && game !== 'mcgg') { // MCGG allows viewing without strict name setup
                 alert("Isi nama dulu, Player!");
                 document.getElementById("globalName").focus();
                 return;
             }
             
-            // FIX LOGIKA: Selalu paksa simpan (backup) nama sebelum pindah halaman
             saveGlobalName(); 
             
             setTimeout(() => {
-                if(game === 'werewolf') window.location.href = "werewolf.html"; 
-                if(game === 'geometry') window.location.href = "ulartangga.html"; 
-                if(game === 'refleksi') window.location.href = "ngobrolyuk.html"; 
-                if(game === 'remi') window.location.href = "remi_suroboyoan.html";
-                if(game === 'undian') window.location.href = "undian.html"; // <-- PENGATURAN ROUTING BARU UNTUK UNDIAN BERHADIAH
+                const routes = {
+                    'mcgg': 'mcgg.html',
+                    'werewolf': 'werewolf.html',
+                    'geometry': 'ulartangga.html',
+                    'refleksi': 'ngobrolyuk.html',
+                    'remi': 'remi_suroboyoan.html',
+                    'undian': 'undian.html'
+                };
+                if(routes[game]) window.location.href = routes[game];
             }, 100);
         }
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
-                    .then(reg => console.log('LUNA App Registered!', reg))
-                    .catch(err => console.log('Gagal Register:', err));
+                    .catch(err => console.log('SW Registration Failed:', err));
             });
         }
     </script>
