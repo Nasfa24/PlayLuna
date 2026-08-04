@@ -84,7 +84,10 @@
 
         /* UI SHOWDOWN CARDS */
         .showdown-player { background: rgba(0,0,0,0.4); padding: 12px; border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); }
-        .showdown-name { font-weight: bold; color: white; font-size: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;}
+        .showdown-name { font-weight: bold; color: white; font-size: 13px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start;}
+        .showdown-name-left { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+        .showdown-score-detail { font-size: 10px; color: #94a3b8; font-weight: 600; line-height: 1.3; }
+        .showdown-score-total { font-size: 14px; font-weight: 900; }
         .showdown-cards { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;}
         .showdown-group { display: flex; padding: 3px; border: 1px dashed; border-radius: 6px; flex-wrap: wrap; justify-content: center;}
         .showdown-hand { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; }
@@ -356,9 +359,14 @@
                     Di awal pembagian mendapat 4 buah Joker sekaligus. Darah akan mengalir di layarmu.
                 </div>
                 <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red-suit); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                    <b style="color:var(--red-suit); font-size: 13px;">🔫 DENDA NEMBAK</b><br>
-                    Jika buanganmu diambil musuh untuk PASANGAN (Meld) atau TUTUP, kamu didenda langsung sesuai kasta buanganmu:<br>
-                    • Angka: <b>-50</b><br>• Gambar (J,Q,K): <b>-100</b><br>• AS: <b>-150</b>
+                    <b style="color:var(--red-suit); font-size: 13px;">🔥 SALAH BUANG (-250)</b><br>
+                    Sengaja/Tidak sengaja membuang kartu Joker ke meja.
+                </div>
+                <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red-suit); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
+                    <b style="color:var(--red-suit); font-size: 13px;">🔫 HUKUMAN AREA (AoE PENALTY)</b><br>
+                    BRUTAL! Denda bagi para korban (yang kartunya disapu/ditembak) <b>sepenuhnya ditentukan oleh "Senjata Terakhir" (Kartu Tutup)</b> si Pemenang! Tidak peduli kartu apa yang kamu buang, jika tersapu dan musuh Tutup, kamu terkena damage seketika dari kartu Tutup tersebut:<br><br>
+                    • Tutup Angka: <b>-50</b><br>• Tutup Gambar (J,Q,K): <b>-100</b><br>• Tutup AS: <b>-150</b><br>• Tutup Joker: <b>-250</b><br><br>
+                    <i>Contoh: Pemenang menyapu kartumu lalu sengaja Tutup Joker. Kamu langsung didenda -250 Poin sekaligus!</i>
                 </div>
             </div>
 
@@ -712,40 +720,106 @@
         }
 
         function handleRoundEnd(game, knockerIdx, victims, customKnockCard = null) {
-            if (!game.globalScores) game.globalScores = {}; let baseKnockValue = 0; let knockMsg = "";
+            if (!game.globalScores) game.globalScores = {};
+            
+            let baseKnockValue = 0;
+            let knockMsg = "";
+            let isTrueJoker = false;
+            let knockCard = customKnockCard;
+
             if (knockerIdx !== null) {
-                let knocker = game.players[knockerIdx]; let knockCard = customKnockCard;
-                if (!knockCard && knocker.discard && knocker.discard.length > 0) { knockCard = knocker.discard[knocker.discard.length - 1]; }
+                let knocker = game.players[knockerIdx];
+                
+                if (!knockCard && knocker.discard && knocker.discard.length > 0) {
+                    knockCard = knocker.discard[knocker.discard.length - 1];
+                }
                 if (!knockCard) { knockCard = { rank: '2', suit: '♠', isFallen: false }; } 
-                let isTrueJoker = (knockCard.rank === game.jokerRank && !knockCard.isFallen);
-                if (isTrueJoker) { baseKnockValue = 250; } else if (knockCard.rank === 'A') { baseKnockValue = 150; } else if (['J', 'Q', 'K'].includes(knockCard.rank)) { baseKnockValue = 100; } else { baseKnockValue = 50; } 
+                
+                isTrueJoker = (knockCard.rank === game.jokerRank && !knockCard.isFallen);
+                
+                // === TRUE AREA OF EFFECT VALUE ===
+                if (isTrueJoker) { baseKnockValue = 250; }
+                else if (knockCard.rank === 'A') { baseKnockValue = 150; }
+                else if (['J', 'Q', 'K'].includes(knockCard.rank)) { baseKnockValue = 100; }
+                else { baseKnockValue = 50; } 
+                
                 knockMsg = `🎉 ${knocker.name} MENUTUP DENGAN KARTU ${isTrueJoker ? 'JOKER' : knockCard.rank}!`;
-                let allValidMelds = []; if (knocker.melds) knocker.melds.forEach(m => allValidMelds.push(...m));
-                let handInfo = evaluateHand(knocker.hand || [], knocker.melds || [], game.jokerRank); if (handInfo.formedGroups) handInfo.formedGroups.forEach(m => allValidMelds.push(...m));
-                let confirmedVictimIndices = []; let confirmedVictimNames = [];
+
+                let allValidMelds = [];
+                if (knocker.melds) knocker.melds.forEach(m => allValidMelds.push(...m));
+                
+                let handInfo = evaluateHand(knocker.hand || [], knocker.melds || [], game.jokerRank);
+                if (handInfo.formedGroups) handInfo.formedGroups.forEach(m => allValidMelds.push(...m));
+
+                let confirmedVictimIndices = [];
+                let confirmedVictimNames = [];
+
                 if (knocker.pendingPenalties && knocker.pendingPenalties.length > 0) {
                     knocker.pendingPenalties.forEach(pen => {
                         let isUsedInMeld = allValidMelds.some(mc => mc.rank === pen.card.rank && mc.suit === pen.card.suit && mc.isFallen === pen.card.isFallen);
                         if (isUsedInMeld) {
-                            let vId = game.players[pen.victimIdx].id; game.globalScores[vId] -= pen.penalty;
-                            if (!confirmedVictimIndices.includes(pen.victimIdx)) { confirmedVictimIndices.push(pen.victimIdx); confirmedVictimNames.push(game.players[pen.victimIdx].name); }
+                            if (!confirmedVictimIndices.includes(pen.victimIdx)) { 
+                                confirmedVictimIndices.push(pen.victimIdx); 
+                                confirmedVictimNames.push(game.players[pen.victimIdx].name); 
+                            }
                         }
                     });
                 }
+
                 victims = confirmedVictimIndices;
-                if (victims && victims.length > 0) { knockMsg += `<br><span style="color:var(--red-suit); font-size:11px; display:block; margin-top:5px;">(Denda Nembak & Tutup ditanggung: ${confirmedVictimNames.join(', ')})</span>`; }
-            } else { knockMsg = "⚠️ STOK KARTU HABIS! SKOR NORMAL DITERAPKAN!"; }
+                
+                if (victims && victims.length > 0) {
+                    knockMsg += `<br><span style="color:var(--red-suit); font-size:11px; display:block; margin-top:5px;">(Korban Tersapu: ${confirmedVictimNames.join(', ')})</span>`;
+                }
+            } else {
+                knockMsg = "⚠️ STOK KARTU HABIS! SKOR NORMAL DITERAPKAN!";
+            }
+            
             game.players.forEach((p, idx) => {
                 if (game.globalScores[p.id] === undefined) game.globalScores[p.id] = 0;
-                let handInfo = evaluateHand(p.hand || [], p.melds || [], game.jokerRank); let rScore = handInfo.score; 
-                if (knockerIdx !== null) { if (idx === knockerIdx) { rScore += baseKnockValue; } else { if (victims && victims.includes(idx)) { rScore -= baseKnockValue; } } }
-                game.globalScores[p.id] += rScore; p.lastRoundScore = rScore; 
+                let handInfo = evaluateHand(p.hand || [], p.melds || [], game.jokerRank);
+                
+                let rScore = handInfo.score; 
+                let dendaTersapu = 0;
+                let dendaType = "";
+                
+                if (knockerIdx !== null) {
+                    if (idx === knockerIdx) {
+                        dendaTersapu = baseKnockValue; 
+                        rScore += dendaTersapu;
+                        dendaType = `Bonus Tutup ${isTrueJoker ? 'JOKER' : knockCard.rank}`;
+                    } else if (victims && victims.includes(idx)) {
+                        dendaTersapu = -baseKnockValue; 
+                        rScore += dendaTersapu;
+                        dendaType = `Denda Tersapu (Tutup ${isTrueJoker ? 'JOKER' : knockCard.rank})`;
+                    }
+                }
+                
+                game.globalScores[p.id] += rScore;
+                p.lastRoundScore = rScore; 
+                p.roundDetails = {
+                    deadwood: handInfo.score,
+                    dendaTersapu: dendaTersapu,
+                    dendaType: dendaType
+                };
             });
-            if (knockerIdx !== null) { game.playDirection = (game.playDirection || 1) * -1; } else { game.playDirection = game.playDirection || 1; }
-            game.status = "ROUND_ENDED"; game.roundReason = knockMsg; game.readyCount = 0; game.readyList = [];
+            
+            if (knockerIdx !== null) { game.playDirection = (game.playDirection || 1) * -1; } 
+            else { game.playDirection = game.playDirection || 1; }
+
+            game.status = "ROUND_ENDED";
+            game.roundReason = knockMsg;
+            game.readyCount = 0; 
+            game.readyList = [];
+
             let maxScore = -9999; let winner = ""; let isMatchOver = false;
-            for (let pid in game.globalScores) { if (game.globalScores[pid] >= (game.targetScore || 250)) isMatchOver = true; if (game.globalScores[pid] > maxScore) { maxScore = game.globalScores[pid]; winner = game.players.find(x=>x.id===pid).name; } }
-            game.isMatchOver = isMatchOver; return game;
+            let currentTarget = game.targetScore || 250;
+            for (let pid in game.globalScores) {
+                if (game.globalScores[pid] >= currentTarget) isMatchOver = true;
+                if (game.globalScores[pid] > maxScore) { maxScore = game.globalScores[pid]; winner = game.players.find(x=>x.id===pid).name; }
+            }
+            game.isMatchOver = isMatchOver;
+            return game;
         }
 
         // ================== LOGIKA NEW WORKFLOW LIGA ==================
@@ -825,10 +899,20 @@
             let sortedPlayers = [...game.players].sort((a,b) => (b.lastRoundScore||0) - (a.lastRoundScore||0)); 
             
             sortedPlayers.forEach(p => {
-                let colorClass = (p.lastRoundScore||0) < 0 ? 'score-minus' : 'score-plus';
                 let afkTag = (p.isAFK || p.isBot) ? ` <span style="color:var(--red-suit); font-size:10px;">(BOT)</span>` : "";
                 html += `<div class="showdown-player">
-                    <div class="showdown-name"><span>${p.name}${afkTag}</span> <span style="color:${(p.lastRoundScore||0) < 0 ? 'var(--red-suit)':'var(--neon-green)'}">${p.lastRoundScore||0} Poin</span></div>
+                    <div class="showdown-name">
+                        <div class="showdown-name-left">
+                            <span>${p.name}${afkTag}</span>
+                            <div class="showdown-score-detail">
+                                Skor Formasi & Beban: <span style="color:${(p.roundDetails?.deadwood || 0) < 0 ? 'var(--red-suit)' : 'var(--neon-green)'}">${p.roundDetails?.deadwood || 0}</span>
+                                ${p.roundDetails?.dendaTersapu ? `<br>${p.roundDetails.dendaType}: <span style="color:${p.roundDetails.dendaTersapu < 0 ? 'var(--red-suit)' : 'var(--neon-green)'}">${p.roundDetails.dendaTersapu}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="showdown-score-total" style="color:${(p.lastRoundScore||0) < 0 ? 'var(--red-suit)':'var(--neon-green)'}">
+                            ${p.lastRoundScore||0} Poin
+                        </div>
+                    </div>
                     <div class="showdown-cards">`;
                 
                 let handInfo = evaluateHand(p.hand || [], p.melds || [], game.jokerRank);
@@ -872,6 +956,7 @@
                     });
                     html += `</div>`;
                 }
+
                 html += `</div></div>`;
             });
 
@@ -1408,11 +1493,7 @@
                         tPlayer.discard.pop(); 
                         
                         let pendingPen = [];
-                        let p1 = 50;
-                        if (topCard.rank === gameTx.jokerRank && !topCard.isFallen) p1 = 250;
-                        else if (topCard.rank === 'A') p1 = 150;
-                        else if (['J', 'Q', 'K'].includes(topCard.rank)) p1 = 100;
-                        pendingPen.push({ victimIdx: actualTargetIdx, card: topCard, penalty: p1 });
+                        pendingPen.push({ victimIdx: actualTargetIdx, card: topCard });
 
                         let indicesToRemove = [...selectedCardIndices].sort((a,b) => b-a);
                         indicesToRemove.forEach(idx => { txPData.hand.splice(idx, 1); });
@@ -1437,12 +1518,7 @@
                             if(iterPlayer.discard && iterPlayer.discard.length > 0) {
                                 let sweptCard = iterPlayer.discard.pop();
                                 sweptToHand.push(sweptCard); 
-                                
-                                let p2 = 50;
-                                if (sweptCard.rank === gameTx.jokerRank && !sweptCard.isFallen) p2 = 250;
-                                else if (sweptCard.rank === 'A') p2 = 150;
-                                else if (['J', 'Q', 'K'].includes(sweptCard.rank)) p2 = 100;
-                                pendingPen.push({ victimIdx: stepIdx, card: sweptCard, penalty: p2 });
+                                pendingPen.push({ victimIdx: stepIdx, card: sweptCard });
                             }
                         });
                         
@@ -1637,11 +1713,7 @@
                         let topD = tPlayer.discard.pop();
                         
                         let pendingPen = [];
-                        let p1 = 50;
-                        if (topD.rank === game.jokerRank && !topD.isFallen) p1 = 250;
-                        else if (topD.rank === 'A') p1 = 150;
-                        else if (['J', 'Q', 'K'].includes(topD.rank)) p1 = 100;
-                        pendingPen.push({ victimIdx: targetP, card: topD, penalty: p1 });
+                        pendingPen.push({ victimIdx: targetP, card: topD });
 
                         let sortedRem = cardsToRemoveFromHand.sort((a,b)=>b-a);
                         sortedRem.forEach(idx => hand.splice(idx, 1));
@@ -1670,12 +1742,7 @@
                             if (iterPlayer.discard && iterPlayer.discard.length > 0) {
                                 let sweptCard = iterPlayer.discard.pop();
                                 sweptToHand.push(sweptCard);
-                                
-                                let p2 = 50;
-                                if (sweptCard.rank === game.jokerRank && !sweptCard.isFallen) p2 = 250;
-                                else if (sweptCard.rank === 'A') p2 = 150;
-                                else if (['J', 'Q', 'K'].includes(sweptCard.rank)) p2 = 100;
-                                pendingPen.push({ victimIdx: stepIdx, card: sweptCard, penalty: p2 });
+                                pendingPen.push({ victimIdx: stepIdx, card: sweptCard });
                             }
                         });
                         
