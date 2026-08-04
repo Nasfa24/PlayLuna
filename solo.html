@@ -3,229 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MGCC Solo Tournament - Pro Edition</title>
+    <title>MGCC Solo Tournament</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet">
     
     <style>
-        /* --- CORE DESIGN SYSTEM --- */
         :root {
-            --bg-dark: #09090b;
-            --bg-gradient: radial-gradient(circle at top right, #1a1a2e, #09090b);
-            --card-bg: rgba(24, 24, 27, 0.65);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --accent: #8b5cf6;
-            --accent-hover: #7c3aed;
-            --accent-glow: 0 0 20px rgba(139, 92, 246, 0.4);
-            --danger: #ef4444;
-            --danger-glow: 0 0 20px rgba(239, 68, 68, 0.4);
-            --success: #10b981;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --bg: #121212; --card: #1e1e2e; --accent: #8b5cf6; --text: #ffffff; --border: rgba(255,255,255,0.1);
+            --danger: #ef4444; --success: #10b981;
         }
-
-        body {
-            font-family: 'Outfit', sans-serif; background: var(--bg-dark); background-image: var(--bg-gradient);
-            color: var(--text-main); margin: 0; padding: 0; min-height: 100vh; overscroll-behavior-y: none;
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; padding-top: 60px; }
+        
+        /* NAVIGATION */
+        .nav-bar {
+            position: absolute; top: 15px; left: 15px; z-index: 100;
         }
+        .btn-back {
+            display: flex; align-items: center; gap: 5px; background: var(--card); color: var(--text);
+            padding: 6px 12px; border-radius: 20px; text-decoration: none; font-size: 0.85rem; font-weight: 600;
+            border: 1px solid var(--border); transition: 0.3s;
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.1); }
 
-        /* --- UTILITIES & GLASSMORPHISM --- */
-        .glass { background: var(--card-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--card-border); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
-        .hidden { display: none !important; }
-        .flex-center { display: flex; align-items: center; justify-content: center; }
+        /* TYPOGRAPHY */
+        h1 { text-align: center; color: var(--accent); margin: 0 0 5px 0; font-weight: 800; font-size: 2em; letter-spacing: 1px; }
+        h2, h3, h4 { color: var(--accent); margin: 10px 0; }
+        .subtitle { text-align: center; color: #9ca3af; font-size: 0.9em; margin-bottom: 20px; font-weight: 600; letter-spacing: 2px; }
+
+        /* LOBBY STYLE */
+        #lobby-section {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 999;
+        }
+        .lobby-card {
+            background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid var(--border);
+            text-align: center; max-width: 350px; width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .lobby-input {
+            padding: 15px; font-size: 1.2rem; text-align: center; text-transform: uppercase; font-family: 'Poppins', sans-serif;
+            border: 2px solid var(--border); border-radius: 12px; width: 100%; box-sizing: border-box; 
+            background: rgba(0,0,0,0.3); color: white; margin-bottom: 20px; letter-spacing: 2px; outline: none; transition: 0.3s;
+        }
+        .lobby-input:focus { border-color: var(--accent); }
+
+        /* UI WRAPPER */
+        #app-wrapper { display: none; }
+
+        /* STATUS BAR */
+        .status-bar {
+            display: flex; justify-content: space-between; align-items: center; 
+            background: var(--card); padding: 10px 15px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 20px; border: 1px solid var(--border);
+        }
+        .live-indicator { display: flex; align-items: center; gap: 5px; color: var(--danger); font-weight: bold; }
+        .dot { height: 8px; width: 8px; background-color: var(--danger); border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.5; } }
+
+        .btn-mini { background: rgba(255,255,255,0.1); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: 'Poppins'; font-size: 0.8rem; font-weight: 600; }
+        .btn-mini:hover { background: rgba(255,255,255,0.2); }
+
+        /* TABS */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { flex: 1; min-width: 80px; padding: 12px 10px; background: var(--card); border: 1px solid var(--border); color: #9ca3af; cursor: pointer; text-align: center; border-radius: 10px; font-family: 'Poppins'; font-weight: 600; transition: 0.2s; }
+        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+        /* TABLES */
+        .card { background: var(--card); padding: 20px; border-radius: 15px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 300px; }
+        th { text-align: left; color: #9ca3af; padding: 12px 10px; border-bottom: 2px solid var(--border); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; }
+        td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
+        .rank-1 { color: #facc15; font-weight: 800; font-size: 1.1em; }
+        .score-val { text-align: right; font-weight: 800; color: var(--success); }
+
+        /* FORMS & BUTTONS */
+        .admin-only { display: none; border-left: 4px solid #f59e0b; padding-left: 15px; margin: 20px 0; background: rgba(245, 158, 11, 0.05); }
+        input, select { 
+            padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.3); color: white; 
+            width: 100%; box-sizing: border-box; font-family: 'Poppins'; outline: none; 
+        }
+        select option { background: var(--card); }
         
-        .container { max-width: 800px; margin: 0 auto; padding: 80px 20px 40px 20px; }
+        button.btn-main { width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 10px; font-weight: 800; color: white; font-family: 'Poppins'; cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        button.btn-main:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        button.btn-danger { background: var(--danger); }
+        button.btn-outline-danger { background: transparent; border: 2px solid var(--danger); color: var(--danger); }
+
+        /* BADGES */
+        .badge { font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 20px; color: #d1d5db; margin-left: 8px; font-weight: 600; }
+        .hidden { display: none; }
+        .center-box { text-align: center; }
+
+        /* SETUP GRID */
+        .setup-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-bottom: 10px; align-items: center; }
+
+        /* CUSTOM MODAL & TOAST */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-box { background: var(--card); padding: 25px; border-radius: 15px; width: 90%; max-width: 320px; text-align: center; border: 1px solid var(--border); }
         
-        /* --- NAVIGATION --- */
-        .nav-bar { position: fixed; top: 0; left: 0; width: 100%; padding: 15px 20px; z-index: 100; box-sizing: border-box; background: rgba(9,9,11,0.8); backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); }
-        .btn-back { display: inline-flex; align-items: center; gap: 8px; color: var(--text-main); text-decoration: none; font-weight: 600; font-size: 0.9rem; padding: 8px 16px; border-radius: 20px; background: rgba(255,255,255,0.05); transition: var(--transition); border: 1px solid transparent; }
-        .btn-back:hover { background: rgba(255,255,255,0.1); border-color: var(--card-border); transform: translateX(-2px); }
-
-        /* --- TYPOGRAPHY --- */
-        h1 { text-align: center; background: linear-gradient(to right, #c4b5fd, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0 0 5px 0; font-weight: 800; font-size: 2.5em; letter-spacing: -0.5px; }
-        h2, h3, h4 { margin: 10px 0; font-weight: 600; }
-        .subtitle { text-align: center; color: var(--text-muted); font-size: 0.95em; margin-bottom: 25px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; }
-
-        /* --- LOBBY --- */
-        #lobby-section { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99; background: var(--bg-dark); }
-        .lobby-card { border-radius: 24px; padding: 40px; width: 90%; max-width: 400px; text-align: center; }
-        .lobby-input { width: 100%; padding: 18px; font-size: 1.5rem; text-align: center; text-transform: uppercase; background: rgba(0,0,0,0.5); color: white; border: 2px solid var(--card-border); border-radius: 16px; margin-bottom: 24px; outline: none; transition: var(--transition); font-family: 'Outfit'; font-weight: 800; letter-spacing: 4px; box-sizing: border-box; }
-        .lobby-input:focus { border-color: var(--accent); box-shadow: var(--accent-glow); transform: translateY(-2px); }
-
-        /* --- STATUS BAR --- */
-        .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-radius: 16px; margin-bottom: 25px; font-size: 0.9rem; font-weight: 600; }
-        .live-indicator { display: flex; align-items: center; gap: 8px; color: var(--danger); text-shadow: var(--danger-glow); }
-        .dot { height: 10px; width: 10px; background-color: var(--danger); border-radius: 50%; display: inline-block; animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; box-shadow: var(--danger-glow); }
-        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .5; transform: scale(1.2); } }
-
-        /* --- TABS --- */
-        .tabs { display: flex; gap: 10px; margin-bottom: 25px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 16px; border: 1px solid var(--card-border); }
-        .tab-btn { flex: 1; padding: 12px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; border-radius: 12px; font-family: 'Outfit'; font-weight: 600; transition: var(--transition); font-size: 0.95rem; }
-        .tab-btn:hover:not(.active) { color: white; background: rgba(255,255,255,0.05); }
-        .tab-btn.active { background: var(--accent); color: white; box-shadow: var(--accent-glow); }
-
-        /* --- CARDS & TABLES --- */
-        .card { border-radius: 20px; padding: 25px; margin-bottom: 25px; }
-        .table-responsive { overflow-x: auto; margin-top: 15px; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; min-width: 400px; }
-        th { text-align: left; color: var(--text-muted); padding: 0 15px 10px; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-        td { padding: 16px 15px; background: rgba(255,255,255,0.03); font-size: 1rem; font-weight: 400; border-top: 1px solid rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.02); transition: var(--transition); }
-        td:first-child { border-left: 1px solid rgba(255,255,255,0.02); border-radius: 12px 0 0 12px; }
-        td:last-child { border-right: 1px solid rgba(255,255,255,0.02); border-radius: 0 12px 12px 0; text-align: right; }
-        tr:hover td { background: rgba(255,255,255,0.06); transform: scale(1.01); }
-        .rank-1 { color: #fbbf24; font-weight: 800; font-size: 1.1em; text-shadow: 0 0 10px rgba(251, 191, 36, 0.4); }
-        .score-val { font-weight: 800; color: var(--success); }
-        .badge { font-size: 0.75rem; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); padding: 4px 10px; border-radius: 20px; color: #ddd6fe; margin-left: 10px; font-weight: 600; }
-
-        /* --- INPUTS & BUTTONS --- */
-        .admin-only { display: none; border-left: 4px solid var(--accent); position: relative; overflow: hidden; }
-        .admin-only::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, rgba(139,92,246,0.1), transparent); pointer-events: none; }
-        
-        input, select { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--card-border); background: rgba(0,0,0,0.3); color: white; font-family: 'Outfit'; outline: none; transition: var(--transition); box-sizing: border-box; font-size: 0.95rem; }
-        input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139,92,246,0.2); }
-        select option { background: var(--bg-dark); }
-        
-        button { cursor: pointer; font-family: 'Outfit'; transition: var(--transition); position: relative; overflow: hidden; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
-        .btn-main { width: 100%; padding: 16px; background: var(--accent); border: none; border-radius: 14px; font-weight: 800; color: white; font-size: 1rem; margin-top: 15px; box-shadow: var(--accent-glow); letter-spacing: 1px; text-transform: uppercase; }
-        .btn-main:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-3px); box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5); }
-        .btn-main:active:not(:disabled) { transform: translateY(1px); }
-        
-        .btn-danger { background: var(--danger); box-shadow: var(--danger-glow); }
-        .btn-danger:hover:not(:disabled) { background: #dc2626; box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5); }
-        .btn-outline { background: transparent; border: 2px solid var(--card-border); box-shadow: none; }
-        .btn-outline:hover:not(:disabled) { border-color: white; background: rgba(255,255,255,0.05); }
-
-        .setup-row { display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 12px; margin-bottom: 12px; align-items: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 14px; }
-        .rank-input-row { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 12px 16px; border-radius: 12px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.02); }
-
-        /* --- CUSTOM DIALOG ENGINE (NO MORE ALERT/CONFIRM) --- */
-        #ui-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; }
-        #ui-overlay.active { opacity: 1; pointer-events: all; }
-        .dialog-box { width: 90%; max-width: 360px; padding: 30px; border-radius: 24px; text-align: center; transform: scale(0.9) translateY(20px); opacity: 0; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        #ui-overlay.active .dialog-box { transform: scale(1) translateY(0); opacity: 1; }
-        .dialog-icon { font-size: 48px; margin-bottom: 15px; display: inline-block; }
-        .dialog-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; }
-        .dialog-message { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 25px; line-height: 1.5; }
-        .dialog-actions { display: flex; gap: 12px; }
-        .dialog-actions button { flex: 1; margin-top: 0; }
-        
-        /* SHAKE ANIMATION FOR DENIED */
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
-        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; border-color: var(--danger) !important; box-shadow: var(--danger-glow) !important; }
-
-        /* --- CUSTOM TOASTS --- */
-        #toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 3000; display: flex; flex-direction: column; gap: 10px; align-items: center; pointer-events: none; }
-        .toast { background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); border: 1px solid var(--card-border); color: white; padding: 14px 24px; border-radius: 100px; font-weight: 600; font-size: 0.9rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 10px; animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        .toast.success .t-icon { color: var(--success); }
-        .toast.error .t-icon { color: var(--danger); }
-        .toast.fadeOut { animation: fadeOut 0.4s forwards; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px) scale(0.9); } }
+        #toast { visibility: hidden; min-width: 250px; background-color: var(--success); color: #fff; text-align: center; border-radius: 8px; padding: 12px; position: fixed; z-index: 3000; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: 600; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
 
         /* SCROLLBAR */
         ::-webkit-scrollbar { height: 6px; width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <div class="nav-bar">
-    <a href="mcgg.html" class="btn-back"><span class="material-symbols-rounded">arrow_back_ios_new</span> Portal</a>
-    <div style="display:flex; gap:10px; align-items:center;">
-        <span class="material-symbols-rounded" style="cursor:pointer; color:var(--text-muted); font-size: 20px;" onclick="copyLink()" title="Share Link">share</span>
-        <button id="btn-login" class="btn-back" style="border-radius:8px; padding: 6px 12px; margin:0;" onclick="UI.showAuthModal()">Admin Login</button>
-    </div>
+    <a href="mcgg.html" class="btn-back"><span class="material-symbols-rounded" style="font-size:18px;">arrow_back</span> Portal</a>
 </div>
 
 <!-- LOBBY -->
 <div id="lobby-section">
-    <div class="lobby-card glass">
-        <span class="material-symbols-rounded" style="font-size: 48px; color: var(--accent); margin-bottom: 10px; display: block;">videogame_asset</span>
-        <h2 style="margin-top:0;">SOLO ARENA</h2>
-        <p style="color:var(--text-muted); font-size:0.9em; margin-bottom:30px;">Enter Room Access Code</p>
-        <input type="text" id="room-code-input" class="lobby-input" placeholder="CODE">
-        <button onclick="enterRoom()" class="btn-main" id="btn-enter-room">JOIN ARENA</button>
+    <div class="lobby-card">
+        <h2 style="margin-top:0;">🎪 SOLO ROOM</h2>
+        <p style="color:#aaa; font-size:0.85em; margin-bottom:20px;">Masukkan Kode Akses Room.<br>Contoh: <b>SOLO1</b></p>
+        <input type="text" id="room-code-input" class="lobby-input" placeholder="KODE ROOM">
+        <button onclick="enterRoom()" class="btn-main">MASUK ROOM</button>
     </div>
 </div>
 
-<!-- CUSTOM DIALOG ENGINE -->
-<div id="ui-overlay">
-    <div class="dialog-box glass" id="ui-dialog">
-        <!-- Injected via JS -->
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="auth-modal">
+    <div class="modal-box">
+        <h3 style="margin-top:0;">Admin Access</h3>
+        <input type="password" id="admin-pass" placeholder="Password Admin" style="margin-bottom:15px; text-align:center;">
+        <div style="display:flex; gap:10px;">
+            <button class="btn-main" style="background:#444;" onclick="closeModal()">Batal</button>
+            <button class="btn-main" onclick="verifyAdmin()">Login</button>
+        </div>
     </div>
 </div>
 
-<!-- TOAST CONTAINER -->
-<div id="toast-container"></div>
+<!-- TOAST -->
+<div id="toast">Notifikasi</div>
 
 <!-- MAIN APP -->
-<div id="app-wrapper" class="container hidden">
-    
-    <div class="status-bar glass">
+<div id="app-wrapper" class="container">
+    <div class="status-bar">
         <div class="live-indicator">
-            <span class="dot"></span> LIVE MATCH
+            <span class="dot"></span> LIVE <span style="color:#888; font-weight:normal; margin-left:8px;" id="display-room-id"></span>
         </div>
-        <div style="color:var(--text-muted);">
-            ROOM ID: <strong style="color:white; letter-spacing: 1px;" id="display-room-id"></strong>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <span class="material-symbols-rounded" style="cursor:pointer; color:#9ca3af;" onclick="copyLink()" title="Share Link">share</span>
+            <button id="btn-login" class="btn-mini" onclick="openModal()">Admin</button>
         </div>
     </div>
 
-    <h1>CHAMPIONSHIP</h1>
-    <p class="subtitle">Solo to Winner</p>
+    <h1>🏆 SOLO TOURNAMENT</h1>
+    <p class="subtitle">DARI SOLO JADI WINNER</p>
 
     <!-- ADMIN SETUP -->
-    <div id="admin-setup" class="card glass admin-only">
-        <h3 style="display:flex; align-items:center; gap:8px; color:var(--accent);"><span class="material-symbols-rounded">manage_accounts</span> Master Setup</h3>
-        <p style="font-size:0.85em; color:var(--text-muted); margin-top:0; margin-bottom: 20px;">Configure players. Save to initialize database.</p>
-        
+    <div id="admin-setup" class="card admin-only">
+        <h3 style="display:flex; align-items:center; gap:8px;"><span class="material-symbols-rounded">settings</span> Admin Setup</h3>
+        <p style="font-size:0.8em; color:#9ca3af; margin-top:0;">Masukkan Data Pemain. Simpan untuk mereset skor.</p>
         <div id="setup-inputs"></div>
+        <button class="btn-main" onclick="savePlayersToDB()">💾 SIMPAN DATA PEMAIN</button>
         
-        <button class="btn-main" onclick="savePlayersToDB()" id="btn-save-players"><span class="material-symbols-rounded" style="vertical-align: middle; font-size: 18px; margin-right: 5px;">save</span> SYNCHRONIZE PLAYERS</button>
-        
-        <div style="display:flex; gap:12px; margin-top:15px;">
-            <button class="btn-main btn-outline" style="flex:1; font-size:0.85rem;" onclick="resetScoresOnly()" id="btn-reset-score"><span class="material-symbols-rounded" style="vertical-align: middle; font-size: 16px;">restart_alt</span> Reset Scores</button>
-            <button class="btn-main btn-danger" style="flex:1; font-size:0.85rem;" onclick="hardReset()" id="btn-hard-reset"><span class="material-symbols-rounded" style="vertical-align: middle; font-size: 16px;">delete_forever</span> Delete Room</button>
+        <div style="display:flex; gap:10px; margin-top:15px;">
+            <button class="btn-main btn-danger" style="flex:1; font-size:0.8rem;" onclick="resetScoresOnly()">🔄 RESET SKOR</button>
+            <button class="btn-main btn-outline-danger" style="flex:1; font-size:0.8rem;" onclick="hardReset()">⚠️ HAPUS ROOM</button>
         </div>
     </div>
 
     <!-- TABS -->
-    <div class="tabs glass">
-        <button class="tab-btn active" onclick="setTab(1)">Match 1</button>
-        <button class="tab-btn" onclick="setTab(2)">Match 2</button>
-        <button class="tab-btn" onclick="setTab(3)">Match 3</button>
-        <button class="tab-btn" onclick="setTab('leaderboard')" style="display:flex; align-items:center; justify-content:center; gap:5px;"><span class="material-symbols-rounded" style="font-size:18px;">emoji_events</span> Standings</button>
+    <div class="tabs">
+        <div class="tab-btn active" onclick="setTab(1)">Game 1</div>
+        <div class="tab-btn" onclick="setTab(2)">Game 2</div>
+        <div class="tab-btn" onclick="setTab(3)">Game 3</div>
+        <div class="tab-btn" onclick="setTab('leaderboard')">🏆 Klasemen</div>
     </div>
 
     <!-- GAME VIEW -->
-    <div id="view-game" class="card glass">
-        <h3 id="game-title" style="margin-top:0; color: white;">Match 1 Results</h3>
+    <div id="view-game" class="card">
+        <h3 id="game-title" style="margin-top:0;">Hasil Game 1</h3>
         
         <div class="table-responsive">
             <table id="game-table">
-                <thead><tr><th>Player</th><th style="text-align:center">Placement</th><th style="text-align:right">Points Earned</th></tr></thead>
+                <thead><tr><th>Pemain</th><th style="text-align:center">Rank</th><th style="text-align:right">Poin</th></tr></thead>
                 <tbody id="game-tbody"></tbody>
             </table>
         </div>
 
-        <div id="admin-game-input" class="admin-only" style="margin-top: 30px; border-top: 1px solid var(--card-border); padding-top:20px;">
-            <h4 style="color:var(--accent);">Input Placement (Match <span id="lbl-game-id">1</span>)</h4>
-            <div id="game-inputs-container" style="margin-top: 15px;"></div>
-            <button class="btn-main" onclick="saveGameToDB()" id="btn-save-game">SUBMIT RESULTS</button>
+        <div id="admin-game-input" class="admin-only" style="margin-top: 20px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top:15px;">
+            <h4>✏️ Input Hasil (Game <span id="lbl-game-id">1</span>)</h4>
+            <div id="game-inputs-container"></div>
+            <button class="btn-main" onclick="saveGameToDB()">UPDATE SKOR</button>
         </div>
     </div>
 
     <!-- LEADERBOARD VIEW -->
-    <div id="view-leaderboard" class="card glass hidden">
-        <h3 style="margin-top:0; color: white; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-rounded" style="color: #fbbf24;">workspace_premium</span> Global Leaderboard</h3>
+    <div id="view-leaderboard" class="card hidden">
+        <h3 style="margin-top:0;">Klasemen Akhir</h3>
         <div class="table-responsive">
             <table>
-                <thead><tr><th>Pos</th><th>Player</th><th>Tier</th><th style="text-align:right">Total Score</th></tr></thead>
+                <thead><tr><th>#</th><th>Pemain</th><th>Tier</th><th style="text-align:right">Total Poin</th></tr></thead>
                 <tbody id="leaderboard-tbody"></tbody>
             </table>
         </div>
@@ -233,9 +210,9 @@
 </div>
 
 <script>
-    /** ==========================================
-     *  CORE CONFIGURATION & STATE
-     *  ========================================== */
+    // ==========================================
+    // CONFIG DATABASE (Sesuai original)
+    // ==========================================
     const firebaseConfig = {
         apiKey: "AIzaSyDLiGNB82sYfYVEd4OHx1eAXScaLrA5-Ps",
         authDomain: "mcgg-turney.firebaseapp.com",
@@ -247,6 +224,8 @@
         measurementId: "G-PMDETSSGYS"
     };
     
+    // PERHATIAN: Di environment production sungguhan, pastikan Firebase Realtime Database rules mengamankan write access.
+    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
@@ -254,99 +233,21 @@
     let activeTab = 1;
     let isAdmin = false;
     let CURRENT_ROOM = null;
-    let isProcessing = false; // Global lock to prevent accidental double taps
     const BASE_POINTS = { 1: 10, 2: 8, 3: 6, 4: 5, 5: 4, 6: 3, 7: 2, 8: 1 };
 
-    /** ==========================================
-     *  UI ENGINE (Modals, Toasts, Locks)
-     *  ========================================== */
-    const UI = {
-        toast: (message, type = 'success') => {
-            const container = document.getElementById('toast-container');
-            const el = document.createElement('div');
-            const icon = type === 'success' ? 'check_circle' : (type === 'error' ? 'error' : 'info');
-            el.className = `toast ${type}`;
-            el.innerHTML = `<span class="material-symbols-rounded t-icon">${icon}</span> ${message}`;
-            container.appendChild(el);
-            setTimeout(() => {
-                el.classList.add('fadeOut');
-                setTimeout(() => el.remove(), 400);
-            }, 3500);
-        },
+    // --- UI HELPERS ---
+    function showToast(message, isError = false) {
+        const toast = document.getElementById("toast");
+        toast.innerText = message;
+        toast.style.backgroundColor = isError ? "var(--danger)" : "var(--success)";
+        toast.className = "show";
+        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+    }
 
-        // Replaces native confirm() with Promise
-        confirm: (title, message, isDanger = false) => {
-            return new Promise((resolve) => {
-                const overlay = document.getElementById('ui-overlay');
-                const dialog = document.getElementById('ui-dialog');
-                
-                const icon = isDanger ? 'warning' : 'help';
-                const iconColor = isDanger ? 'var(--danger)' : 'var(--accent)';
-                const btnClass = isDanger ? 'btn-danger' : 'btn-main';
-                
-                dialog.innerHTML = `
-                    <span class="material-symbols-rounded dialog-icon" style="color: ${iconColor}">${icon}</span>
-                    <div class="dialog-title">${title}</div>
-                    <div class="dialog-message">${message}</div>
-                    <div class="dialog-actions">
-                        <button class="btn-main btn-outline" id="dlg-cancel">Cancel</button>
-                        <button class="${btnClass}" id="dlg-confirm">Proceed</button>
-                    </div>
-                `;
-                
-                overlay.classList.add('active');
-                
-                document.getElementById('dlg-cancel').onclick = () => { overlay.classList.remove('active'); resolve(false); };
-                document.getElementById('dlg-confirm').onclick = () => { overlay.classList.remove('active'); resolve(true); };
-            });
-        },
+    function openModal() { document.getElementById('auth-modal').style.display = 'flex'; document.getElementById('admin-pass').focus(); }
+    function closeModal() { document.getElementById('auth-modal').style.display = 'none'; document.getElementById('admin-pass').value = ''; }
 
-        // Custom Auth Modal for Admin
-        showAuthModal: () => {
-            const overlay = document.getElementById('ui-overlay');
-            const dialog = document.getElementById('ui-dialog');
-            dialog.className = 'dialog-box glass'; // reset classes
-            dialog.innerHTML = `
-                <span class="material-symbols-rounded dialog-icon" style="color: var(--accent)">admin_panel_settings</span>
-                <div class="dialog-title">Admin Access</div>
-                <div class="dialog-message">Requires master password to unlock controls.</div>
-                <input type="password" id="admin-pass" placeholder="Password" style="margin-bottom:20px; text-align:center; letter-spacing:2px;">
-                <div class="dialog-actions">
-                    <button class="btn-main btn-outline" onclick="document.getElementById('ui-overlay').classList.remove('active')">Cancel</button>
-                    <button class="btn-main" onclick="verifyAdmin()">Unlock</button>
-                </div>
-            `;
-            overlay.classList.add('active');
-            setTimeout(() => document.getElementById('admin-pass').focus(), 100);
-        },
-
-        // Permission Denied Effect
-        permissionDenied: (message = "Permission Denied") => {
-            const dialog = document.getElementById('ui-dialog');
-            dialog.classList.remove('shake');
-            void dialog.offsetWidth; // trigger reflow
-            dialog.classList.add('shake');
-            UI.toast(message, 'error');
-        },
-
-        // Lock button during async operations
-        setLoading: (btnId, isLoading) => {
-            const btn = document.getElementById(btnId);
-            if(!btn) return;
-            if(isLoading) {
-                btn.dataset.original = btn.innerHTML;
-                btn.innerHTML = `<span class="material-symbols-rounded" style="animation: pulse 1s infinite;">sync</span> Processing...`;
-                btn.disabled = true;
-            } else {
-                btn.innerHTML = btn.dataset.original;
-                btn.disabled = false;
-            }
-        }
-    };
-
-    /** ==========================================
-     *  LOBBY SYSTEM
-     *  ========================================== */
+    // --- LOBBY SYSTEM ---
     window.onload = function() {
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
@@ -357,35 +258,26 @@
     };
 
     function enterRoom() {
-        const input = document.getElementById('room-code-input');
-        const inputCode = input.value.toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
-        
-        if(!inputCode) { 
-            input.classList.add('shake');
-            setTimeout(() => input.classList.remove('shake'), 500);
-            UI.toast("Please enter a Room Code", "error"); 
-            return; 
-        }
+        const inputCode = document.getElementById('room-code-input').value.toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
+        if(!inputCode) { showToast("Masukkan Kode Room!", true); return; }
         
         CURRENT_ROOM = inputCode;
-        document.getElementById('lobby-section').classList.add('hidden');
-        document.getElementById('app-wrapper').classList.remove('hidden');
+        document.getElementById('lobby-section').style.display = 'none';
+        document.getElementById('app-wrapper').style.display = 'block';
         document.getElementById('display-room-id').innerText = `${CURRENT_ROOM}`;
         
         const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?code=' + CURRENT_ROOM;
         window.history.pushState({path:newUrl},'',newUrl);
 
         initApp();
-        UI.toast(`Joined Room: ${CURRENT_ROOM}`);
     }
 
     function copyLink() {
-        navigator.clipboard.writeText(window.location.href).then(() => UI.toast("Link copied to clipboard!"));
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => showToast("Link tersalin! Share ke peserta."));
     }
 
-    /** ==========================================
-     *  APP LOGIC & RENDER
-     *  ========================================== */
+    // --- APP LOGIC ---
     function initApp() {
         db.ref('solorank/' + CURRENT_ROOM).on('value', (snapshot) => {
             const data = snapshot.val();
@@ -419,15 +311,16 @@
     }
 
     function renderGameTab(gameId) {
-        document.getElementById('game-title').innerText = `Match ${gameId} Results`;
+        document.getElementById('game-title').innerText = `Hasil Game ${gameId}`;
         const tbody = document.getElementById('game-tbody');
         const adminContainer = document.getElementById('game-inputs-container');
         
-        tbody.innerHTML = ''; adminContainer.innerHTML = '';
+        tbody.innerHTML = '';
+        adminContainer.innerHTML = '';
 
         if(players.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:40px;">Waiting for Admin setup...</td></tr>';
-            adminContainer.innerHTML = '<div style="text-align:center; padding:20px; border:1px dashed var(--danger); color:var(--danger); border-radius:12px;">⚠️ Please setup players first.</div>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#555; padding:30px;">Menunggu Admin Setup...</td></tr>';
+            adminContainer.innerHTML = '<div style="text-align:center; padding:10px; color:var(--danger);">⚠️ Setup pemain terlebih dahulu.</div>';
             return;
         }
 
@@ -447,24 +340,26 @@
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${p.name}</strong> <span class="badge">${p.tier}</span></td>
-                        <td style="text-align:center; color: #cbd5e1; font-weight:600;">#${rank}</td>
+                        <td style="text-align:center">#${rank}</td>
                         <td class="score-val">+${score}</td>
-                    </tr>`;
+                    </tr>
+                `;
             }
         });
-        if(!hasData) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:30px;">No results recorded yet.</td></tr>';
+        if(!hasData) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#555; padding:20px;">Belum ada hasil input</td></tr>';
 
-        // Admin Input
+        // Admin Input Generator
         players.forEach((p, idx) => {
             let currentRank = (p.games && p.games[gameId]) ? p.games[gameId] : 0;
             adminContainer.innerHTML += `
-                <div class="rank-input-row">
-                    <div style="font-size:0.95rem; font-weight:600;">${p.name} <div style="color:var(--text-muted); font-size:0.8em; font-weight:400; margin-top:2px;">${p.tier}</div></div>
-                    <select id="input-g${gameId}-p${idx}" style="width:140px; padding:10px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
+                    <div style="font-size:0.9em; flex:1; font-weight:600;">${p.name} <div style="color:#888; font-size:0.8em; font-weight:400;">${p.tier}</div></div>
+                    <select id="input-g${gameId}-p${idx}" style="width:130px; font-size:0.85rem;">
                         <option value="0" ${currentRank==0?'selected':''}>- Rank -</option>
                         ${[1,2,3,4,5,6,7,8].map(r => `<option value="${r}" ${currentRank==r?'selected':''}>#${r} (+${BASE_POINTS[r]})</option>`).join('')}
                     </select>
-                </div>`;
+                </div>
+            `;
         });
     }
 
@@ -472,8 +367,8 @@
         const tbody = document.getElementById('leaderboard-tbody');
         tbody.innerHTML = '';
         if(players.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:40px;">No tournament data available.</td></tr>';
-            return;
+             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#555; padding:30px;">Belum ada data turnamen</td></tr>';
+             return;
         }
 
         let leaderboardData = players.map(p => {
@@ -490,31 +385,30 @@
         leaderboardData.sort((a,b) => b.totalScore - a.totalScore);
 
         leaderboardData.forEach((p, idx) => {
-            let isFirst = idx === 0;
+            let rankCls = idx === 0 ? 'rank-1' : '';
             tbody.innerHTML += `
                 <tr>
-                    <td class="${isFirst ? 'rank-1' : ''}">#${idx+1}</td>
-                    <td style="font-weight:600; color:${isFirst?'#fbbf24':'white'}">${p.name}</td>
+                    <td class="${rankCls}">#${idx+1}</td>
+                    <td style="font-weight:600; color:${idx===0?'#facc15':'white'}">${p.name}</td>
                     <td><span class="badge">${p.tier}</span></td>
-                    <td class="score-val" style="font-size: 1.1em;">${p.totalScore}</td>
-                </tr>`;
+                    <td class="score-val">${p.totalScore}</td>
+                </tr>
+            `;
         });
     }
 
-    /** ==========================================
-     *  ADMIN ACTIONS & SAFETY LOCKS
-     *  ========================================== */
+    // --- ADMIN ---
     function verifyAdmin() {
         const pass = document.getElementById('admin-pass').value;
         if(pass === "admin123") {
             isAdmin = true;
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
             document.getElementById('btn-login').style.display = 'none';
-            document.getElementById('ui-overlay').classList.remove('active');
+            closeModal();
             generateSetupInputs(); 
-            UI.toast("Admin Controls Unlocked", "success");
+            showToast("Login Admin Berhasil");
         } else {
-            UI.permissionDenied("Invalid Master Password");
+            showToast("Password Salah!", true);
         }
     }
 
@@ -527,7 +421,8 @@
         loopData.forEach((p, i) => {
             if(i >= 8) return; 
             let n = p.name || "";
-            let t = "Epic"; let pts = "";
+            let t = "Epic";
+            let pts = "";
             
             if(p.tier) {
                 if(p.tier.includes('Legend')) t = 'Legend';
@@ -537,16 +432,18 @@
                      if(match) pts = match[1];
                 }
             }
+
             container.innerHTML += `
                 <div class="setup-row">
-                    <input type="text" id="setup-name-${i}" placeholder="Player ${i+1}" value="${n}">
+                    <input type="text" id="setup-name-${i}" placeholder="Pemain ${i+1}" value="${n}">
                     <select id="setup-tier-${i}" onchange="toggleM(${i})">
                         <option value="Epic" ${t==='Epic'?'selected':''}>Epic</option>
                         <option value="Legend" ${t==='Legend'?'selected':''}>Legend</option>
                         <option value="Mythic" ${t==='Mythic'?'selected':''}>Mythic</option>
                     </select>
                     <input type="number" id="setup-poin-${i}" placeholder="Pts" style="display:${t==='Mythic'?'block':'none'}" value="${pts}">
-                </div>`;
+                </div>
+            `;
         });
     }
 
@@ -555,14 +452,9 @@
         document.getElementById(`setup-poin-${idx}`).style.display = val === 'Mythic' ? 'block' : 'none';
     }
 
-    async function savePlayersToDB() {
-        if(isProcessing) return;
-        const confirmed = await UI.confirm("Synchronize Players?", "This will update the player roster. Existing match scores will be retained if positions match.");
-        if(!confirmed) return;
-
-        isProcessing = true;
-        UI.setLoading('btn-save-players', true);
-
+    // --- ACTIONS ---
+    function savePlayersToDB() {
+        if(!confirm("Simpan konfigurasi pemain? Ini aman dan tidak mereset skor jika format sama.")) return;
         let newPlayers = [];
         for(let i=0; i<8; i++) {
             let name = document.getElementById(`setup-name-${i}`).value.trim();
@@ -581,65 +473,39 @@
             }
 
             let existingGames = (players[i] && players[i].games) ? players[i].games : { 1:0, 2:0, 3:0 };
-            newPlayers.push({ name, tier: displayTier, mult, games: existingGames });
+            newPlayers.push({ name: name, tier: displayTier, mult: mult, games: existingGames });
         }
-        
         db.ref('solorank/' + CURRENT_ROOM + '/players').set(newPlayers)
-            .then(() => UI.toast("Roster successfully synchronized!"))
-            .catch(e => UI.toast(e.message, "error"))
-            .finally(() => { isProcessing = false; UI.setLoading('btn-save-players', false); });
+          .then(() => showToast("Data Pemain Tersimpan!"))
+          .catch(e => showToast(e.message, true));
     }
 
-    async function saveGameToDB() {
-        if(!players || players.length === 0) return UI.toast("Configure players first!", "error");
-        if(isProcessing) return;
-
-        const confirmed = await UI.confirm(`Submit Match ${activeTab}?`, "This will update the global leaderboard immediately.");
-        if(!confirmed) return;
-
-        isProcessing = true;
-        UI.setLoading('btn-save-game', true);
-
+    function saveGameToDB() {
+        if(!players || players.length === 0) return showToast("Setup pemain dulu!", true);
         let updatedPlayers = JSON.parse(JSON.stringify(players));
         updatedPlayers.forEach((p, idx) => {
             let rankVal = document.getElementById(`input-g${activeTab}-p${idx}`).value;
             p.games[activeTab] = parseInt(rankVal);
         });
-
         db.ref('solorank/' + CURRENT_ROOM + '/players').set(updatedPlayers)
-            .then(() => UI.toast(`Match ${activeTab} scores updated!`))
-            .catch(() => UI.toast("Network error while saving.", "error"))
-            .finally(() => { isProcessing = false; UI.setLoading('btn-save-game', false); });
+          .then(() => showToast(`Skor Game ${activeTab} Berhasil Diupdate!`));
     }
 
-    async function resetScoresOnly() {
-        if(isProcessing) return;
-        const confirmed = await UI.confirm("Reset All Scores?", "This will wipe all match results but keep the player names and tiers intact.", true);
-        if(!confirmed) return;
-
-        isProcessing = true;
-        UI.setLoading('btn-reset-score', true);
-
+    function resetScoresOnly() {
+        if(!confirm("Anda yakin mereset semua skor menjadi 0? Nama pemain akan tetap ada.")) return;
         let resetPlayers = players.map(p => ({ ...p, games: { 1: 0, 2: 0, 3: 0 } }));
-        db.ref('solorank/' + CURRENT_ROOM + '/players').set(resetPlayers)
-            .then(() => UI.toast("All scores have been reset."))
-            .finally(() => { isProcessing = false; UI.setLoading('btn-reset-score', false); });
+        db.ref('solorank/' + CURRENT_ROOM + '/players').set(resetPlayers).then(() => showToast("Skor direset!"));
     }
 
-    async function hardReset() {
-        if(isProcessing) return;
-        const confirmed = await UI.confirm("ERASE ROOM?", `This will permanently delete Room ${CURRENT_ROOM} and all its data. This cannot be undone.`, true);
-        if(!confirmed) return;
-
-        isProcessing = true;
-        UI.setLoading('btn-hard-reset', true);
-
-        db.ref('solorank/' + CURRENT_ROOM).remove().then(() => {
-            players = []; generateSetupInputs();
-            UI.toast("Room deleted permanently.", "info");
-            setTimeout(() => window.location.href = 'mcgg.html', 1500); // Redirect to portal
-        }).finally(() => { isProcessing = false; UI.setLoading('btn-hard-reset', false); });
+    function hardReset() {
+        if(confirm(`⚠️ HAPUS PERMANEN ROOM ${CURRENT_ROOM}? Semua data akan hilang.`)) {
+            db.ref('solorank/' + CURRENT_ROOM).remove().then(() => {
+                players = []; generateSetupInputs();
+                showToast("Room berhasil dihapus.");
+            });
+        }
     }
 </script>
+
 </body>
 </html>
