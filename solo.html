@@ -224,8 +224,6 @@
         measurementId: "G-PMDETSSGYS"
     };
     
-    // PERHATIAN: Di environment production sungguhan, pastikan Firebase Realtime Database rules mengamankan write access.
-    
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
@@ -233,6 +231,9 @@
     let activeTab = 1;
     let isAdmin = false;
     let CURRENT_ROOM = null;
+    let isSetupGenerated = false;
+    let areGameInputsGenerated = false;
+
     const BASE_POINTS = { 1: 10, 2: 8, 3: 6, 4: 5, 5: 4, 6: 3, 7: 2, 8: 1 };
 
     // --- UI HELPERS ---
@@ -282,8 +283,19 @@
         db.ref('solorank/' + CURRENT_ROOM).on('value', (snapshot) => {
             const data = snapshot.val();
             players = (data && data.players) ? data.players : [];
+            
+            // Sync UI Setup Admin tanpa me-reset fokus kursor
+            if(isAdmin && !isSetupGenerated) {
+                generateSetupInputs(); 
+                isSetupGenerated = true;
+            } else if (isAdmin && isSetupGenerated) {
+                updateSetupInputs();
+            }
+
             renderUI();
-            if(isAdmin) generateSetupInputs(); 
+        }, (error) => {
+            showToast("Akses Ditolak: Periksa Rules Database Firebase", true);
+            console.error("Firebase Read Error:", error);
         });
     }
 
@@ -294,6 +306,8 @@
 
     function setTab(tab) {
         activeTab = tab;
+        areGameInputsGenerated = false; // Memaksa perenderan ulang form saat tab pindah
+        
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         const idx = tab === 'leaderboard' ? 3 : tab - 1;
         document.querySelectorAll('.tab-btn')[idx].classList.add('active');
@@ -316,7 +330,6 @@
         const adminContainer = document.getElementById('game-inputs-container');
         
         tbody.innerHTML = '';
-        adminContainer.innerHTML = '';
 
         if(players.length === 0) {
             tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#555; padding:30px;">Menunggu Admin Setup...</td></tr>';
@@ -324,6 +337,7 @@
             return;
         }
 
+        // Render Table (Display)
         let sortedForView = [...players].sort((a,b) => {
             let rA = (a.games && a.games[gameId]) ? parseInt(a.games[gameId]) : 99;
             let rB = (b.games && b.games[gameId]) ? parseInt(b.games[gameId]) : 99;
@@ -348,19 +362,30 @@
         });
         if(!hasData) tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#555; padding:20px;">Belum ada hasil input</td></tr>';
 
-        // Admin Input Generator
-        players.forEach((p, idx) => {
-            let currentRank = (p.games && p.games[gameId]) ? p.games[gameId] : 0;
-            adminContainer.innerHTML += `
-                <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
-                    <div style="font-size:0.9em; flex:1; font-weight:600;">${p.name} <div style="color:#888; font-size:0.8em; font-weight:400;">${p.tier}</div></div>
-                    <select id="input-g${gameId}-p${idx}" style="width:130px; font-size:0.85rem;">
-                        <option value="0" ${currentRank==0?'selected':''}>- Rank -</option>
-                        ${[1,2,3,4,5,6,7,8].map(r => `<option value="${r}" ${currentRank==r?'selected':''}>#${r} (+${BASE_POINTS[r]})</option>`).join('')}
-                    </select>
-                </div>
-            `;
-        });
+        // Admin Input Generator (State Preservation)
+        if (!areGameInputsGenerated) {
+            adminContainer.innerHTML = '';
+            players.forEach((p, idx) => {
+                let currentRank = (p.games && p.games[gameId]) ? p.games[gameId] : 0;
+                adminContainer.innerHTML += `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center; background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
+                        <div style="font-size:0.9em; flex:1; font-weight:600;">${p.name} <div style="color:#888; font-size:0.8em; font-weight:400;">${p.tier}</div></div>
+                        <select id="input-g${gameId}-p${idx}" style="width:130px; font-size:0.85rem;">
+                            <option value="0" ${currentRank==0?'selected':''}>- Rank -</option>
+                            ${[1,2,3,4,5,6,7,8].map(r => `<option value="${r}" ${currentRank==r?'selected':''}>#${r} (+${BASE_POINTS[r]})</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            });
+            areGameInputsGenerated = true;
+        } else {
+            // Hanya perbarui nilai select jika DOM sudah ada
+            players.forEach((p, idx) => {
+                let currentRank = (p.games && p.games[gameId]) ? p.games[gameId] : 0;
+                let selectEl = document.getElementById(`input-g${gameId}-p${idx}`);
+                if (selectEl) selectEl.value = currentRank;
+            });
+        }
     }
 
     function renderLeaderboard() {
@@ -405,7 +430,11 @@
             document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
             document.getElementById('btn-login').style.display = 'none';
             closeModal();
-            generateSetupInputs(); 
+            
+            if(!isSetupGenerated) {
+                generateSetupInputs(); 
+                isSetupGenerated = true;
+            }
             showToast("Login Admin Berhasil");
         } else {
             showToast("Password Salah!", true);
@@ -447,6 +476,18 @@
         });
     }
 
+    function updateSetupInputs() {
+        // Sinkronisasi data ke form setup admin tanpa menghancurkan elemen DOM
+        let loopData = players.length > 0 ? players : Array(8).fill({});
+        loopData.forEach((p, i) => {
+            if(i >= 8) return;
+            let elName = document.getElementById(`setup-name-${i}`);
+            if(elName && !elName.matches(':focus')) {
+                elName.value = p.name || "";
+            }
+        });
+    }
+
     window.toggleM = function(idx) {
         const val = document.getElementById(`setup-tier-${idx}`).value;
         document.getElementById(`setup-poin-${idx}`).style.display = val === 'Mythic' ? 'block' : 'none';
@@ -475,34 +516,44 @@
             let existingGames = (players[i] && players[i].games) ? players[i].games : { 1:0, 2:0, 3:0 };
             newPlayers.push({ name: name, tier: displayTier, mult: mult, games: existingGames });
         }
+        
         db.ref('solorank/' + CURRENT_ROOM + '/players').set(newPlayers)
           .then(() => showToast("Data Pemain Tersimpan!"))
-          .catch(e => showToast(e.message, true));
+          .catch(e => showToast("Gagal simpan: " + e.message, true));
     }
 
     function saveGameToDB() {
         if(!players || players.length === 0) return showToast("Setup pemain dulu!", true);
         let updatedPlayers = JSON.parse(JSON.stringify(players));
         updatedPlayers.forEach((p, idx) => {
-            let rankVal = document.getElementById(`input-g${activeTab}-p${idx}`).value;
-            p.games[activeTab] = parseInt(rankVal);
+            let selectEl = document.getElementById(`input-g${activeTab}-p${idx}`);
+            if (selectEl) {
+                p.games[activeTab] = parseInt(selectEl.value);
+            }
         });
         db.ref('solorank/' + CURRENT_ROOM + '/players').set(updatedPlayers)
-          .then(() => showToast(`Skor Game ${activeTab} Berhasil Diupdate!`));
+          .then(() => showToast(`Skor Game ${activeTab} Berhasil Diupdate!`))
+          .catch(e => showToast("Gagal update skor: " + e.message, true));
     }
 
     function resetScoresOnly() {
         if(!confirm("Anda yakin mereset semua skor menjadi 0? Nama pemain akan tetap ada.")) return;
         let resetPlayers = players.map(p => ({ ...p, games: { 1: 0, 2: 0, 3: 0 } }));
-        db.ref('solorank/' + CURRENT_ROOM + '/players').set(resetPlayers).then(() => showToast("Skor direset!"));
+        db.ref('solorank/' + CURRENT_ROOM + '/players').set(resetPlayers)
+          .then(() => showToast("Skor direset!"))
+          .catch(e => showToast("Gagal reset: " + e.message, true));
     }
 
     function hardReset() {
         if(confirm(`⚠️ HAPUS PERMANEN ROOM ${CURRENT_ROOM}? Semua data akan hilang.`)) {
-            db.ref('solorank/' + CURRENT_ROOM).remove().then(() => {
-                players = []; generateSetupInputs();
+            db.ref('solorank/' + CURRENT_ROOM).remove()
+            .then(() => {
+                players = []; 
+                areGameInputsGenerated = false;
+                generateSetupInputs();
                 showToast("Room berhasil dihapus.");
-            });
+            })
+            .catch(e => showToast("Gagal hapus: " + e.message, true));
         }
     }
 </script>
