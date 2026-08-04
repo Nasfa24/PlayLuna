@@ -222,6 +222,7 @@
     let isAdmin = false;
     let gameResults = { 1: {}, 2: {}, 3: {} };
     let CURRENT_ROOM = null;
+    let formsGenerated = false;
 
     // --- UI HELPERS ---
     function showToast(message, isError = false) {
@@ -282,7 +283,14 @@
                 if (players.length > 0) {
                     document.getElementById('setup-section').style.display = 'none';
                     document.getElementById('app-section').style.display = 'flex';
-                    generateGameForms(); 
+                    
+                    if (!formsGenerated) {
+                        generateGameForms(); 
+                        formsGenerated = true;
+                    } else {
+                        updateGameFormsValues();
+                    }
+                    
                     updateLeaderboardUI();
                 }
             } else {
@@ -293,12 +301,14 @@
                     document.getElementById('game-forms').innerHTML = '<p style="text-align:center; padding:40px; color:#aaa;"><span class="material-symbols-rounded" style="font-size:3em; display:block; margin-bottom:10px;">hourglass_empty</span>Menunggu Admin Setup Room</p>';
                 }
             }
+        }, (error) => {
+            showToast("Akses Ditolak: Periksa Rules Database Firebase", true);
+            console.error("Firebase Read Error:", error);
         });
     }
 
     function generateGameForms() {
         const container = document.getElementById('game-forms');
-        const scrollPos = container.scrollTop;
         
         let activeTab = 1;
         document.querySelectorAll('.game-content').forEach((el, idx) => { if(el.classList.contains('active')) activeTab = idx + 1; });
@@ -329,7 +339,19 @@
             container.innerHTML += html;
             if(isAdmin) refreshDropdownOptions(gameId);
         }
-        container.scrollTop = scrollPos;
+    }
+
+    function updateGameFormsValues() {
+        for (let gameId = 1; gameId <= 3; gameId++) {
+            for (let rank = 1; rank <= 8; rank++) {
+                let el = document.getElementById(`g${gameId}-r${rank}`);
+                if (el) {
+                    let selectedPlayer = (gameResults[gameId] && gameResults[gameId][rank]) ? gameResults[gameId][rank] : "";
+                    el.value = selectedPlayer;
+                }
+            }
+            if(isAdmin) refreshDropdownOptions(gameId);
+        }
     }
 
     function refreshDropdownOptions(gameId) {
@@ -358,7 +380,9 @@
     function handleSelection(gameId, rank, playerName) {
         if (!isAdmin) return;
         refreshDropdownOptions(gameId);
-        db.ref(`tournaments/${CURRENT_ROOM}/results/${gameId}/${rank}`).set(playerName);
+        
+        db.ref(`tournaments/${CURRENT_ROOM}/results/${gameId}/${rank}`).set(playerName)
+          .catch(e => showToast("Gagal simpan data: " + e.message, true));
     }
 
     function switchTab(gameId) {
@@ -417,16 +441,21 @@
             db.ref(`tournaments/${CURRENT_ROOM}`).set({
                 players: newPlayers,
                 results: { 1: {}, 2: {}, 3: {} }
-            }).then(() => showToast("Setup berhasil disimpan!"));
+            })
+            .then(() => showToast("Setup berhasil disimpan!"))
+            .catch(e => showToast("Gagal simpan setup: " + e.message, true));
         }
     }
 
     function resetTournament() {
         if(confirm(`⚠️ Hapus PERMANEN data Room ${CURRENT_ROOM}?`)) {
-            db.ref(`tournaments/${CURRENT_ROOM}`).remove().then(() => {
+            db.ref(`tournaments/${CURRENT_ROOM}`).remove()
+            .then(() => {
+                formsGenerated = false; // Reset DOM state
                 showToast("Room dihapus. Mereset web...");
                 setTimeout(() => location.reload(), 1500);
-            });
+            })
+            .catch(e => showToast("Gagal hapus room: " + e.message, true));
         }
     }
     
@@ -446,7 +475,12 @@
             let selects = document.querySelectorAll('select');
             selects.forEach(s => s.disabled = false);
             if(players.length === 0) document.getElementById('setup-section').style.display = 'block';
+            
+            // Re-render forms to enable inputs if they were generated as read-only
+            formsGenerated = false;
             generateGameForms();
+            formsGenerated = true;
+            
             showToast("Admin Mode Diaktifkan!");
         } else {
             showToast("Password Salah!", true);
