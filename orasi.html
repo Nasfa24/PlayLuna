@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Orasi - Latihan Public Speaking</title>
+    
+    <!-- Fonts: Playfair for elegance, Inter for clean UI -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0d0a14;
+            --bg-gradient: radial-gradient(circle at 50% -10%, #2a163d 0%, #0d0a14 70%);
+            --surface-color: rgba(30, 24, 45, 0.6);
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --primary: #FF5722;
+            --primary-hover: #E64A19;
+            --primary-glow: rgba(255, 87, 34, 0.3);
+            --text-main: #f8f8f9;
+            --text-muted: #9ba1a6;
+            --radius-pill: 50px;
+            --radius-box: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 
+         * Kunci Ketinggian 100vh Asli (tanpa scroll) 
+         * overflow: hidden mematikan scroll sama sekali.
+         */
+        body {
+            background-color: var(--bg-dark);
+            background-image: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            height: 100vh; 
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between; /* Menyebar elemen dari atas ke bawah */
+            overflow: hidden; 
+            overscroll-behavior: none;
+        }
+
+        /* Progress Bar */
+        #progress-bar-container {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: rgba(255,255,255,0.05);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        #progress-bar {
+            height: 100%;
+            width: 100%;
+            background: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+            transition: width 1s linear;
+        }
+
+        /* 
+         * HEADER (Diperkecil jaraknya) 
+         */
+        header {
+            text-align: center;
+            padding-top: 15px; /* Dulu 50px */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem; /* Dulu 3rem */
+            color: #fff;
+            margin-bottom: 2px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .subtitle a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .mode-container {
+            margin: 10px auto 5px; /* Diperkecil dari 20px */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .mode-toggle {
+            display: flex;
+            background: rgba(13, 10, 20, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: var(--radius-pill);
+            padding: 4px; /* Dulu 6px */
+            width: fit-content;
+            border: 1px solid var(--surface-border);
+            margin-bottom: 5px;
+        }
+
+        .mode-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 16px; /* Dulu 12px 24px */
+            border-radius: var(--radius-pill);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 4px 10px var(--primary-glow);
+        }
+
+        .mode-desc {
+            font-size: 0.75rem; /* Dulu 0.85rem */
+            color: #888c91;
+            font-weight: 400;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .category-select {
+            background: var(--surface-color);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            color: var(--text-main);
+            border: 1px solid var(--surface-border);
+            padding: 10px 16px; /* Dulu 14px 24px */
+            border-radius: var(--radius-pill);
+            font-size: 0.9rem;
+            margin-top: 5px; /* Dulu 15px */
+            cursor: pointer;
+            outline: none;
+            appearance: none;
+            text-align: center;
+            width: 85%;
+            max-width: 280px;
+        }
+
+        .category-select:focus {
+            border-color: var(--primary);
+        }
+
+        /* 
+         * STAGE UTAMA (Center) 
+         */
+        .main-stage {
+            flex-grow: 1; /* Mengisi ruang kosong */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            padding: 0 15px;
+            text-align: center;
+        }
+
+        .status-label {
+            color: var(--primary);
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 10px; /* Dulu 20px */
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .status-label.show {
+            opacity: 1;
+        }
+
+        .topic-display {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem; /* Dulu 3.5rem */
+            line-height: 1.1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-word;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+
+        .spinning {
+            filter: blur(2px);
+            opacity: 0.6;
+            transform: scale(0.95);
+            color: var(--primary);
+        }
+
+        .timer-display {
+            font-size: 4rem; /* Dulu 5rem */
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            display: none;
+        }
+
+        @keyframes pulse-danger {
+            0% { transform: scale(1); color: var(--text-main); }
+            50% { transform: scale(1.05); color: #ff4d4d; }
+            100% { transform: scale(1); color: var(--text-main); }
+        }
+        .timer-danger {
+            animation: pulse-danger 1s infinite;
+        }
+
+        /* 
+         * CONTROLS (Area Bawah)
+         */
+        .controls {
+            display: flex;
+            gap: 10px; /* Dulu 15px */
+            padding: 15px 15px 25px; /* Dulu padding bawah 60px */
+            width: 100%;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            background: var(--surface-color);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--text-main);
+            border: 1px solid var(--surface-border);
+            padding: 14px 24px; /* Dulu 18px 32px */
+            border-radius: var(--radius-pill);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+        }
+
+        @keyframes subtle-pulse {
+            0% { box-shadow: 0 0 0 0 var(--primary-glow); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 87, 34, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 87, 34, 0); }
+        }
+        .btn-pulse {
+            animation: subtle-pulse 2s infinite;
+        }
+
+        .btn-icon {
+            padding: 14px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Modal Pengaturan */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background: #1a1625;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 24px 24px 0 0;
+            padding: 25px 25px 35px;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+            border-top: 1px solid var(--surface-border);
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: var(--radius-box);
+            border: 1px solid var(--surface-border);
+        }
+
+        .setting-label {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .setting-label strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary);
+            height: 6px;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+
+        /* Customized SweetAlert */
+        .swal2-dark-theme {
+            background: rgba(26, 22, 37, 0.95) !important;
+            backdrop-filter: blur(15px) !important;
+            border: 1px solid var(--surface-border) !important;
+            border-radius: var(--radius-box) !important;
+            color: #fff !important;
+        }
+        .swal2-title { color: #fff !important; font-family: 'Playfair Display', serif; font-size: 1.8rem !important; }
+        .swal2-html-container { color: var(--text-muted) !important; font-size: 1rem !important; }
+        .swal2-confirm { background: var(--primary) !important; border-radius: var(--radius-pill) !important; padding: 10px 25px !important; font-weight: 600 !important; }
+        .swal2-cancel { background: transparent !important; border: 1px solid var(--surface-border) !important; border-radius: var(--radius-pill) !important; padding: 10px 25px !important; }
+
+        /* Media Query untuk Layar Sangat Kecil (SE/5S) */
+        @media (max-height: 600px) {
+            .title { font-size: 1.8rem; }
+            .topic-display { font-size: 2rem; }
+            .timer-display { font-size: 3.5rem; }
+            header { padding-top: 10px; }
+            .controls { padding-bottom: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Garis Kemajuan Waktu -->
+    <div id="progress-bar-container">
+        <div id="progress-bar"></div>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+        <h1 class="title">Orasi</h1>
+        <div class="subtitle">Latihan Public Speaking oleh <a href="https://www.instagram.com/mas_uuth/" target="_blank">Mas Uuth</a></div>
+        
+        <div class="mode-container">
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="btn-spontan" onclick="setMode('spontan')">🧠 Spontan</button>
+                <button class="mode-btn" id="btn-riset" onclick="setMode('riset')">🔍 Riset Mendalam</button>
+            </div>
+            <!-- Keterangan Dinamis Tombol -->
+            <p id="mode-desc" class="mode-desc">Langsung bicara tanpa persiapan sedikitpun.</p>
+        </div>
+
+        <select class="category-select" id="category">
+            <option value="general">🌍 Topik Umum</option>
+            <option value="finance">💰 Keuangan Pribadi</option>
+            <option value="entrepreneurship">🚀 Dunia Usaha</option>
+            <option value="startups">🏢 Startup (Perusahaan Baru)</option>
+            <option value="tech">💻 Teknologi & AI</option>
+            <option value="fitness">🏃 Olahraga & Kebugaran</option>
+            <option value="nutrition">🍎 Gizi & Makanan</option>
+            <option value="productivity">⏱️ Produktivitas Kerja</option>
+            <option value="history">🏛️ Sejarah Dunia</option>
+            <option value="literature">📚 Sastra & Buku</option>
+        </select>
+    </header>
+
+    <!-- AREA TENGAH -->
+    <main class="main-stage">
+        <div class="status-label" id="status-label">SIAP DIMULAI</div>
+        <div class="topic-display" id="topic-text">Tekan tombol untuk mengacak.</div>
+        <div class="timer-display" id="timer-text">00:00</div>
+    </main>
+
+    <!-- AREA TOMBOL BAWAH -->
+    <div class="controls" id="control-panel">
+        <button class="btn btn-primary btn-pulse" id="btn-main" onclick="handleMainAction()">Acak Topik</button>
+        <button class="btn btn-icon" id="btn-settings" onclick="openSettings()">⚙️</button>
+    </div>
+
+    <!-- Papan Pengaturan Bawah -->
+    <div class="modal-overlay" id="settings-modal" onclick="closeSettings(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 class="modal-header">Pengaturan Waktu</h2>
+            
+            <div class="setting-group">
+                <div class="setting-label">
+                    <span>Lama Berbicara</span>
+                    <strong id="val-speech">1 Menit</strong>
+                </div>
+                <input type="range" id="slide-speech" min="1" max="10" value="1" oninput="updateSettingsText()">
+            </div>
+
+            <div class="setting-group" id="research-setting-group" style="display: none;">
+                <div class="setting-label">
+                    <span>Waktu Mencari Bahan</span>
+                    <strong id="val-research">10 Menit</strong>
+                </div>
+                <input type="range" id="slide-research" min="1" max="60" value="10" oninput="updateSettingsText()">
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%;" onclick="saveSettings()">Simpan Pengaturan</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. KUMPULAN TOPIK (300 Topik, 10 Kategori, Maksimal 5 Kata) ---
+        const topics = {
+            "general": [
+                "Apa arti sukses buatmu?", "Medsos merubah cara kita berteman", "Pilih gelar atau pengalaman kerja?", 
+                "Cara bangkit dari kegagalan berat", "Kecanduan TikTok merusak fokus otak", "Kerja keras terus bikin kaya?", 
+                "Takut ketinggalan tren zaman sekarang", "Sanksi sosial internet itu adil?", "Jejak digital tidak bisa hilang", 
+                "Kenapa lebih suka chat teks?", "Waktunya bersantai tanpa rasa bersalah", "Filter wajah rusak standar cantik", 
+                "Kenapa suka pamer barang mewah?", "Cemas memikirkan masa depan bumi", "Bikin batas wajar dengan teman", 
+                "Sukses butuh modal orang tua?", "Sanggup hidup tanpa main HP?", "Terlalu banyak mikir bikin diam", 
+                "Banyak teman online tapi kesepian", "Ijazah kuliah masih laku tidak?", "Pentingnya atur uang saat muda", 
+                "Tinggalkan kebiasaan buruk zaman dulu", "Lebih milih kerja bebas waktu", "Belajar berani bilang kata TIDAK", 
+                "Sekolah cuma demi kejar nilai", "Balita lebih pintar main HP", "Marah berlebihan saat main game", 
+                "Kenapa suka gaya hidup sedih?", "Jangan membandingkan hidup dengan orang", "Pilih hidup tenang tanpa beban"
+            ],
+            "finance": [
+                "Pentingnya menabung sejak masih muda", "Beli barang sesuai kebutuhan saja", "Bahaya pinjaman online ilegal mencekik", 
+                "Pilih menabung atau mulai investasi?", "Cara mengatur gaji setiap bulan", "Dana darurat itu sangat penting", 
+                "Jangan besar pasak daripada tiang", "Lebih baik beli atau sewa?", "Gaya hidup mewah bikin miskin", 
+                "Siapkan dana pensiun dari sekarang", "Pisahkan uang pribadi dan usaha", "Jangan mudah tergiur diskon besar", 
+                "Investasi bodong janji cepat kaya", "Beli tunai atau pilih cicilan?", "Pentingnya punya asuransi kesehatan diri", 
+                "Susahnya menabung gaji yang kecil", "Kartu kredit teman atau musuh?", "Belanja pintar di pasar tradisional", 
+                "Mencatat pengeluaran kecil setiap hari", "Tahan nafsu belanja barang mahal", "Utang demi gengsi itu bahaya", 
+                "Tabungan emas atau simpan uang?", "Menjadi tulang punggung beban keluarga", "Malu terlihat miskin di internet", 
+                "Pilih jajan kopi atau menabung?", "Kerja sampingan tambah uang saku", "Rumah kecil tapi milik sendiri", 
+                "Hati-hati memberikan pinjaman pada teman", "Biaya nikah atau modal usaha?", "Harga murah tapi cepat rusak"
+            ],
+            "entrepreneurship": [
+                "Modal utama memulai sebuah usaha", "Pilih jadi bos atau karyawan?", "Cara mencari peluang bisnis baru", 
+                "Pentingnya melayani pelanggan dengan ramah", "Jangan takut gagal saat berbisnis", "Sukses jualan di sosial media", 
+                "Usaha kecil bisa jadi besar", "Menjaga kualitas produk selalu sama", "Pentingnya promosi dari mulut pelanggan", 
+                "Saingan banyak bukan berarti mati", "Berani ambil risiko dalam bisnis", "Menangani pelanggan yang suka marah", 
+                "Membuka cabang baru tempat usaha", "Membuat kemasan produk jadi menarik", "Ide usaha dari hobi sendiri", 
+                "Bedanya omzet dan keuntungan bersih", "Pantang menyerah saat jualan sepi", "Usaha keluarga yang turun temurun", 
+                "Merekrut karyawan yang jujur bekerja", "Membangun merek agar mudah diingat", "Jualan makanan selalu laku keras?", 
+                "Berbisnis tanpa modal, apakah bisa?", "Belajar dari pesaing yang sukses", "Disiplin catat uang masuk keluar", 
+                "Modal pinjam bank atau keluarga?", "Cara hadapi ulasan buruk pembeli", "Kerjasama bisnis dengan sahabat dekat", 
+                "Gagal bisnis jangan cepat menyerah", "Bisnis hancur karena salah urus", "Kunci sukses pengusaha zaman sekarang"
+            ],
+            "startups": [
+                "Budaya kerja di perusahaan baru", "Bakar uang demi cari pelanggan", "Risiko kerja di perusahaan rintisan", 
+                "Bikin aplikasi yang bantu orang", "Mencari pemodal untuk perusahaan baru", "Kerja santai tapi tekanan tinggi", 
+                "Gaji besar tapi sering lembur", "Perusahaan hancur karena kehabisan uang", "Kerja fleksibel dari mana saja", 
+                "Perbedaan startup dan kantor biasa", "Bekerja pakai kaos dan celana", "Rentan terkena pemecatan massal mendadak", 
+                "Peluang naik jabatan sangat cepat", "Kerja tim yang sangat erat", "Persaingan sangat ketat antar perusahaan", 
+                "Masa depan perusahaan bergantung pemodal", "Fasilitas kantor yang sangat mewah", "Banyak posisi pekerjaan jabatan baru", 
+                "Atasan yang usianya masih muda", "Menjual perusahaan ke pemilik baru", "Fokus mengejar jumlah pemakai aplikasi", 
+                "Lebih mementingkan ide dan kreativitas", "Belajar dari perusahaan yang tumbang", "Tidur di kantor kejar waktu", 
+                "Gelar pendidikan kadang tidak penting", "Ruang kantor yang serba terbuka", "Ubah masalah jadi peluang bisnis", 
+                "Berani bersaing dengan perusahaan besar", "Kapan startup mulai cari untung?", "Banyak rapat tapi minim hasil"
+            ],
+            "tech": [
+                "Mesin pintar menggantikan pekerjaan kita", "Bahaya data pribadi dicuri orang", "Kecerdasan buatan bikin kita malas?", 
+                "Hidup tanpa internet, apakah sanggup?", "Teknologi membuat dunia makin sempit", "Anak kecil kecanduan main gadget", 
+                "Masa depan mobil tanpa supir", "Bahaya penipuan canggih di internet", "Mesin pintar bisa membuat gambar?", 
+                "Cara bijak menggunakan teknologi terbaru", "Ketergantungan pada layar setiap hari", "Membeli barang cukup lewat HP", 
+                "Cetak tiga dimensi merubah dunia", "Kacamata pintar pengganti layar komputer", "Hati-hati memberikan kata sandi rahasia", 
+                "Buku fisik diganti buku layar", "Bahaya penyebaran video wajah palsu", "Manusia pergi tinggal di Mars?", 
+                "Robot pintar melayani di restoran", "Rumah serba otomatis lewat suara", "Beli makanan datang lewat udara", 
+                "Kerja jauh digantikan panggilan video", "Uang kertas diganti uang internet", "Dokter bedah digantikan lengan robot", 
+                "Belajar coding untuk masa depan", "Media sosial merusak kesehatan mental?", "Kamera jalanan awasi gerak manusia", 
+                "Surat menyurat diganti pesan cepat", "Bahaya percaya mesin seratus persen", "Baterai HP yang cepat habis"
+            ],
+            "fitness": [
+                "Olahraga ringan di dalam rumah", "Pentingnya olahraga rutin setiap hari", "Susahnya konsisten pergi ke gym", 
+                "Jalan kaki bagus untuk jantung", "Mitos banyak keringat bakar lemak", "Olahraga bikin pikiran jadi tenang", 
+                "Jangan olahraga berlebihan sampai sakit", "Pemanasan sebelum olahraga sangat wajib", "Cari teman agar semangat olahraga", 
+                "Lari pagi udara masih segar", "Berenang bikin seluruh badan bergerak", "Olahraga angkat beban bentuk otot", 
+                "Tidur nyenyak setelah badan berkeringat", "Olahraga lari paling murah meriah", "Jangan langsung minum air dingin", 
+                "Olahraga malam hari susah tidur?", "Badan kaku jarang digerakkan ototnya", "Ikut senam massal hari minggu", 
+                "Olahraga mengecilkan perut buncit berlemak", "Sakit badan setelah lama berhenti", "Bermain sepeda keliling jalan kota", 
+                "Fokus pada kesehatan bukan kurus", "Napas panjang karena rutin bergerak", "Beli alat olahraga ujungnya nganggur", 
+                "Diet sehat dengan rutin olahraga", "Malu tubuh gemuk saat olahraga", "Pentingnya pendinginan setelah selesai olahraga", 
+                "Sepatu olahraga yang nyaman dipakai", "Banyak minum saat keluar keringat", "Bikin jadwal olahraga tiap minggu"
+            ],
+            "nutrition": [
+                "Bahaya terlalu banyak makan gula", "Sayur dan buah sangat penting", "Kurangi makan makanan cepat saji", 
+                "Minum air putih yang cukup", "Diet sangat ketat bikin sakit", "Pentingnya sarapan sebelum mulai aktivitas", 
+                "Makanan sehat tidak harus mahal", "Kurangi makan gorengan setiap hari", "Baca label gizi di kemasan", 
+                "Makan malam bikin cepat gemuk?", "Makan terlalu pedas bahayakan perut", "Kurangi garam hindari darah tinggi", 
+                "Daging ikan baik untuk otak", "Bahaya kecanduan minuman manis boba", "Camilan sehat buah dan kacang", 
+                "Masak sendiri di rumah terjamin", "Pentingnya protein untuk otot tubuh", "Jauhi makanan yang berpengawet buatan", 
+                "Minum susu kuatkan tulang kita", "Banyak serat lancarkan buang air", "Jangan lewatkan waktu makan siang", 
+                "Waspada makanan pemicu alergi parah", "Bawa bekal makan ke kantor", "Makan cukup tidak usah kekenyangan", 
+                "Makan manis untuk tenangkan pikiran?", "Bahaya mie instan tiap hari", "Pilih nasi putih atau merah?", 
+                "Sayuran mentah vs sayuran matang", "Minyak sehat untuk menggoreng makanan", "Makan pelan bikin cepat kenyang"
+            ],
+            "productivity": [
+                "Cara fokus kerja tanpa gangguan", "Kurangi menunda pekerjaan yang penting", "Bikin daftar kerja setiap pagi", 
+                "Meja rapi bikin kerja semangat", "Jangan kerjakan semua secara bersamaan", "Istirahat sejenak di sela kerja", 
+                "Bangun pagi bikin lebih produktif", "Matikan notifikasi HP saat fokus", "Jangan bawa urusan kantor pulang", 
+                "Bekerja cerdas bukan bekerja keras", "Tidur siang sebentar pulihkan tenaga", "Siapkan jadwal untuk hari esok", 
+                "Dengarkan musik saat sedang bekerja", "Cari tempat sepi biar fokus", "Jangan terlalu sering buka sosial-media", 
+                "Kerjakan tugas paling berat duluan", "Jangan paksa kerja kalau sakit", "Rapat terlalu lama buang waktu", 
+                "Jaga meja tetap bersih kosong", "Pecah tugas besar jadi kecil", "Kerja di kafe vs kantor", 
+                "Pentingnya punya target waktu selesai", "Jangan kerja di atas kasur", "Fokus penuh satu jam saja", 
+                "Beri hadiah diri setelah selesai", "Delegasikan tugas pada yang ahli", "Minum air putih biar melek", 
+                "Pilih jam kerja paling nyaman", "Singkirkan barang tidak penting meja", "Belajar dari kesalahan kerja kemarin"
+            ],
+            "history": [
+                "Belajar dari kesalahan masa lalu", "Pahlawan kemerdekaan yang jarang dikenal", "Kenapa kita harus belajar sejarah?", 
+                "Penemuan penting yang mengubah dunia", "Runtuhnya kerajaan besar Nusantara dulu", "Dampak perang bagi warga biasa", 
+                "Bangsa yang melupakan sejarahnya sendiri", "Masa penjajahan yang sangat pahit", "Sejarah terbentuknya mata uang uang", 
+                "Bangunan kuno yang masih kokoh", "Cara orang dulu mengirim pesan", "Wabah penyakit mematikan zaman dulu", 
+                "Buku harian tokoh masa lalu", "Sejarah nama kota tempat tinggalmu", "Pakaian adat dari zaman dulu", 
+                "Zaman purba manusia belum menulis", "Perdagangan rempah di lautan luas", "Candi peninggalan kerajaan masa lalu", 
+                "Sumpah pemuda satukan bangsa kita", "Cerita legenda yang dipercaya nyata", "Museum simpan banyak benda kuno", 
+                "Bentuk tulisan orang zaman purba", "Perang dunia mengubah peta negara", "Cerita rakyat yang diturunkan lisan", 
+                "Perjuangan wanita di zaman dahulu", "Sejarah dunia yang banyak disembunyikan", "Senjata tradisional untuk melawan musuh", 
+                "Perkembangan transportasi dari masa lalu", "Sejarah membuktikan manusia sering serakah", "Bukti sejarah ada di sekitar"
+            ],
+            "literature": [
+                "Baca buku buka jendela dunia", "Buku cerita yang mengubah hidupmu", "Lebih suka baca atau nonton?", 
+                "Puisi romantis yang menyentuh hati", "Dongeng anak penuh pesan moral", "Buku fisik atau buku layar?", 
+                "Menulis cerita pengalaman hidup sendiri", "Karakter cerita yang jadi idola", "Pesan tersembunyi dalam sebuah novel", 
+                "Minat baca anak muda menurun", "Menulis buku harian hilangkan stres", "Koleksi buku bekas yang murah", 
+                "Buku tebal tapi ceritanya membosankan", "Imajinasi liar saat membaca novel", "Sastra kritik kondisi sosial negara", 
+                "Komik bergambar disukai banyak orang", "Membaca buku sebelum tidur malam", "Buku memotivasi hidup jadi semangat", 
+                "Pinjam buku di perpustakaan kota", "Akhir cerita yang tidak terduga", "Menangis karena cerita buku sedih", 
+                "Tulisan pendek penuh makna dalam", "Kutipan buku yang jadi pegangan", "Tukar pinjam buku dengan teman", 
+                "Membuat puisi saat sedang sedih", "Cerita detektif bikin otak berpikir", "Novel horor bikin susah tidur", 
+                "Majalah anak anak zaman dahulu", "Gaya bahasa penulis zaman dahulu", "Bau kertas buku baru dibeli"
+            ]
+        };
+
+        const config = {
+            mode: 'spontan',
+            speechTime: 1, 
+            researchTime: 10,
+            currentTopic: '',
+            state: 'idle', 
+            timerInterval: null,
+            timeRemaining: 0,
+            totalTimeInSeconds: 0
+        };
+
+        // --- 2. SINTESIS SUARA (Tanpa File Luar) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+
+        function unlockAudioContext() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTick() {
+            unlockAudioContext();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
+            
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function playBeep(isFinal = false) {
+            unlockAudioContext();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = isFinal ? 'sine' : 'square';
+            osc.frequency.setValueAtTime(isFinal ? 440 : 880, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(isFinal ? 0.4 : 0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (isFinal ? 1.5 : 0.2));
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + (isFinal ? 1.5 : 0.2));
+        }
+
+        // --- 3. KENDALI ELEMEN LAYAR ---
+        const elTopic = document.getElementById('topic-text');
+        const elStatus = document.getElementById('status-label');
+        const elTimer = document.getElementById('timer-text');
+        const elBtnMain = document.getElementById('btn-main');
+        const elCategory = document.getElementById('category');
+        const elModeDesc = document.getElementById('mode-desc');
+        const modal = document.getElementById('settings-modal');
+        const elProgressBarContainer = document.getElementById('progress-bar-container');
+        const elProgressBar = document.getElementById('progress-bar');
+
+        // --- 4. LOGIKA UTAMA & ANIMASI ---
+
+        function setMode(mode) {
+            unlockAudioContext(); 
+            if (config.state !== 'idle' && config.state !== 'ready') {
+                confirmAction("Pindah Cara Latihan?", "Waktu sedang berjalan. Yakin ingin menghentikan latihan ini?", () => executeSetMode(mode));
+                return;
+            }
+            executeSetMode(mode);
+        }
+
+        function executeSetMode(mode) {
+            config.mode = mode;
+            document.getElementById('btn-spontan').classList.toggle('active', mode === 'spontan');
+            document.getElementById('btn-riset').classList.toggle('active', mode === 'riset');
+            document.getElementById('research-setting-group').style.display = mode === 'riset' ? 'block' : 'none';
+            
+            // Mengubah keterangan tombol dinamis
+            if(mode === 'spontan') {
+                elModeDesc.innerText = "Langsung bicara tanpa persiapan sedikitpun.";
+            } else {
+                elModeDesc.innerText = "Diberi waktu cari bahan sebelum bicara.";
+            }
+
+            resetState();
+        }
+
+        async function handleMainAction() {
+            unlockAudioContext();
+            
+            // Cegah pencet dua kali
+            elBtnMain.disabled = true; 
+
+            if (config.state === 'idle') {
+                elBtnMain.classList.remove('btn-pulse'); 
+                await spinTopic();
+            } else if (config.state === 'ready') {
+                if (config.mode === 'riset') startTimer('research');
+                else startTimer('speech');
+            } else if (config.state === 'researching') {
+                confirmAction("Selesai Mencari Bahan?", "Sudah merasa siap untuk mulai berbicara sekarang?", () => startTimer('speech'), () => { elBtnMain.disabled = false; });
+            } else if (config.state === 'speaking') {
+                confirmAction("Berhenti Berbicara?", "Waktu bicaramu belum habis. Yakin ingin menyudahi sekarang?", resetState, () => { elBtnMain.disabled = false; });
+            }
+        }
+
+        async function spinTopic() {
+            config.state = 'spinning';
+            elTopic.classList.add('spinning');
+            
+            const category = elCategory.value;
+            const pool = topics[category];
+            let spins = 0;
+            const maxSpins = 15; 
+            
+            const spinInterval = setInterval(() => {
+                const randomTopic = pool[Math.floor(Math.random() * pool.length)];
+                elTopic.innerText = randomTopic;
+                playTick(); 
+                spins++;
+                
+                if (spins >= maxSpins) {
+                    clearInterval(spinInterval);
+                    finalizeSpin(pool);
+                }
+            }, 80);
+        }
+
+        function finalizeSpin(pool) {
+            config.currentTopic = pool[Math.floor(Math.random() * pool.length)];
+            elTopic.innerText = config.currentTopic;
+            elTopic.classList.remove('spinning');
+            
+            config.state = 'ready';
+            elStatus.innerText = 'TOPIK SIAP';
+            elStatus.classList.add('show');
+
+            if (config.mode === 'spontan') {
+                elBtnMain.innerText = `Mulai Bicara (${config.speechTime} Menit)`;
+            } else {
+                elBtnMain.innerText = `Mulai Riset (${config.researchTime} Menit)`;
+            }
+            
+            elBtnMain.disabled = false;
+        }
+
+        function startTimer(type) {
+            clearInterval(config.timerInterval);
+            config.state = type === 'research' ? 'researching' : 'speaking';
+            
+            // Efek transisi antar teks
+            elTopic.style.opacity = '0';
+            setTimeout(() => {
+                elTopic.style.display = 'none';
+                elTimer.style.display = 'block';
+                elTopic.style.opacity = '1'; 
+            }, 300);
+
+            elStatus.innerText = type === 'research' ? 'MENCARI BAHAN...' : 'SEDANG BERBICARA...';
+            
+            config.totalTimeInSeconds = (type === 'research' ? config.researchTime : config.speechTime) * 60;
+            config.timeRemaining = config.totalTimeInSeconds;
+            
+            elProgressBarContainer.style.opacity = '1';
+            elProgressBar.style.width = '100%';
+            elTimer.classList.remove('timer-danger');
+            
+            updateTimerDisplay();
+
+            elBtnMain.innerText = type === 'research' ? 'Lompati Riset' : 'Akhiri Latihan';
+            elBtnMain.classList.remove('btn-primary');
+            elBtnMain.disabled = false;
+
+            config.timerInterval = setInterval(() => {
+                config.timeRemaining--;
+                updateTimerDisplay();
+                updateProgressBar();
+
+                if (config.timeRemaining <= 5 && config.timeRemaining > 0) {
+                    playBeep(false); 
+                    elTimer.classList.add('timer-danger');
+                } else if (config.timeRemaining <= 0) {
+                    playBeep(true); 
+                    clearInterval(config.timerInterval);
+                    elTimer.classList.remove('timer-danger');
+                    timerComplete(type);
+                }
+            }, 1000);
+            
+            window.onbeforeunload = () => "Sesi latihan sedang berjalan, yakin ingin keluar dari halaman ini?";
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(config.timeRemaining / 60).toString().padStart(2, '0');
+            const s = (config.timeRemaining % 60).toString().padStart(2, '0');
+            elTimer.innerText = `${m}:${s}`;
+        }
+
+        function updateProgressBar() {
+            const percentage = (config.timeRemaining / config.totalTimeInSeconds) * 100;
+            elProgressBar.style.width = `${percentage}%`;
+        }
+
+        function timerComplete(type) {
+            window.onbeforeunload = null;
+            elProgressBarContainer.style.opacity = '0';
+            
+            if (type === 'research') {
+                Swal.fire({
+                    title: 'Waktu Riset Habis!',
+                    text: 'Tarik napas yang panjang, dan mari kita mulai berbicara.',
+                    icon: 'info',
+                    customClass: { popup: 'swal2-dark-theme' },
+                    confirmButtonText: 'Mulai Bicara',
+                    allowOutsideClick: false
+                }).then(() => {
+                    startTimer('speech');
+                });
+            } else {
+                Swal.fire({
+                    title: 'Waktu Habis!',
+                    text: 'Latihan luar biasa! Silakan istirahatkan suaramu sebentar.',
+                    icon: 'success',
+                    customClass: { popup: 'swal2-dark-theme' },
+                    confirmButtonText: 'Selesai'
+                }).then(resetState);
+            }
+        }
+
+        function resetState() {
+            clearInterval(config.timerInterval);
+            window.onbeforeunload = null;
+            config.state = 'idle';
+            config.currentTopic = '';
+            
+            elTimer.style.display = 'none';
+            elTimer.classList.remove('timer-danger');
+            elTopic.style.display = 'flex';
+            elTopic.innerText = 'Tekan tombol untuk mengacak.';
+            elStatus.classList.remove('show');
+            elProgressBarContainer.style.opacity = '0';
+            
+            elBtnMain.innerText = 'Acak Topik';
+            elBtnMain.classList.add('btn-primary', 'btn-pulse');
+            elBtnMain.disabled = false;
+        }
+
+        // --- 5. PENGATURAN & SWEETALERT ---
+
+        function openSettings() {
+            unlockAudioContext();
+            if (config.state !== 'idle' && config.state !== 'ready') {
+                alertToast("Gagal! Waktu sedang berjalan.");
+                return;
+            }
+            document.getElementById('slide-speech').value = config.speechTime;
+            document.getElementById('slide-research').value = config.researchTime;
+            updateSettingsText();
+            modal.classList.add('active');
+        }
+
+        function closeSettings(e) {
+            if (e.target === modal) modal.classList.remove('active');
+        }
+
+        function updateSettingsText() {
+            document.getElementById('val-speech').innerText = document.getElementById('slide-speech').value + ' Menit';
+            document.getElementById('val-research').innerText = document.getElementById('slide-research').value + ' Menit';
+        }
+
+        function saveSettings() {
+            config.speechTime = parseInt(document.getElementById('slide-speech').value);
+            config.researchTime = parseInt(document.getElementById('slide-research').value);
+            modal.classList.remove('active');
+            
+            if (config.state === 'ready') {
+                 if (config.mode === 'spontan') elBtnMain.innerText = `Mulai Bicara (${config.speechTime} Menit)`;
+                 else elBtnMain.innerText = `Mulai Riset (${config.researchTime} Menit)`;
+            }
+            alertToast("Pengaturan disimpan!");
+        }
+
+        function confirmAction(title, text, onConfirm, onCancel) {
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                customClass: { popup: 'swal2-dark-theme' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if(onConfirm) onConfirm();
+                } else {
+                    if(onCancel) onCancel();
+                }
+            });
+        }
+
+        function alertToast(message) {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                customClass: { popup: 'swal2-dark-theme' }
+            });
+            Toast.fire({
+                icon: 'success',
+                title: message
+            });
+        }
+    </script>
+</body>
+</html>
