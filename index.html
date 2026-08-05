@@ -6,354 +6,431 @@
     <title>PLAY LUNA - GAMING HUB</title>
 
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0a0a0f">
+    <meta name="theme-color" content="#050508">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="apple-touch-icon" href="icon.svg">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet">
     
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@800&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,1,0" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         :root {
-            /* Deep, rich dark background */
-            --bg-dark: #0a0a0f;
-            --card-bg: rgba(30, 30, 46, 0.6);
+            /* Palet Warna Kosmik yang Lebih Gelap dan Kontras */
+            --bg-base: #050508;
+            --panel-bg: rgba(18, 18, 28, 0.4);
+            --card-bg: rgba(25, 25, 35, 0.6);
+            --card-hover: rgba(40, 40, 55, 0.8);
             
-            /* Theme Accents */
-            --mc-accent: #6366f1; /* Indigo - MCGG */
-            --ud-accent: #f59e0b; /* Amber - Undian */
-            --rs-accent: #f39c12; /* Orange - Remi */
-            --gw-accent: #00FF9D; /* Neon Green - Ular Tangga */
-            --rr-accent: #f43f5e; /* Rose - Refleksi */
-            --ww-accent: #ffd369; /* Gold - Werewolf */
+            /* Warna Identitas Aplikasi */
+            --or-accent: #a855f7; /* Ungu Orasi */
+            --mc-accent: #6366f1; /* Indigo MCGG */
+            --ud-accent: #f59e0b; /* Amber Undian */
+            --rs-accent: #f39c12; /* Oranye Remi */
+            --gw-accent: #00FF9D; /* Hijau Ular Tangga */
+            --rr-accent: #f43f5e; /* Merah Muda Refleksi */
+            --ww-accent: #ffd369; /* Emas Werewolf */
             
-            --text-main: #ffffff;
-            --text-muted: #94a3b8;
-            --border-glass: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border-line: rgba(255, 255, 255, 0.08);
+            --radius-main: 24px;
+            --radius-card: 16px;
         }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-dark);
-            /* Dynamic Aurora/Mesh Background */
-            background-image: 
-                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.12), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(244, 63, 94, 0.12), transparent 25%),
-                radial-gradient(circle at 50% 80%, rgba(0, 255, 157, 0.08), transparent 30%);
-            background-attachment: fixed;
-            color: var(--text-main);
+        * {
+            box-sizing: border-box;
             margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* LAYOUT UTAMA: Dikunci penuh di 100vh tanpa scroll */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 15% 0%, rgba(99, 102, 241, 0.15), transparent 40%),
+                radial-gradient(circle at 85% 100%, rgba(244, 63, 94, 0.15), transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.05), transparent 50%);
+            color: var(--text-main);
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; 
+            overscroll-behavior: none;
+            padding: 10px;
+        }
+
+        /* MAIN DASHBOARD PANEL (Menyatukan semua elemen agar terlihat solid) */
+        .dashboard-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100%;
+            max-height: 850px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-line);
+            border-radius: var(--radius-main);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-            box-sizing: border-box;
-            overflow-x: hidden;
+            padding: 15px;
+            position: relative;
+            animation: fadeIn 0.6s ease-out;
         }
 
-        /* HEADER ANIMATION & STYLING */
+        /* TOMBOL REFRESH / CLEAR CACHE */
+        .top-bar {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: -15px;
+            z-index: 10;
+        }
+        .btn-clear {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-line);
+            color: var(--text-sub);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-clear .material-symbols-rounded { font-size: 18px; }
+        .btn-clear:hover {
+            background: rgba(244, 63, 94, 0.2);
+            color: var(--rr-accent);
+            border-color: var(--rr-accent);
+            transform: rotate(180deg);
+        }
+
+        /* HEADER */
         .header { 
-            text-align: center; margin-bottom: 40px; margin-top: 30px; 
-            animation: fadeInDown 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            text-align: center; 
+            margin-bottom: 12px;
+            flex-shrink: 0;
         }
         .logo { 
-            font-size: 3.2rem; font-weight: 800; letter-spacing: 6px; margin: 0;
-            background: linear-gradient(135deg, var(--gw-accent), var(--mc-accent), var(--rr-accent));
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem; 
+            font-weight: 800; 
+            letter-spacing: 5px; 
+            margin: 0;
+            background: linear-gradient(to right, var(--or-accent), var(--mc-accent), var(--gw-accent));
             background-size: 200% auto;
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent;
             animation: shine 5s linear infinite;
         }
         .subtitle { 
-            font-size: 0.95rem; font-weight: 500; letter-spacing: 3px; color: var(--text-muted); 
-            text-transform: uppercase; margin-top: 5px;
+            font-size: 0.65rem; 
+            font-weight: 700; 
+            letter-spacing: 3px; 
+            color: var(--text-sub); 
+            text-transform: uppercase; 
+            margin-top: 0px;
         }
 
-        /* PREMIUM INPUT FIELD */
+        /* PLAYER INPUT */
         .user-setup {
-            width: 100%; max-width: 450px; margin-bottom: 50px;
-            background: var(--card-bg); padding: 25px; border-radius: 20px;
-            border: 1px solid var(--border-glass);
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
+            width: 100%;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+        .input-wrapper {
             position: relative;
-            overflow: hidden;
+            display: flex;
+            align-items: center;
         }
-        /* Top glowing accent for input box */
-        .user-setup::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-            background: linear-gradient(90deg, var(--mc-accent), var(--rr-accent));
-        }
-
-        .input-label {
-            font-size: 0.85rem; color: var(--text-muted); display: block; 
-            margin-bottom: 10px; text-align: center; font-weight: 600; letter-spacing: 1px;
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            color: var(--text-sub);
+            font-size: 20px;
         }
         input.player-input {
-            width: 100%; padding: 18px; border-radius: 12px; border: none;
-            background: rgba(0, 0, 0, 0.4); color: white; text-align: center;
-            font-family: 'Poppins', sans-serif; font-size: 1.2rem; font-weight: 600;
-            outline: none; border: 2px solid rgba(255,255,255,0.05); transition: 0.3s all ease;
-            box-sizing: border-box; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+            width: 100%; 
+            padding: 12px 15px 12px 45px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border-line);
+            background: rgba(0, 0, 0, 0.5); 
+            color: var(--text-main); 
+            font-family: 'Inter', sans-serif; 
+            font-size: 0.95rem; 
+            font-weight: 600;
+            outline: none; 
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
         }
-        input.player-input::placeholder { color: rgba(255,255,255,0.2); font-weight: 400; }
+        input.player-input::placeholder { color: rgba(255,255,255,0.25); font-weight: 500; font-size: 0.85rem;}
         input.player-input:focus { 
-            border-color: var(--mc-accent); 
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), inset 0 2px 10px rgba(0,0,0,0.5); 
-            transform: translateY(-2px);
+            border-color: var(--gw-accent); 
+            box-shadow: 0 0 15px rgba(0, 255, 157, 0.15), inset 0 2px 5px rgba(0,0,0,0.5); 
         }
 
-        /* GRID & CARDS (GLASSMORPHISM) */
-        .game-grid {
-            display: grid; grid-template-columns: 1fr; gap: 25px;
-            width: 100%; max-width: 450px; padding-bottom: 40px;
+        /* GRID MENU (Sangat Compact) */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: auto auto auto auto;
+            gap: 10px;
+            flex-grow: 1; /* Dinamis mengisi ruang kosong */
+            align-content: stretch;
+            overflow: hidden; /* Mencegah tumpah */
         }
 
+        /* DESAIN KARTU */
         .game-card {
-            background: var(--card-bg); border-radius: 24px; overflow: hidden;
-            position: relative; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            cursor: pointer; border: 1px solid var(--border-glass);
-            display: flex; flex-direction: column;
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            opacity: 0; /* For staggered animation */
-            animation: fadeUpCard 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            background: var(--card-bg); 
+            border-radius: var(--radius-card); 
+            position: relative; 
+            border: 1px solid var(--border-line);
+            display: flex; 
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            cursor: pointer; 
+            overflow: hidden;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
         }
-        
-        /* Staggered entrance delays */
-        .game-card:nth-child(1) { animation-delay: 0.2s; }
-        .game-card:nth-child(2) { animation-delay: 0.3s; }
-        .game-card:nth-child(3) { animation-delay: 0.4s; }
-        .game-card:nth-child(4) { animation-delay: 0.5s; }
-        .game-card:nth-child(5) { animation-delay: 0.6s; }
-        .game-card:nth-child(6) { animation-delay: 0.7s; }
+        .game-card:active { transform: scale(0.95); }
 
-        .game-card:hover { transform: translateY(-8px) scale(1.02); }
-        .game-card:active { transform: scale(0.98); transition: 0.1s; }
-        
-        .card-banner { 
-            height: 120px; position: relative; display: flex; align-items: center; 
-            justify-content: center; overflow: hidden; 
-        }
+        /* Icon & Text Styling */
         .card-icon { 
-            font-size: 4.5rem; z-index: 2; transition: 0.4s;
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+            font-size: 1.8rem; 
+            margin-bottom: 5px;
+            z-index: 2; 
+            transition: 0.3s;
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
         }
-        .game-card:hover .card-icon { transform: scale(1.15) rotate(5deg); }
-        .card-bg-glow { 
-            position: absolute; width: 150%; height: 150%; opacity: 0.4; 
-            top: -25%; left: -25%; filter: blur(40px); transition: 0.4s;
+        .card-title { 
+            font-size: 0.8rem; 
+            font-weight: 700; 
+            margin: 0; 
+            text-align: center;
+            z-index: 2;
+            letter-spacing: 0.3px;
         }
-        .game-card:hover .card-bg-glow { opacity: 0.7; }
+        .card-subtitle { display: none; }
 
-        .card-info { padding: 25px; text-align: left; position: relative; z-index: 3; }
-        .card-title { font-size: 1.6rem; font-weight: 800; margin: 0; letter-spacing: 0.5px; }
-        .card-desc { font-size: 0.9rem; color: var(--text-muted); margin: 8px 0 20px 0; line-height: 1.5; }
-        
-        .tags { display: flex; gap: 8px; font-size: 0.75rem; font-weight: 600; flex-wrap: wrap; margin-bottom: 20px; }
-        .tag { 
-            padding: 6px 12px; border-radius: 50px; 
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            display: flex; align-items: center; gap: 4px;
+        /* Glow Effect di dalam kartu */
+        .card-glow { 
+            position: absolute; width: 100%; height: 100%; opacity: 0.08; 
+            top: 0; left: 0; transition: opacity 0.3s;
+            pointer-events: none;
         }
+        .game-card:hover .card-glow { opacity: 0.25; }
+        .game-card:hover { background: var(--card-hover); border-color: rgba(255,255,255,0.2); }
 
-        .btn-play {
-            width: 100%; padding: 14px; border: none; border-radius: 12px;
-            font-weight: 800; font-family: 'Poppins', sans-serif; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            transition: all 0.3s ease; font-size: 1rem;
-            position: relative; overflow: hidden;
+        /* PRIORITAS LAYOUT KARTU */
+        /* Baris 1: Orasi (Prioritas Utama, Lebar Penuh) */
+        .game-card:nth-child(1) { 
+            grid-column: span 2; 
+            flex-direction: row; 
+            justify-content: flex-start; 
+            padding: 0 20px;
+            background: linear-gradient(145deg, rgba(168, 85, 247, 0.15), var(--card-bg));
+            border-color: rgba(168, 85, 247, 0.3);
         }
-        .btn-play span { font-size: 1.2rem; transition: 0.3s; }
-        .game-card:hover .btn-play { padding-right: 20px; }
-        .game-card:hover .btn-play span { transform: translateX(5px); }
+        .game-card:nth-child(1) .card-icon { font-size: 2.5rem; margin-bottom: 0; margin-right: 15px; color: var(--or-accent);}
+        .game-card:nth-child(1) .card-title { font-size: 1.1rem; text-align: left; }
+        .game-card:nth-child(1) .card-subtitle { display: block; font-size: 0.7rem; color: var(--text-sub); font-weight: 500; margin-top: 2px;}
+        .game-card:nth-child(1) .card-glow { background: radial-gradient(circle at right, var(--or-accent), transparent 70%); }
 
-        /* THEME SPECIFIC PHYSICS (HOVER BORDERS & GLOWS) */
-        .theme-mc .card-banner { background: linear-gradient(135deg, #1e1b4b, #312e81); }
-        .theme-mc .card-title { color: var(--mc-accent); }
-        .theme-mc .btn-play { background: var(--mc-accent); color: #fff; }
-        .game-card.theme-mc:hover { border-color: var(--mc-accent); box-shadow: 0 15px 35px rgba(99, 102, 241, 0.25); }
+        /* Tema Sisa Kartu */
+        .theme-mc .card-icon { color: var(--mc-accent); }
+        .theme-mc .card-glow { background: radial-gradient(circle at top, var(--mc-accent), transparent); }
 
-        .theme-ud .card-banner { background: linear-gradient(135deg, #4c1d95, #311047); }
-        .theme-ud .card-title { color: var(--ud-accent); }
-        .theme-ud .btn-play { background: var(--ud-accent); color: #000; }
-        .game-card.theme-ud:hover { border-color: var(--ud-accent); box-shadow: 0 15px 35px rgba(245, 158, 11, 0.25); }
+        .theme-ud .card-icon { color: var(--ud-accent); }
+        .theme-ud .card-glow { background: radial-gradient(circle at top, var(--ud-accent), transparent); }
 
-        .theme-rs .card-banner { background: linear-gradient(135deg, #78350f, #4a2311); }
-        .theme-rs .card-title { color: var(--rs-accent); }
-        .theme-rs .btn-play { background: var(--rs-accent); color: #000; }
-        .game-card.theme-rs:hover { border-color: var(--rs-accent); box-shadow: 0 15px 35px rgba(243, 156, 18, 0.25); }
+        .theme-rs .card-icon { color: var(--rs-accent); }
+        .theme-rs .card-glow { background: radial-gradient(circle at top, var(--rs-accent), transparent); }
 
-        .theme-gw .card-banner { background: linear-gradient(135deg, #064e3b, #0f3460); }
-        .theme-gw .card-title { color: var(--gw-accent); }
-        .theme-gw .btn-play { background: var(--gw-accent); color: #000; }
-        .game-card.theme-gw:hover { border-color: var(--gw-accent); box-shadow: 0 15px 35px rgba(0, 255, 157, 0.25); }
+        .theme-gw .card-icon { color: var(--gw-accent); }
+        .theme-gw .card-glow { background: radial-gradient(circle at top, var(--gw-accent), transparent); }
 
-        .theme-rr .card-banner { background: linear-gradient(135deg, #881337, #4c0519); }
-        .theme-rr .card-title { color: var(--rr-accent); }
-        .theme-rr .btn-play { background: var(--rr-accent); color: #fff; }
-        .game-card.theme-rr:hover { border-color: var(--rr-accent); box-shadow: 0 15px 35px rgba(244, 63, 94, 0.25); }
+        .theme-rr .card-icon { color: var(--rr-accent); }
+        .theme-rr .card-glow { background: radial-gradient(circle at top, var(--rr-accent), transparent); }
 
-        .theme-ww .card-banner { background: linear-gradient(135deg, #334155, #0f172a); }
-        .theme-ww .card-title { color: var(--ww-accent); }
-        .theme-ww .btn-play { background: var(--ww-accent); color: #000; }
-        .game-card.theme-ww:hover { border-color: var(--ww-accent); box-shadow: 0 15px 35px rgba(255, 211, 105, 0.25); }
+        .theme-ww .card-icon { color: var(--ww-accent); }
+        .theme-ww .card-glow { background: radial-gradient(circle at top, var(--ww-accent), transparent); }
 
         /* FOOTER */
         .footer { 
-            margin-top: auto; font-size: 0.8rem; color: #64748b; 
-            padding: 30px 0; letter-spacing: 1px; text-align: center; font-weight: 500; 
+            margin-top: 15px;
+            font-size: 0.65rem; 
+            color: #64748b; 
+            letter-spacing: 1px; 
+            text-align: center; 
+            font-weight: 500; 
+            flex-shrink: 0;
         }
-
-        /* CUSTOM TOAST NOTIFICATION */
-        #toast { 
-            visibility: hidden; min-width: 250px; background-color: var(--rr-accent); 
-            color: #fff; text-align: center; border-radius: 12px; padding: 15px 20px; 
-            position: fixed; z-index: 3000; left: 50%; bottom: 30px; transform: translateX(-50%); 
-            font-weight: 600; font-size: 0.95rem; box-shadow: 0 10px 25px rgba(244, 63, 94, 0.4); 
-            opacity: 0; transition: opacity 0.3s, bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            display: flex; align-items: center; justify-content: center; gap: 8px;
+        .footer a {
+            color: var(--gw-accent);
+            text-decoration: none;
+            font-weight: 700;
+            transition: color 0.3s;
         }
-        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+        .footer a:hover { color: var(--or-accent); }
 
-        /* KEYFRAMES */
-        @keyframes fadeUpCard { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        /* ANIMASI */
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes shine { to { background-position: 200% center; } }
+        
+        /* Modifikasi SweetAlert agar menyatu dengan tema */
+        .swal2-dark-theme {
+            background: rgba(18, 18, 28, 0.95) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid var(--border-line) !important;
+            border-radius: var(--radius-main) !important;
+            color: #fff !important;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+        }
+
+        /* Penyesuaian ekstrim untuk layar HP mungil (Tinggi < 650px) */
+        @media (max-height: 650px) {
+            .dashboard-container { padding: 10px; }
+            .logo { font-size: 1.8rem; }
+            .input-wrapper input { padding: 10px 10px 10px 40px; }
+            .menu-grid { gap: 8px; }
+            .game-card { padding: 8px; }
+            .card-icon { font-size: 1.6rem; margin-bottom: 3px; }
+            .card-title { font-size: 0.75rem; }
+            .game-card:nth-child(1) .card-icon { font-size: 2rem; }
+            .footer { margin-top: 10px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1 class="logo">PLAY LUNA</h1>
-        <div class="subtitle">Gaming & Tournament Hub</div>
-    </div>
-
-    <div class="user-setup">
-        <label class="input-label">TENTUKAN PLAYER NAME KAMU</label>
-        <input type="text" id="globalName" class="player-input" placeholder="Ketik namamu di sini..." oninput="saveGlobalName()">
-    </div>
-
-    <div class="game-grid">
+    <!-- Main Container Dashboard -->
+    <div class="dashboard-container">
         
-        <!-- MCGG TOURNAMENT -->
-        <div class="game-card theme-mc" onclick="launchGame('mcgg')">
-            <div class="card-banner">
-                <div class="card-bg-glow" style="background: var(--mc-accent);"></div>
-                <span class="material-symbols-rounded card-icon" style="color: var(--mc-accent);">emoji_events</span>
+        <!-- Tombol Clear -->
+        <div class="top-bar">
+            <button class="btn-clear" onclick="clearData()" title="Hapus Memori Lokal">
+                <span class="material-symbols-rounded">refresh</span>
+            </button>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1 class="logo">PLAY LUNA</h1>
+            <div class="subtitle">GAMING & TOURNAMENT HUB</div>
+        </div>
+
+        <!-- Input Nama -->
+        <div class="user-setup">
+            <div class="input-label">TENTUKAN IDENTITAS PLAYER</div>
+            <div class="input-wrapper">
+                <span class="material-symbols-rounded input-icon">account_circle</span>
+                <input type="text" id="globalName" class="player-input" placeholder="Siapa namamu?" oninput="saveGlobalName()" autocomplete="off">
             </div>
-            <div class="card-info">
+        </div>
+
+        <!-- Bento Grid: 7 Aplikasi -->
+        <div class="menu-grid">
+            
+            <!-- 1. ORASI (Prioritas Teratas) -->
+            <div class="game-card theme-or" onclick="launchGame('orasi')">
+                <div class="card-glow"></div>
+                <span class="material-symbols-rounded card-icon">mic_external_on</span>
+                <div>
+                    <h2 class="card-title">Orasi Speaking</h2>
+                    <span class="card-subtitle">Latih mental public speakingmu</span>
+                </div>
+            </div>
+
+            <!-- 2. MCGG -->
+            <div class="game-card theme-mc" onclick="launchGame('mcgg')">
+                <div class="card-glow"></div>
+                <span class="material-symbols-rounded card-icon">emoji_events</span>
                 <h2 class="card-title">MCGG Turnamen</h2>
-                <p class="card-desc">Portal resmi manajemen Live Score & Turnamen e-sports. Pantau klasemen secara real-time.</p>
-                <div class="tags">
-                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">sensors</span> Live Score</span>
-                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">swords</span> Magic Chess</span>
-                </div>
-                <button class="btn-play">MASUK PORTAL <span class="material-symbols-rounded">arrow_forward</span></button>
             </div>
-        </div>
 
-        <!-- UNDIAN BERHADIAH -->
-        <div class="game-card theme-ud" onclick="launchGame('undian')">
-            <div class="card-banner">
-                <div class="card-bg-glow" style="background: var(--ud-accent);"></div>
-                <span class="material-symbols-rounded card-icon" style="color: var(--ud-accent);">redeem</span>
+            <!-- 3. UNDIAN -->
+            <div class="game-card theme-ud" onclick="launchGame('undian')">
+                <div class="card-glow"></div>
+                <span class="material-symbols-rounded card-icon">redeem</span>
+                <h2 class="card-title">Undian Hadiah</h2>
             </div>
-            <div class="card-info">
-                <h2 class="card-title">Undian Berhadiah</h2>
-                <p class="card-desc">Platform penentuan pemenang adil & akurat. Acak bulan atau tanggal lahir tanpa intervensi.</p>
-                <div class="tags">
-                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">celebration</span> Semua Orang</span>
-                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">balance</span> 100% Adil</span>
-                </div>
-                <button class="btn-play">BUKA UNDIAN <span class="material-symbols-rounded">arrow_forward</span></button>
-            </div>
-        </div>
 
-        <!-- REMI SUROBOYOAN -->
-        <div class="game-card theme-rs" onclick="launchGame('remi')">
-            <div class="card-banner">
-                <div class="card-bg-glow" style="background: var(--rs-accent);"></div>
-                <span class="material-symbols-rounded card-icon" style="color: var(--rs-accent);">style</span>
+            <!-- 4. REMI SUROBOYOAN -->
+            <div class="game-card theme-rs" onclick="launchGame('remi')">
+                <div class="card-glow"></div>
+                <span class="material-symbols-rounded card-icon">style</span>
+                <h2 class="card-title">Remi Kartu</h2>
             </div>
-            <div class="card-info">
-                <h2 class="card-title">Remi Suroboyoan</h2>
-                <p class="card-desc">Adu mekanik susun kartu di meja warkop. Kumpulkan poin tertinggi atau jadi beban temanmu!</p>
-                <div class="tags">
-                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">group</span> 1-4 Orang</span>
-                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">psychology</span> Strategi</span>
-                </div>
-                <button class="btn-play">MAIN SEKARANG <span class="material-symbols-rounded">play_arrow</span></button>
-            </div>
-        </div>
 
-        <!-- ULAR TANGGA -->
-        <div class="game-card theme-gw" onclick="launchGame('geometry')">
-            <div class="card-banner">
-                <div class="card-bg-glow" style="background: var(--gw-accent);"></div>
-                <span class="material-symbols-rounded card-icon" style="color: var(--gw-accent);">casino</span>
-            </div>
-            <div class="card-info">
+            <!-- 5. ULAR TANGGA -->
+            <div class="game-card theme-gw" onclick="launchGame('geometry')">
+                <div class="card-glow"></div>
+                <span class="material-symbols-rounded card-icon">casino</span>
                 <h2 class="card-title">Ular Tangga</h2>
-                <p class="card-desc">Bukan ular tangga biasa. Tempur dengan kartu serangan dan selamatkan diri dengan strategi neon.</p>
-                <div class="tags">
-                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">group</span> 2-12 Orang</span>
-                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">bolt</span> Casual</span>
-                </div>
-                <button class="btn-play">MAIN SEKARANG <span class="material-symbols-rounded">play_arrow</span></button>
             </div>
-        </div>
 
-        <!-- RUANG REFLEKSI -->
-        <div class="game-card theme-rr" onclick="launchGame('refleksi')">
-            <div class="card-banner">
-                <div class="card-bg-glow" style="background: var(--rr-accent);"></div>
-                <span class="material-symbols-rounded card-icon" style="color: var(--rr-accent);">volunteer_activism</span>
-            </div>
-            <div class="card-info">
+            <!-- 6. RUANG REFLEKSI -->
+            <div class="game-card theme-rr" onclick="launchGame('refleksi')">
+                <div class="card-glow"></div>
+                <span class="material-symbols-rounded card-icon">volunteer_activism</span>
                 <h2 class="card-title">Ruang Refleksi</h2>
-                <p class="card-desc">Game Deep Talk & Psikologi. Kenali teman dan dirimu sendiri lebih dalam tanpa penghakiman.</p>
-                <div class="tags">
-                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">favorite</span> Deep Talk</span>
-                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">forum</span> 2+ Orang</span>
-                </div>
-                <button class="btn-play">MULAI SESI <span class="material-symbols-rounded">play_arrow</span></button>
             </div>
+
+            <!-- 7. WEREWOLF -->
+            <div class="game-card theme-ww" onclick="launchGame('werewolf')">
+                <div class="card-glow"></div>
+                <span class="material-symbols-rounded card-icon">nightlight_round</span>
+                <h2 class="card-title">Werewolf Village</h2>
+            </div>
+
         </div>
 
-        <!-- WEREWOLF -->
-        <div class="game-card theme-ww" onclick="launchGame('werewolf')">
-            <div class="card-banner">
-                <div class="card-bg-glow" style="background: var(--ww-accent);"></div>
-                <span class="material-symbols-rounded card-icon" style="color: var(--ww-accent);">nightlight_round</span>
-            </div>
-            <div class="card-info">
-                <h2 class="card-title">Werewolf</h2>
-                <p class="card-desc">Cari pengkhianat di desa atau jadilah pemangsa. Permainan deduksi sosial penuh manipulasi.</p>
-                <div class="tags">
-                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">groups</span> 4-15 Orang</span>
-                    <span class="tag"><span class="material-symbols-rounded" style="font-size:14px;">gavel</span> Butuh Host</span>
-                </div>
-                <button class="btn-play">MULAI MALAM <span class="material-symbols-rounded">play_arrow</span></button>
-            </div>
+        <!-- Footer -->
+        <div class="footer">
+            PLAY LUNA • by <a href="https://www.instagram.com/mas_uuth/" target="_blank" rel="noopener noreferrer">Mas Uuth</a>
         </div>
 
     </div>
-
-    <div class="footer">
-        PLAY LUNA HUB v4.0 • by Mas Uuth
-    </div>
-
-    <!-- TOAST NOTIFICATION -->
-    <div id="toast"><span class="material-symbols-rounded">error</span> <span id="toast-msg">Notifikasi</span></div>
 
     <script>
-        // Load Saved Name
+        // Memuat Nama yang Tersimpan
         window.onload = () => {
             const savedName = localStorage.getItem("luna_global_name");
             if(savedName) document.getElementById("globalName").value = savedName;
         };
 
-        // Save Name to Ecosystem LocalStorage
+        // Fitur Pembersih Cache & Refresh
+        function clearData() {
+            Swal.fire({
+                title: 'Bersihkan Sistem?',
+                text: "Semua data profil dan riwayat aplikasi PlayLuna akan dihapus dari peramban ini.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f43f5e',
+                cancelButtonColor: 'rgba(255,255,255,0.1)',
+                confirmButtonText: 'Ya, Bersihkan!',
+                cancelButtonText: 'Batal',
+                customClass: { popup: 'swal2-dark-theme' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.clear();
+                    location.reload(); 
+                }
+            });
+        }
+
+        // Simpan Nama ke Ekosistem Lokal
         function saveGlobalName() {
             const name = document.getElementById("globalName").value.trim();
             localStorage.setItem("luna_global_name", name);
@@ -362,28 +439,26 @@
             localStorage.setItem("myPlayerName", name);           
         }
 
-        // Custom Toast System (Replaces Alert)
-        function showToast(message) {
-            const toast = document.getElementById("toast");
-            document.getElementById("toast-msg").innerText = message;
-            toast.className = "show";
-            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
-        }
-
-        // Routing Logic
+        // Logika Perpindahan Aplikasi
         function launchGame(game) {
             const name = document.getElementById("globalName").value.trim();
             
-            // Exception: MCGG Portal doesn't require a strict name on this layer
-            if(!name && game !== 'mcgg') { 
-                showToast("Isi nama Player kamu dulu!");
+            // Aturan Wajib Nama (Kecuali Orasi dan MCGG yang bisa dimainkan anonim)
+            if(!name && game !== 'mcgg' && game !== 'orasi') { 
+                Swal.fire({
+                    title: 'Akses Ditolak',
+                    text: 'Silakan ketik nama Player kamu terlebih dahulu sebelum masuk ke ruang permainan.',
+                    icon: 'error',
+                    confirmButtonColor: '#6366f1',
+                    customClass: { popup: 'swal2-dark-theme' }
+                });
                 
-                // Add a small shake animation to the input field
+                // Efek visual peringatan pada form
                 const input = document.querySelector('.user-setup');
-                input.style.transform = "translateX(-10px)";
-                setTimeout(() => input.style.transform = "translateX(10px)", 100);
-                setTimeout(() => input.style.transform = "translateX(-10px)", 200);
-                setTimeout(() => input.style.transform = "translateX(0)", 300);
+                input.style.transform = "scale(1.02) translateX(-5px)";
+                setTimeout(() => input.style.transform = "translateX(5px)", 100);
+                setTimeout(() => input.style.transform = "translateX(-5px)", 200);
+                setTimeout(() => input.style.transform = "scale(1) translateX(0)", 300);
                 
                 document.getElementById("globalName").focus();
                 return;
@@ -391,25 +466,29 @@
             
             saveGlobalName(); 
             
-            // Visual feedback before jumping (optional button styling change)
-            setTimeout(() => {
-                const routes = {
-                    'mcgg': 'mcgg.html',
-                    'werewolf': 'werewolf.html',
-                    'geometry': 'ulartangga.html',
-                    'refleksi': 'ngobrolyuk.html',
-                    'remi': 'remi_suroboyoan.html',
-                    'undian': 'undian.html'
-                };
-                if(routes[game]) window.location.href = routes[game];
-            }, 150);
+            // Simulasi loading/transisi cepat sebelum pindah
+            const routes = {
+                'orasi': 'orasi.html',        
+                'mcgg': 'mcgg.html',
+                'werewolf': 'werewolf.html',
+                'geometry': 'ulartangga.html',
+                'refleksi': 'ngobrolyuk.html',
+                'remi': 'remi_suroboyoan.html',
+                'undian': 'undian.html'
+            };
+            
+            if(routes[game]) {
+                setTimeout(() => {
+                    window.location.href = routes[game];
+                }, 150);
+            }
         }
 
-        // Service Worker
+        // Pendaftaran Service Worker untuk performa PWA
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
-                    .catch(err => console.log('SW Registration Failed:', err));
+                    .catch(err => console.log('SW Registration Gagal:', err));
             });
         }
     </script>
