@@ -20,7 +20,7 @@
            1. DESIGN TOKENS (AMOLED OPTIMIZED)
            ========================================================================== */
         :root {
-            /* AMOLED True Black background for deep contrast */
+            /* AMOLED True Black */
             --bg-base: #000000;
             --bg-gradient: radial-gradient(circle at 50% 0%, #1c0e2b 0%, #000000 65%);
             
@@ -34,6 +34,7 @@
             --primary-hover: #E64A19;
             --primary-glow: rgba(255, 87, 34, 0.4);
             --danger: #ff4444;
+            --danger-glow: rgba(255, 68, 68, 0.2);
             
             /* Typography */
             --text-main: #ffffff;
@@ -42,13 +43,10 @@
             /* Geometry */
             --radius-pill: 999px;
             --radius-box: 24px;
-            
-            /* Fluid Spacing */
-            --spacing-safe: env(safe-area-inset-bottom, 20px);
         }
 
         /* ==========================================================================
-           2. BASE RESET & LAYOUT
+           2. BASE RESET & LAYOUT ARCHITECTURE
            ========================================================================== */
         * {
             box-sizing: border-box;
@@ -59,18 +57,27 @@
 
         body {
             background-color: var(--bg-base);
-            background-image: var(--bg-gradient);
-            background-attachment: fixed;
             color: var(--text-main);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            /* 100dvh prevents issues with mobile browser address bars */
+            /* Flex layout fixes calculation bugs present in Grid on 20:9 screens */
             height: 100dvh; 
             width: 100vw;
-            display: grid;
-            /* Grid layout ensures perfect centering regardless of 6.7" tall screens */
-            grid-template-rows: auto 1fr auto; 
+            display: flex;
+            flex-direction: column;
             overflow: hidden; 
             overscroll-behavior: none;
+            position: relative; /* Anchor for pseudo-element */
+        }
+
+        /* HARDWARE ACCELERATED BACKGROUND - Fixes disappearing theme on Android Chrome/WebView */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: var(--bg-gradient);
+            z-index: -1;
+            pointer-events: none;
+            transform: translateZ(0); /* Force GPU acceleration */
         }
 
         /* ==========================================================================
@@ -92,7 +99,7 @@
             width: 100%;
             background: var(--primary);
             box-shadow: 0 0 12px var(--primary-glow);
-            transition: width 0.1s linear; /* Fast transition for smooth Date.now() updates */
+            transition: width 0.1s linear; 
             transform-origin: left;
         }
 
@@ -102,6 +109,7 @@
             padding: clamp(15px, 4vh, 30px) 20px 10px;
             width: 100%;
             z-index: 10;
+            flex-shrink: 0; /* Never collapse header */
         }
 
         .title {
@@ -159,7 +167,7 @@
         .mode-desc {
             font-size: 0.75rem;
             color: var(--text-muted);
-            height: 1rem; /* Fixed height to prevent layout shift */
+            height: 1rem; 
         }
 
         .category-select {
@@ -183,14 +191,15 @@
         }
         .category-select:focus { border-color: var(--primary); }
 
-        /* Main Stage (Always Centered) */
+        /* Main Stage (Fluid center area) */
         .main-stage {
+            flex-grow: 1; /* Takes up all remaining space */
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             width: 100%;
-            padding: 0 20px;
+            padding: 0 25px;
             text-align: center;
             position: relative;
         }
@@ -213,8 +222,7 @@
 
         .topic-display {
             font-family: 'Playfair Display', serif;
-            /* Fluid sizing: scales perfectly based on viewport width */
-            font-size: clamp(2rem, 8vw, 3rem); 
+            font-size: clamp(1.8rem, 7vw, 2.8rem); 
             line-height: 1.2;
             word-break: break-word;
             text-shadow: 0 4px 20px rgba(0,0,0,0.5);
@@ -250,14 +258,16 @@
         }
         .btn-pulse { animation: subtle-pulse 2s infinite; }
 
-        /* Bottom Controls (Thumb-friendly area) */
+        /* Bottom Controls (Thumb-friendly area - Adjusted for 6.7" phones) */
         .controls {
+            flex-shrink: 0; /* Protect from squishing */
             display: flex;
             gap: 12px;
-            padding: 15px 20px calc(25px + var(--spacing-safe));
+            /* Max limits padding on devices with huge safe areas to prevent push-up */
+            padding: 15px 20px max(20px, env(safe-area-inset-bottom));
             width: 100%;
             justify-content: center;
-            background: linear-gradient(to top, var(--bg-base) 40%, transparent);
+            background: linear-gradient(to top, var(--bg-base) 60%, transparent);
             z-index: 10;
         }
 
@@ -282,7 +292,7 @@
             background: var(--primary);
             color: #fff;
             border: none;
-            flex-grow: 1; /* Make main button take available space */
+            flex-grow: 1; 
             max-width: 300px;
         }
 
@@ -295,7 +305,7 @@
             aspect-ratio: 1;
         }
 
-        /* Modal / Bottom Sheet (Native Mobile Feel) */
+        /* Modal / Bottom Sheet */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -317,7 +327,7 @@
             width: 100%;
             max-width: 500px;
             border-radius: 28px 28px 0 0;
-            padding: 30px 25px calc(35px + var(--spacing-safe));
+            padding: 30px 25px max(35px, calc(15px + env(safe-area-inset-bottom)));
             transform: translateY(100%);
             transition: transform 0.4s cubic-bezier(0.3, 1, 0.3, 1);
             border-top: 1px solid var(--surface-border);
@@ -378,7 +388,7 @@
         }
         input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.2); }
 
-        /* Customized SweetAlert to match dark theme */
+        /* SWEETALERT PREMIUM CUSTOMIZATION */
         .swal2-dark-theme {
             background: rgba(17, 14, 23, 0.98) !important;
             backdrop-filter: blur(15px) !important;
@@ -386,12 +396,35 @@
             border-radius: var(--radius-box) !important;
             color: #fff !important;
         }
-        .swal2-title { color: #fff !important; font-family: 'Playfair Display', serif; font-size: 1.8rem !important; }
+        .swal2-title { color: #fff !important; font-family: 'Playfair Display', serif; font-size: 1.6rem !important; }
         .swal2-html-container { color: var(--text-muted) !important; font-size: 0.95rem !important; line-height: 1.5 !important;}
-        .swal2-confirm { background: var(--primary) !important; border-radius: var(--radius-pill) !important; padding: 12px 30px !important; font-weight: 600 !important; }
-        .swal2-cancel { background: transparent !important; border: 1px solid var(--surface-border) !important; border-radius: var(--radius-pill) !important; padding: 12px 30px !important; }
         
-        /* Hide scrollbar completely but allow scrolling in modal if needed */
+        /* Button Styles inside SweetAlert */
+        .swal-btn-primary { 
+            background: var(--primary) !important; 
+            border-radius: var(--radius-pill) !important; 
+            padding: 12px 28px !important; 
+            font-weight: 600 !important; 
+            color: #fff !important;
+            border: none !important;
+            box-shadow: 0 4px 15px var(--primary-glow) !important;
+        }
+        .swal-btn-danger-outline { 
+            background: transparent !important; 
+            border: 1px solid var(--danger) !important; 
+            border-radius: var(--radius-pill) !important; 
+            padding: 12px 28px !important; 
+            color: var(--danger) !important;
+            font-weight: 600 !important;
+        }
+        .swal-btn-secondary {
+            background: transparent !important; 
+            border: 1px solid var(--surface-border) !important; 
+            border-radius: var(--radius-pill) !important; 
+            padding: 12px 28px !important;
+            color: var(--text-main) !important;
+        }
+        
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -468,7 +501,7 @@
     </div>
 
     <script>
-        "use strict"; // Enforce strict mode for cleaner, safer code
+        "use strict"; 
 
         /**
          * KUMPULAN TOPIK (Dataset)
@@ -488,7 +521,6 @@
 
         /**
          * AUDIO ENGINE
-         * Dirancang untuk berjalan aman di semua browser modern (membutuhkan interaksi user)
          */
         const AudioEngine = (function() {
             let ctx = null;
@@ -509,7 +541,7 @@
                     
                     osc.type = type;
                     osc.frequency.setValueAtTime(freq, ctx.currentTime);
-                    if (type === 'triangle') { // Tick effect
+                    if (type === 'triangle') { 
                         osc.frequency.exponentialRampToValueAtTime(freq * 1.5, ctx.currentTime + duration);
                     }
                     
@@ -534,21 +566,18 @@
 
         /**
          * APPLICATION CONTROLLER
-         * Memisahkan logika aplikasi dari manipulasi DOM langsung
          */
         const App = (function() {
-            // State
             const state = {
-                mode: 'spontan', // spontan | riset
-                status: 'idle',  // idle | spinning | ready | researching | speaking
-                speechTime: 1,   // minutes
-                researchTime: 10,// minutes
-                targetTimeMs: 0, // Absolute end time (bulletproof against throttled intervals)
-                timerRaf: null,  // requestAnimationFrame ID
-                totalDuration: 0 // ms
+                mode: 'spontan', 
+                status: 'idle',  
+                speechTime: 1,   
+                researchTime: 10,
+                targetTimeMs: 0, 
+                timerRaf: null,  
+                totalDuration: 0 
             };
 
-            // DOM Elements
             const DOM = {
                 topic: document.getElementById('topic-text'),
                 statusLabel: document.getElementById('status-label'),
@@ -562,11 +591,26 @@
                 progressContainer: document.getElementById('progress-bar-container')
             };
 
-            /** ================= MENGATUR MODE ================= */
             function setMode(mode) {
                 AudioEngine.init();
                 if (state.status !== 'idle' && state.status !== 'ready') {
-                    confirmAction("Pindah Cara Latihan?", "Waktu sedang berjalan. Yakin ingin menghentikan latihan ini?", () => executeSetMode(mode));
+                    // Gunakan peringatan kustom untuk pindah mode
+                    Swal.fire({
+                        title: 'Tinggalkan Sesi?',
+                        text: 'Waktu sedang berjalan. Yakin ingin menghentikan latihan ini dan berganti mode?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, Ganti',
+                        cancelButtonText: 'Batal',
+                        customClass: { 
+                            popup: 'swal2-dark-theme',
+                            confirmButton: 'swal-btn-danger-outline',
+                            cancelButton: 'swal-btn-secondary'
+                        },
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) executeSetMode(mode);
+                    });
                     return;
                 }
                 executeSetMode(mode);
@@ -585,7 +629,6 @@
                 resetState();
             }
 
-            /** ================= LOGIKA UTAMA (TOMBOL TENGAH) ================= */
             async function handleMainAction() {
                 AudioEngine.init();
                 DOM.btnMain.disabled = true; 
@@ -599,21 +642,55 @@
                         startTimer(state.mode === 'riset' ? 'researching' : 'speaking');
                         break;
                     case 'researching':
-                        confirmAction("Selesai Mencari Bahan?", "Sudah siap untuk mulai berbicara sekarang?", 
-                            () => startTimer('speaking'), 
-                            () => { DOM.btnMain.disabled = false; }
-                        );
+                        handleEarlyStop('researching');
                         break;
                     case 'speaking':
-                        confirmAction("Berhenti Berbicara?", "Waktu bicaramu belum habis. Yakin menyudahi sekarang?", 
-                            resetState, 
-                            () => { DOM.btnMain.disabled = false; }
-                        );
+                        handleEarlyStop('speaking');
                         break;
                 }
             }
+            
+            // Logika baru untuk interupsi psikologis (Tidak datar)
+            function handleEarlyStop(type) {
+                if (type === 'researching') {
+                    Swal.fire({
+                        title: 'Selesai Lebih Cepat?',
+                        text: 'Sudah merasa menemukan argumen yang cukup kuat untuk mulai berbicara sekarang?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, Mulai Bicara',
+                        cancelButtonText: 'Belum, Lanjut Riset',
+                        customClass: { 
+                            popup: 'swal2-dark-theme',
+                            confirmButton: 'swal-btn-primary',
+                            cancelButton: 'swal-btn-secondary'
+                        },
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) startTimer('speaking');
+                        else DOM.btnMain.disabled = false;
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Menyerah Lebih Awal?',
+                        text: 'Waktumu belum habis. Orator sejati menyelesaikan apa yang ia mulai. Yakin ingin menyerah sekarang?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, Hentikan',
+                        cancelButtonText: 'Teruskan Bicara',
+                        customClass: { 
+                            popup: 'swal2-dark-theme',
+                            confirmButton: 'swal-btn-danger-outline',
+                            cancelButton: 'swal-btn-primary'
+                        },
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) resetState();
+                        else DOM.btnMain.disabled = false;
+                    });
+                }
+            }
 
-            /** ================= SLOT MACHINE EFFECT (EASE OUT) ================= */
             function spinTopicAnimation() {
                 return new Promise(resolve => {
                     state.status = 'spinning';
@@ -623,14 +700,12 @@
                     let currentSpin = 0;
                     const totalSpins = 20;
                     
-                    // Fungsi recursive dengan delay yang semakin melambat (ease-out)
                     function doSpin() {
                         DOM.topic.innerText = pool[Math.floor(Math.random() * pool.length)];
                         AudioEngine.tick();
                         currentSpin++;
                         
                         if (currentSpin < totalSpins) {
-                            // Delay melambat perlahan menggunakan kurva pangkat
                             const delay = Math.pow(currentSpin, 1.5) * 1.5 + 40; 
                             setTimeout(doSpin, delay);
                         } else {
@@ -657,12 +732,10 @@
                 DOM.btnMain.disabled = false;
             }
 
-            /** ================= BULLETPROOF TIMER (Date.now()) ================= */
             function startTimer(type) {
                 cancelAnimationFrame(state.timerRaf);
                 state.status = type;
                 
-                // Transisi UI (Fade Out/In)
                 DOM.topic.style.opacity = '0';
                 setTimeout(() => {
                     DOM.topic.style.display = 'none';
@@ -685,11 +758,10 @@
 
                 window.onbeforeunload = () => "Sesi latihan sedang berjalan, yakin keluar?";
                 
-                let lastBeepTime = 0; // Prevent multiple beeps in one second
+                let lastBeepTime = 0; 
                 
-                // Loop Timer menggunakan RequestAnimationFrame (lebih presisi & hemat daya)
                 function updateTimer() {
-                    if (state.status !== type) return; // Exit if state changed
+                    if (state.status !== type) return; 
 
                     const now = Date.now();
                     let remainingMs = state.targetTimeMs - now;
@@ -699,19 +771,16 @@
                         return;
                     }
 
-                    // Render teks MM:SS
                     const totalSecs = Math.ceil(remainingMs / 1000);
                     const m = Math.floor(totalSecs / 60).toString().padStart(2, '0');
                     const s = (totalSecs % 60).toString().padStart(2, '0');
                     DOM.timerDisplay.innerText = `${m}:${s}`;
 
-                    // Render Progress Bar
                     const percentage = (remainingMs / state.totalDuration) * 100;
                     DOM.progressBar.style.width = `${percentage}%`;
 
-                    // Peringatan 5 detik terakhir
                     if (totalSecs <= 5) {
-                        if (now - lastBeepTime > 900) { // Bunyi tiap ~1 detik
+                        if (now - lastBeepTime > 900) { 
                             AudioEngine.beep();
                             lastBeepTime = now;
                         }
@@ -736,7 +805,10 @@
                         title: 'Waktu Riset Habis!',
                         text: 'Tarik napas yang panjang, dan mari kita mulai berbicara.',
                         icon: 'info',
-                        customClass: { popup: 'swal2-dark-theme' },
+                        customClass: { 
+                            popup: 'swal2-dark-theme',
+                            confirmButton: 'swal-btn-primary'
+                        },
                         confirmButtonText: 'Mulai Bicara',
                         allowOutsideClick: false
                     }).then(() => startTimer('speaking'));
@@ -745,7 +817,10 @@
                         title: 'Waktu Habis!',
                         text: 'Latihan luar biasa! Silakan istirahatkan suaramu sebentar.',
                         icon: 'success',
-                        customClass: { popup: 'swal2-dark-theme' },
+                        customClass: { 
+                            popup: 'swal2-dark-theme',
+                            confirmButton: 'swal-btn-primary'
+                        },
                         confirmButtonText: 'Selesai'
                     }).then(resetState);
                 }
@@ -758,7 +833,7 @@
                 
                 DOM.timerDisplay.style.display = 'none';
                 DOM.timerDisplay.classList.remove('timer-danger');
-                DOM.topic.style.display = 'flex';
+                DOM.topic.style.display = 'block';
                 DOM.topic.innerText = 'Tekan tombol untuk mengacak.';
                 DOM.statusLabel.classList.remove('show');
                 DOM.progressContainer.style.opacity = '0';
@@ -768,7 +843,6 @@
                 DOM.btnMain.disabled = false;
             }
 
-            /** ================= PENGATURAN / MODAL ================= */
             function openSettings() {
                 AudioEngine.init();
                 if (state.status !== 'idle' && state.status !== 'ready') {
@@ -803,23 +877,6 @@
                 toastMsg("Pengaturan disimpan!");
             }
 
-            /** ================= HELPER UI ================= */
-            function confirmAction(title, text, onConfirm, onCancel) {
-                Swal.fire({
-                    title: title,
-                    text: text,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Ya',
-                    cancelButtonText: 'Batal',
-                    reverseButtons: true,
-                    customClass: { popup: 'swal2-dark-theme' }
-                }).then((result) => {
-                    if (result.isConfirmed && onConfirm) onConfirm();
-                    else if (!result.isConfirmed && onCancel) onCancel();
-                });
-            }
-
             function toastMsg(message) {
                 Swal.mixin({
                     toast: true,
@@ -833,7 +890,6 @@
                 });
             }
 
-            // Expose public methods
             return {
                 setMode, handleMainAction, openSettings, closeSettings, updateSettingsText, saveSettings
             };
