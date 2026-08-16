@@ -55,29 +55,31 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        body {
+        html, body {
             background-color: var(--bg-base);
             color: var(--text-main);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            /* Flex layout fixes calculation bugs present in Grid on 20:9 screens */
             height: 100dvh; 
             width: 100vw;
-            display: flex;
-            flex-direction: column;
             overflow: hidden; 
-            overscroll-behavior: none;
-            position: relative; /* Anchor for pseudo-element */
         }
 
-        /* HARDWARE ACCELERATED BACKGROUND - Fixes disappearing theme on Android Chrome/WebView */
+        body {
+            display: flex;
+            flex-direction: column;
+            overscroll-behavior: none;
+            position: relative; 
+        }
+
+        /* HARDWARE ACCELERATED BACKGROUND - FIX TEMA HILANG */
         body::before {
             content: '';
-            position: absolute;
+            position: fixed; /* Berubah dari absolute ke fixed agar tidak terpengaruh tinggi body */
             top: 0; left: 0; right: 0; bottom: 0;
             background-image: var(--bg-gradient);
             z-index: -1;
             pointer-events: none;
-            transform: translateZ(0); /* Force GPU acceleration */
+            transform: translateZ(0); 
         }
 
         /* ==========================================================================
@@ -109,7 +111,7 @@
             padding: clamp(15px, 4vh, 30px) 20px 10px;
             width: 100%;
             z-index: 10;
-            flex-shrink: 0; /* Never collapse header */
+            flex-shrink: 0;
         }
 
         .title {
@@ -193,7 +195,7 @@
 
         /* Main Stage (Fluid center area) */
         .main-stage {
-            flex-grow: 1; /* Takes up all remaining space */
+            flex-grow: 1; 
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -258,13 +260,13 @@
         }
         .btn-pulse { animation: subtle-pulse 2s infinite; }
 
-        /* Bottom Controls (Thumb-friendly area - Adjusted for 6.7" phones) */
+        /* Bottom Controls - FIX POSISI AGAR TIDAK TERTUTUP HOME BAR */
         .controls {
-            flex-shrink: 0; /* Protect from squishing */
+            flex-shrink: 0; 
             display: flex;
             gap: 12px;
-            /* Max limits padding on devices with huge safe areas to prevent push-up */
-            padding: 15px 20px max(20px, env(safe-area-inset-bottom));
+            /* Padding bawah dibuat kalkulasi dinamis, minimal 45px untuk layar besar/gestur */
+            padding: 15px 20px calc(45px + env(safe-area-inset-bottom));
             width: 100%;
             justify-content: center;
             background: linear-gradient(to top, var(--bg-base) 60%, transparent);
@@ -284,6 +286,7 @@
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             user-select: none;
+            outline: none;
         }
         .btn:active:not(:disabled) { transform: scale(0.95); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -305,7 +308,7 @@
             aspect-ratio: 1;
         }
 
-        /* Modal / Bottom Sheet */
+        /* Modal / Bottom Sheet - FIX POSISI BAWAH */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -327,7 +330,8 @@
             width: 100%;
             max-width: 500px;
             border-radius: 28px 28px 0 0;
-            padding: 30px 25px max(35px, calc(15px + env(safe-area-inset-bottom)));
+            /* Padding bawah diamankan juga */
+            padding: 30px 25px calc(45px + env(safe-area-inset-bottom));
             transform: translateY(100%);
             transition: transform 0.4s cubic-bezier(0.3, 1, 0.3, 1);
             border-top: 1px solid var(--surface-border);
@@ -388,41 +392,71 @@
         }
         input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.2); }
 
-        /* SWEETALERT PREMIUM CUSTOMIZATION */
+        /* SWEETALERT PREMIUM CUSTOMIZATION - FIX NOTIF FLAT */
         .swal2-dark-theme {
-            background: rgba(17, 14, 23, 0.98) !important;
-            backdrop-filter: blur(15px) !important;
-            border: 1px solid var(--surface-border) !important;
-            border-radius: var(--radius-box) !important;
+            background: rgba(20, 16, 26, 0.98) !important;
+            backdrop-filter: blur(25px) !important;
+            -webkit-backdrop-filter: blur(25px) !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+            border-radius: 28px !important;
             color: #fff !important;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6) !important;
+            padding: 2em 1.5em !important;
         }
-        .swal2-title { color: #fff !important; font-family: 'Playfair Display', serif; font-size: 1.6rem !important; }
-        .swal2-html-container { color: var(--text-muted) !important; font-size: 0.95rem !important; line-height: 1.5 !important;}
+        .swal2-title { 
+            color: #fff !important; 
+            font-family: 'Playfair Display', serif !important; 
+            font-size: 1.8rem !important; 
+            letter-spacing: -0.5px;
+        }
+        .swal2-html-container { 
+            color: #b4b4b4 !important; 
+            font-size: 1.05rem !important; 
+            line-height: 1.6 !important;
+            margin-top: 15px !important;
+        }
+        .swal2-actions {
+            margin-top: 30px !important;
+            gap: 12px !important;
+            width: 100% !important;
+        }
+        .swal2-icon.swal2-warning { border-color: var(--primary) !important; color: var(--primary) !important; }
+        .swal2-icon.swal2-info { border-color: #4facfe !important; color: #4facfe !important; }
         
         /* Button Styles inside SweetAlert */
         .swal-btn-primary { 
             background: var(--primary) !important; 
             border-radius: var(--radius-pill) !important; 
-            padding: 12px 28px !important; 
+            padding: 14px 28px !important; 
             font-weight: 600 !important; 
             color: #fff !important;
             border: none !important;
             box-shadow: 0 4px 15px var(--primary-glow) !important;
+            transition: all 0.2s ease !important;
+            flex: 1;
         }
+        .swal-btn-primary:active { transform: scale(0.95) !important; }
+        
         .swal-btn-danger-outline { 
-            background: transparent !important; 
-            border: 1px solid var(--danger) !important; 
+            background: rgba(255, 68, 68, 0.05) !important; 
+            border: 1px solid rgba(255, 68, 68, 0.4) !important; 
             border-radius: var(--radius-pill) !important; 
-            padding: 12px 28px !important; 
-            color: var(--danger) !important;
+            padding: 14px 28px !important; 
+            color: #ff6b6b !important;
             font-weight: 600 !important;
+            transition: all 0.2s ease !important;
+            flex: 1;
         }
+        .swal-btn-danger-outline:active { background: rgba(255, 68, 68, 0.15) !important; transform: scale(0.95) !important; }
+        
         .swal-btn-secondary {
             background: transparent !important; 
             border: 1px solid var(--surface-border) !important; 
             border-radius: var(--radius-pill) !important; 
-            padding: 12px 28px !important;
+            padding: 14px 28px !important;
             color: var(--text-main) !important;
+            font-weight: 600 !important;
+            flex: 1;
         }
         
         ::-webkit-scrollbar { display: none; }
@@ -496,7 +530,7 @@
                 <input type="range" id="slide-research" min="1" max="60" value="10" oninput="App.updateSettingsText()">
             </div>
 
-            <button class="btn btn-primary" style="width: 100%;" onclick="App.saveSettings()">Simpan Pengaturan</button>
+            <button class="btn btn-primary" style="width: 100%; max-width: none;" onclick="App.saveSettings()">Simpan Pengaturan</button>
         </div>
     </div>
 
@@ -594,7 +628,6 @@
             function setMode(mode) {
                 AudioEngine.init();
                 if (state.status !== 'idle' && state.status !== 'ready') {
-                    // Gunakan peringatan kustom untuk pindah mode
                     Swal.fire({
                         title: 'Tinggalkan Sesi?',
                         text: 'Waktu sedang berjalan. Yakin ingin menghentikan latihan ini dan berganti mode?',
@@ -650,16 +683,16 @@
                 }
             }
             
-            // Logika baru untuk interupsi psikologis (Tidak datar)
+            // LOGIKA NOTIFIKASI BARU (TIDAK FLAT)
             function handleEarlyStop(type) {
                 if (type === 'researching') {
                     Swal.fire({
-                        title: 'Selesai Lebih Cepat?',
-                        text: 'Sudah merasa menemukan argumen yang cukup kuat untuk mulai berbicara sekarang?',
-                        icon: 'question',
+                        title: 'Sudah Siap Tampil?',
+                        html: '<div style="margin-top: 5px;">Waktu riset masih tersisa. Yakin sudah menemukan argumen yang kuat untuk mulai bicara sekarang?</div>',
+                        icon: 'info',
                         showCancelButton: true,
-                        confirmButtonText: 'Ya, Mulai Bicara',
-                        cancelButtonText: 'Belum, Lanjut Riset',
+                        confirmButtonText: 'Mulai Bicara',
+                        cancelButtonText: 'Lanjut Riset',
                         customClass: { 
                             popup: 'swal2-dark-theme',
                             confirmButton: 'swal-btn-primary',
@@ -672,12 +705,17 @@
                     });
                 } else {
                     Swal.fire({
-                        title: 'Menyerah Lebih Awal?',
-                        text: 'Waktumu belum habis. Orator sejati menyelesaikan apa yang ia mulai. Yakin ingin menyerah sekarang?',
+                        title: 'Sesi Belum Selesai!',
+                        html: `
+                            <div style="margin-top: 5px; text-align: center;">
+                                <strong style="color: var(--primary); font-size: 1.15rem; display: block; margin-bottom: 10px;">Panggung masih milikmu.</strong>
+                                Orator sejati menaklukkan rasa tidak nyaman dan menguasai setiap detik yang ada. Apakah kamu benar-benar ingin menyerah sekarang?
+                            </div>
+                        `,
                         icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonText: 'Ya, Hentikan',
-                        cancelButtonText: 'Teruskan Bicara',
+                        confirmButtonText: 'Akhiri Sesi',
+                        cancelButtonText: 'Lanjutkan Orasi',
                         customClass: { 
                             popup: 'swal2-dark-theme',
                             confirmButton: 'swal-btn-danger-outline',
