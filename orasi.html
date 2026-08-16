@@ -74,7 +74,7 @@
         /* HARDWARE ACCELERATED BACKGROUND - FIX TEMA HILANG */
         body::before {
             content: '';
-            position: fixed; /* Berubah dari absolute ke fixed agar tidak terpengaruh tinggi body */
+            position: fixed; 
             top: 0; left: 0; right: 0; bottom: 0;
             background-image: var(--bg-gradient);
             z-index: -1;
@@ -228,7 +228,14 @@
             line-height: 1.2;
             word-break: break-word;
             text-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            transition: opacity 0.3s ease, filter 0.1s;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Tema Tetap Tampil (Elegan) */
+        .topic-display.active-session {
+            font-size: clamp(1.4rem, 5vw, 2rem);
+            opacity: 0.8;
+            margin-bottom: 15px;
         }
 
         .timer-display {
@@ -260,13 +267,13 @@
         }
         .btn-pulse { animation: subtle-pulse 2s infinite; }
 
-        /* Bottom Controls - FIX POSISI AGAR TIDAK TERTUTUP HOME BAR */
+        /* Bottom Controls - FIX POSISI EKSTRA AMAN */
         .controls {
             flex-shrink: 0; 
             display: flex;
             gap: 12px;
-            /* Padding bawah dibuat kalkulasi dinamis, minimal 45px untuk layar besar/gestur */
-            padding: 15px 20px calc(45px + env(safe-area-inset-bottom));
+            /* Padding dinaikkan drastis ke 75px agar bersih total dari Home Bar HP 6.7 inch */
+            padding: 15px 20px calc(75px + env(safe-area-inset-bottom));
             width: 100%;
             justify-content: center;
             background: linear-gradient(to top, var(--bg-base) 60%, transparent);
@@ -308,7 +315,7 @@
             aspect-ratio: 1;
         }
 
-        /* Modal / Bottom Sheet - FIX POSISI BAWAH */
+        /* Modal / Bottom Sheet - FIX POSISI EKSTRA AMAN */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -330,8 +337,8 @@
             width: 100%;
             max-width: 500px;
             border-radius: 28px 28px 0 0;
-            /* Padding bawah diamankan juga */
-            padding: 30px 25px calc(45px + env(safe-area-inset-bottom));
+            /* Padding dinaikkan drastis ke 75px */
+            padding: 30px 25px calc(75px + env(safe-area-inset-bottom));
             transform: translateY(100%);
             transition: transform 0.4s cubic-bezier(0.3, 1, 0.3, 1);
             border-top: 1px solid var(--surface-border);
@@ -392,7 +399,7 @@
         }
         input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.2); }
 
-        /* SWEETALERT PREMIUM CUSTOMIZATION - FIX NOTIF FLAT */
+        /* SWEETALERT PREMIUM CUSTOMIZATION */
         .swal2-dark-theme {
             background: rgba(20, 16, 26, 0.98) !important;
             backdrop-filter: blur(25px) !important;
@@ -625,6 +632,49 @@
                 progressContainer: document.getElementById('progress-bar-container')
             };
 
+            // INTERCEPT BACK BUTTON (POPSTATE)
+            function initHistoryAPI() {
+                // Set state awal
+                window.history.replaceState({ appState: 'home' }, '');
+                
+                window.addEventListener('popstate', (e) => {
+                    if (state.status === 'researching' || state.status === 'speaking') {
+                        // Kunci user agar tidak langsung terlempar keluar dari app
+                        window.history.pushState({ appState: 'session' }, ''); 
+                        
+                        Swal.fire({
+                            title: 'Akhiri Panggung?',
+                            html: `
+                                <div style="margin-top: 5px; text-align: center;">
+                                    <strong style="color: var(--primary); font-size: 1.15rem; display: block; margin-bottom: 10px;">Waktu masih berjalan!</strong>
+                                    Menekan tombol kembali akan menghentikan seluruh sesi latihanmu. Yakin ingin menyerah sekarang?
+                                </div>
+                            `,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Ya, Akhiri Sesi',
+                            cancelButtonText: 'Teruskan Bicara',
+                            customClass: { 
+                                popup: 'swal2-dark-theme',
+                                confirmButton: 'swal-btn-danger-outline',
+                                cancelButton: 'swal-btn-primary'
+                            },
+                            reverseButtons: true
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                resetState(true); // Reset tanpa trigger history back
+                                window.history.back(); // Kembalikan state yang tadi kita kunci
+                            }
+                        });
+                    } else if (state.status === 'ready') {
+                        resetState();
+                    }
+                });
+            }
+
+            // Jalankan interseptor saat halaman dimuat
+            initHistoryAPI();
+
             function setMode(mode) {
                 AudioEngine.init();
                 if (state.status !== 'idle' && state.status !== 'ready') {
@@ -683,7 +733,6 @@
                 }
             }
             
-            // LOGIKA NOTIFIKASI BARU (TIDAK FLAT)
             function handleEarlyStop(type) {
                 if (type === 'researching') {
                     Swal.fire({
@@ -774,12 +823,9 @@
                 cancelAnimationFrame(state.timerRaf);
                 state.status = type;
                 
-                DOM.topic.style.opacity = '0';
-                setTimeout(() => {
-                    DOM.topic.style.display = 'none';
-                    DOM.timerDisplay.style.display = 'block';
-                    DOM.topic.style.opacity = '1';
-                }, 300);
+                // Tema TIDAK DIHILANGKAN, hanya diubah ukurannya agar elegan dengan timer
+                DOM.topic.classList.add('active-session');
+                DOM.timerDisplay.style.display = 'block';
 
                 DOM.statusLabel.innerText = type === 'researching' ? 'MENCARI BAHAN...' : 'SEDANG BERBICARA...';
                 
@@ -793,6 +839,11 @@
                 DOM.btnMain.innerText = type === 'researching' ? 'Lompati Riset' : 'Akhiri Latihan';
                 DOM.btnMain.classList.remove('btn-primary');
                 DOM.btnMain.disabled = false;
+
+                // Push state history untuk tombol back native
+                if (window.history.state?.appState !== 'session') {
+                    window.history.pushState({ appState: 'session' }, '');
+                }
 
                 window.onbeforeunload = () => "Sesi latihan sedang berjalan, yakin keluar?";
                 
@@ -860,18 +911,18 @@
                             confirmButton: 'swal-btn-primary'
                         },
                         confirmButtonText: 'Selesai'
-                    }).then(resetState);
+                    }).then(() => resetState());
                 }
             }
 
-            function resetState() {
+            function resetState(skipHistoryBack = false) {
                 cancelAnimationFrame(state.timerRaf);
                 window.onbeforeunload = null;
                 state.status = 'idle';
                 
                 DOM.timerDisplay.style.display = 'none';
                 DOM.timerDisplay.classList.remove('timer-danger');
-                DOM.topic.style.display = 'block';
+                DOM.topic.classList.remove('active-session'); // Kembalikan ukuran topik
                 DOM.topic.innerText = 'Tekan tombol untuk mengacak.';
                 DOM.statusLabel.classList.remove('show');
                 DOM.progressContainer.style.opacity = '0';
@@ -879,6 +930,11 @@
                 DOM.btnMain.innerText = 'Acak Topik';
                 DOM.btnMain.classList.add('btn-primary', 'btn-pulse');
                 DOM.btnMain.disabled = false;
+
+                // Membersihkan stack history jika user tidak sengaja keluar lewat fungsi back manual
+                if (!skipHistoryBack && window.history.state?.appState === 'session') {
+                    window.history.back();
+                }
             }
 
             function openSettings() {
